@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { t, LANGUAGES } from '../i18n';
+import { t } from '../i18n';
 import EligibilityList from './EligibilityList';
 
 // AI 채팅창. 고객 질문을 받아 onAsk로 넘기고, 상황에 따라 버튼을 보여준다.
@@ -8,33 +8,14 @@ import EligibilityList from './EligibilityList';
 //  - 고객 정보 확인 버튼(네/아니요, 바뀌었어요): 가입 자격 판단 전에
 //  - 가입 자격 결과: 상품별 가능/불가 + 기간 선택 + 불가 상품의 [상담원 연결]
 //  - 연결 제안 버튼(상담원 연결 / 혼자 계속): 판단 질문, 멈춤, 이탈 반복 (4단계), 고객 정보 불일치
-// 제목줄: [🌐 언어] [↺ 처음으로] [×]. 상담원과 대화 중(waiting)에는 언어·↺ 대신 [연결 상태] [상담 종료] [×]
+// 제목줄: [↺ 처음으로] [×]. 언어는 시작 화면에서 고른다. 상담원과 대화 중(waiting)에는 ↺ 대신 [연결 상태] [상담 종료] [×]
 export default function ChatPanel({
   open, onClose, lang, busy, messages, pendingIntent, options, offer, waiting, agentJoined, suggestions,
-  langLocked, onChangeLang, onEndChat, onAsk, onConfirm, onChoose, onAcceptOffer, onDeclineOffer,
+  onEndChat, onAsk, onConfirm, onChoose, onAcceptOffer, onDeclineOffer,
   verifying, eligibility, restartOffered, onVerify, onPickProduct, onProductHandoff, onRestart,
 }) {
   const [text, setText] = useState('');
   const bodyRef = useRef(null);
-
-  // 언어 드롭다운: 바깥을 누르거나 Esc를 누르면 닫는다
-  const [langMenu, setLangMenu] = useState(false);
-  const langRef = useRef(null);
-  useEffect(() => {
-    if (!langMenu) return undefined;
-    const onDown = (e) => {
-      if (!langRef.current?.contains(e.target)) setLangMenu(false);
-    };
-    const onKey = (e) => {
-      if (e.key === 'Escape') setLangMenu(false);
-    };
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [langMenu]);
 
   // 새 메시지·버튼이 생기면 맨 아래로 스크롤
   useEffect(() => {
@@ -60,44 +41,7 @@ export default function ChatPanel({
         <strong>{t(lang, 'chatTitle')}</strong>
         <div className="chat-head-actions">
           {!waiting && (
-            <div className="lang-select" ref={langRef}>
-              <button
-                type="button"
-                className="lang-trigger"
-                aria-haspopup="listbox"
-                aria-expanded={langMenu}
-                disabled={langLocked}
-                onClick={() => setLangMenu((v) => !v)}
-              >
-                <span aria-hidden="true">🌐</span>
-                {(LANGUAGES.find((l) => l.code === lang) ?? LANGUAGES[0]).label}
-                {!langLocked && <span aria-hidden="true">▾</span>}
-              </button>
-              {langMenu && (
-                <ul className="lang-menu" role="listbox">
-                  {LANGUAGES.map((l) => (
-                    <li key={l.code} role="presentation">
-                      <button
-                        type="button"
-                        role="option"
-                        aria-selected={l.code === lang}
-                        className={l.code === lang ? 'on' : ''}
-                        onClick={() => {
-                          setLangMenu(false);
-                          onChangeLang(l.code);
-                        }}
-                      >
-                        {l.label}
-                        {l.code === lang && <span aria-hidden="true">✓</span>}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-          {!waiting && (
-            <button className="chat-restart-icon" onClick={onRestart} disabled={busy} title="처음으로" aria-label="처음으로">
+            <button className="chat-restart-icon" onClick={onRestart} disabled={busy} title={t(lang, 'restart')} aria-label={t(lang, 'restart')}>
               ↺
             </button>
           )}
@@ -164,7 +108,7 @@ export default function ChatPanel({
         {restartOffered && (
           <div className="confirm-row">
             <button className="pill-btn" onClick={onRestart} disabled={busy}>
-              ↺ 처음으로
+              ↺ {t(lang, 'restart')}
             </button>
           </div>
         )}

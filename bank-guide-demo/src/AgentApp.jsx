@@ -31,6 +31,7 @@ export default function AgentApp() {
   const [detail, setDetail] = useState(null);
   const [reply, setReply] = useState('');
   const [sending, setSending] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false); // 자주 쓰는 답변 펼침 (기본은 접힘)
   const [error, setError] = useState(null);
   const threadRef = useRef(null);
 
@@ -237,12 +238,20 @@ export default function AgentApp() {
             )}
             {detail.status !== 'CLOSED' && (
               <div className="templates">
-                <span>자주 쓰는 답변</span>
-                {TEMPLATES.map((s) => (
-                  <button key={s} type="button" onClick={() => setReply(s)}>
-                    {s}
-                  </button>
-                ))}
+                <button
+                  type="button"
+                  className="templates-toggle"
+                  aria-expanded={showTemplates}
+                  onClick={() => setShowTemplates((v) => !v)}
+                >
+                  자주 쓰는 답변 {showTemplates ? '▾' : '▸'}
+                </button>
+                {showTemplates &&
+                  TEMPLATES.map((s) => (
+                    <button key={s} type="button" onClick={() => setReply(s)}>
+                      {s}
+                    </button>
+                  ))}
               </div>
             )}
             <form className="reply" onSubmit={send}>
