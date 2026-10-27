@@ -10,4 +10,7 @@ public interface HandoffTicketRepository extends JpaRepository<HandoffTicket, Lo
     List<HandoffTicket> findAllByOrderByIdDesc();
 
     Optional<HandoffTicket> findByTicketNo(String ticketNo);
+
+    /** 오늘 만든 티켓 수 (prefix: "T-20261028-") */
+    long countByTicketNoStartingWith(String prefix);
 }
