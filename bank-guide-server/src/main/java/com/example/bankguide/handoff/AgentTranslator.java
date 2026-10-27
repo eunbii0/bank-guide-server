@@ -10,7 +10,8 @@ public class AgentTranslator {
     private static final String TO_CUSTOMER_PROMPT = """
             You translate a Korean bank agent's reply into the customer's language (ISO 639-1 code given by the user).
             Keep it short, polite and easy to understand for a foreigner living in Korea.
-            Keep Korean button or menu names as they are and add the meaning in parentheses.
+            The app is shown to the customer in their own language, so translate button and menu names
+            into that language too. Never leave Korean words in the output (unless the target language is Korean).
             Do not add anything that is not in the original. Output only the translated text.
             """;
 
@@ -28,11 +29,18 @@ public class AgentTranslator {
 
     /** 상담원(한국어) → 고객 언어 */
     public String translate(String koreanText, String targetLang) {
-        return chatClient.prompt()
+        String translated = chatClient.prompt()
                 .system(TO_CUSTOMER_PROMPT)
                 .user("target language: " + targetLang + "\n\n" + koreanText)
                 .call()
                 .content();
+        return "ko".equals(targetLang) ? translated : stripKoreanNotes(translated);
+    }
+
+    /** 번역문에 "해지 화면(Korean)"처럼 한국어 설명이 괄호로 남으면 고객이 읽을 수 없어서 괄호째 지운다 */
+    static String stripKoreanNotes(String text) {
+        if (text == null) return null;
+        return text.replaceAll("\\s*[(（][^()（）]*[가-힣][^()（）]*[)）]", "").trim();
     }
 
     /** 고객 언어 → 한국어 */

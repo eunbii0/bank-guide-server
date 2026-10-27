@@ -45,7 +45,10 @@ public class SuggestionService {
             - Write in polite Korean, one sentence each, concrete and easy to translate.
             - Base them only on the conversation and the handoff note. Answer what the customer last asked.
             - Do not promise results, amounts or dates that are not in the conversation.
-            - Never ask for passwords, PINs, security card numbers or full account numbers.
+            - Never ask for passwords, PINs, security card numbers, account numbers, resident or foreigner
+              registration numbers (even the last digits), phone numbers or any other ID number.
+              If identity must be checked, tell the customer to use the app's verification or visit a branch.
+            - Ask whether someone else requested a transfer or account loan only when the note says FRAUD_SUSPECTED.
             - If the note says FRAUD_SUSPECTED, one of the replies must check whether someone else asked
               the customer to transfer money or lend their account.
             - If the conversation is ending, one reply may politely close the chat.

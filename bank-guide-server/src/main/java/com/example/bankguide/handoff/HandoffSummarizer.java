@@ -16,12 +16,16 @@ public class HandoffSummarizer {
               1) what the customer wants to do,
               2) where they stopped and what they asked (translate their question into Korean),
               3) anything notable such as wrong screens visited or signs of pressure from someone else.
-            - "checkpoints": 1 to 3 short Korean items the agent should confirm.
-              If the task moves money, always include whether a third party asked for it.
+            - "checkpoints": 1 to 3 short Korean items the agent should confirm, specific to this customer's task
+              (e.g. a visa or eligibility question, a form field, a missing document).
+              Ask whether a third party requested the transfer only when the task is a money transfer
+              or the riskFlag is FRAUD_SUSPECTED. Do not add that item for cards, certificates or joining a product.
             - "riskFlag": "FRAUD_SUSPECTED" if anyone seems to be pressuring the customer to move money
               or lend their account, otherwise "NONE".
 
             Use only facts in the input. Do not guess amounts, names or reasons that are not there.
+            Do not say the customer is doing something (such as transferring money) unless they said so.
+            Describe what someone else told the customer as what the customer reported, in natural Korean.
             Never write account numbers or phone numbers.
             """;
 

@@ -42,6 +42,7 @@ public class IntentService {
     // 챗봇 첫 메뉴 버튼. 상품 해지는 자격 판단 없이 기존 정기예금 중도해지로 간다.
     private static final List<String> MENU_ITEMS = List.of("MENU_CARD", "MENU_CANCEL", "MENU_JOIN");
     private static final String CANCEL_TASK = "DEPOSIT_CANCEL";
+    private static final int MAX_CANDIDATES = 3;
 
     private static final Logger log = LoggerFactory.getLogger(IntentService.class);
 
@@ -129,6 +130,11 @@ public class IntentService {
         String intent = validCodes.contains(result.intent()) ? result.intent() : null;
         if (intent == null && candidates.size() == 1) {
             intent = candidates.get(0);
+        }
+        // 후보가 너무 많으면 고객 말을 이해하지 못한 것이다 ("안녕하세요", "새 계좌 만들래요" 등).
+        // 관련 없는 업무 버튼 7개를 늘어놓지 말고 모른다고 답한다.
+        if (candidates.size() > MAX_CANDIDATES) {
+            return reply(conversationId, unknown(lang, source));
         }
 
         if (candidates.size() >= 2) {

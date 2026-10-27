@@ -40,6 +40,24 @@ class HandoffNoteTest {
     }
 
     @Test
+    void 카드_발급_같은_평범한_상담에는_제3자_확인_항목을_빼고_이체와_해지_사기에는_남긴다() {
+        SummaryResult llm = new SummaryResult(List.of("요약"),
+                List.of("영문 이름 확인", "제3자가 계좌 이동을 요구했는지 확인"), "NONE");
+
+        assertEquals(List.of("영문 이름 확인"), HandoffNote.sanitize(llm, "STUCK", "체크카드 발급").checkpoints());
+        assertEquals(2, HandoffNote.sanitize(llm, "ADVICE", "예금 중도해지").checkpoints().size());
+        assertEquals(2, HandoffNote.sanitize(llm, "CUSTOMER_REQUEST", "송금").checkpoints().size());
+        assertEquals(2, HandoffNote.sanitize(llm, "FRAUD", "체크카드 발급").checkpoints().size());
+    }
+
+    @Test
+    void 번역문에_남은_한국어_괄호_설명은_지운다() {
+        assertEquals("You can check it on the termination screen.",
+                AgentTranslator.stripKoreanNotes("You can check it on the termination screen (해지 화면)."));
+        assertEquals("Press Next (next step) to continue.", AgentTranslator.stripKoreanNotes("Press Next (next step) to continue."));
+    }
+
+    @Test
     void 비어_있는_LLM_요약은_쓰지_않는다() {
         assertNull(HandoffNote.sanitize(new SummaryResult(List.of(), List.of(), "NONE"), "ADVICE"));
         assertNull(HandoffNote.sanitize(null, "ADVICE"));
