@@ -1,3 +1,17 @@
+-- 기준 데이터: 서버를 켤 때마다 지우고 다시 넣는다 (문구·규칙을 고치고 재시작하면 바로 반영).
+-- 상담 기록 테이블(handoff_ticket, chat_message, guide_event, eligibility_check, customer_info_access)은
+-- 건드리지 않는다. 기록 테이블은 기준 데이터 테이블을 FK로 참조하지 않아서 따로 지울 수 있다.
+-- FK 순서: 참조하는 쪽부터 지운다
+DELETE FROM product_rule;
+DELETE FROM product;
+DELETE FROM customer_profile;
+DELETE FROM intent_keyword;
+DELETE FROM ui_text;
+DELETE FROM guide_step_text;
+DELETE FROM guide_step;
+DELETE FROM guide_task_text;
+DELETE FROM guide_task;
+
 -- 지원 언어: ko(한국어), en(영어), vi(베트남어), zh(중국어)
 -- 앱 화면은 고객이 고른 언어로 보이므로, 안내 문구의 버튼 이름은 프론트 i18n.js(PAGE)의 화면 표기와 똑같이 맞춘다.
 

@@ -515,7 +515,18 @@
 
 # 3부. DB 테이블
 
-서버를 켤 때마다 `schema.sql` → `data.sql`로 새로 만듭니다 (데모용).
+서버를 켤 때 `schema.sql`이 **없는 테이블만** 만들고, `data.sql`이 **기준 데이터만** 지우고 다시 넣습니다.
+
+| 구분 | 테이블 | 재시작하면 |
+|---|---|---|
+| 기준 데이터 | `guide_task`, `guide_task_text`, `guide_step`, `guide_step_text`, `ui_text`, `intent_keyword`, `customer_profile`, `product`, `product_rule` | `data.sql` 내용으로 다시 채움 (문구·규칙 수정이 바로 반영) |
+| 상담 기록 | `handoff_ticket`, `chat_message`, `guide_event`, `eligibility_check`, `customer_info_access` | **그대로 남음** (MySQL 프로필일 때. 기본 H2는 메모리 DB라 서버를 끄면 사라짐) |
+
+- **전체 초기화**: Active profiles에 `reset`을 더해 한 번 실행합니다 (예: `mysql,reset`). `reset.sql`이 모든 테이블을 지운 뒤 새로 만듭니다.
+  리허설 기록을 지우고 시연을 시작할 때, **`schema.sql`의 테이블 구조를 바꾼 뒤**(이미 있는 테이블에는 새 컬럼이 생기지 않음)에 씁니다.
+  초기화한 다음에는 `reset`을 빼고 실행해야 기록이 남습니다.
+- 진행 중인 화면 안내 상태(몇 단계인지)는 서버 메모리에 있어서 재시작하면 사라집니다. 고객은 안내를 다시 시작하면 됩니다.
+- 티켓 번호는 그날 만든 티켓 수로 매깁니다 (`T-20261028-0001`부터).
 
 | 테이블 | 내용 |
 |---|---|

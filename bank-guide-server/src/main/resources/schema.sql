@@ -1,21 +1,9 @@
--- 데모용: 서버를 켤 때마다 테이블을 새로 만든다 (MySQL 프로필에서도 동일)
-DROP TABLE IF EXISTS customer_info_access;
-DROP TABLE IF EXISTS eligibility_check;
-DROP TABLE IF EXISTS product_rule;
-DROP TABLE IF EXISTS product;
-DROP TABLE IF EXISTS customer_profile;
-DROP TABLE IF EXISTS handoff_ticket;
-DROP TABLE IF EXISTS chat_message;
-DROP TABLE IF EXISTS guide_event;
-DROP TABLE IF EXISTS ui_text;
-DROP TABLE IF EXISTS intent_keyword;
-DROP TABLE IF EXISTS guide_step_text;
-DROP TABLE IF EXISTS guide_step;
-DROP TABLE IF EXISTS guide_task_text;
-DROP TABLE IF EXISTS guide_task;
+-- 테이블이 없을 때만 만든다. 서버를 다시 켜도 상담 기록(티켓·채팅·안내 기록·자격 판단·정보 조회 기록)은 남는다.
+-- 기준 데이터(업무·문구·고객·상품 규칙)는 data.sql이 켤 때마다 지우고 다시 넣는다.
+-- 테이블 구조를 바꾼 뒤나 기록을 전부 지우고 싶을 때는 reset 프로필로 실행한다 (reset.sql → 모든 테이블 삭제).
 
 -- 업무 (메뉴 지도의 머리). 언어와 무관한 정보만 둔다.
-CREATE TABLE guide_task (
+CREATE TABLE IF NOT EXISTS guide_task (
     code        VARCHAR(40)  PRIMARY KEY,   -- DEPOSIT_CANCEL
     goal_page   VARCHAR(60)  NOT NULL,      -- 이 화면에 도착하면 안내 종료
     priority    INT          NOT NULL,      -- 키워드 대체 분류 시 검사 순서
@@ -23,7 +11,7 @@ CREATE TABLE guide_task (
 );
 
 -- 업무 이름과 확인 질문 (언어별)
-CREATE TABLE guide_task_text (
+CREATE TABLE IF NOT EXISTS guide_task_text (
     id           BIGINT AUTO_INCREMENT PRIMARY KEY,
     task_code    VARCHAR(40)  NOT NULL,
     lang         VARCHAR(5)   NOT NULL,     -- ko, en, vi, zh
@@ -33,7 +21,7 @@ CREATE TABLE guide_task_text (
 );
 
 -- 업무별 단계 (어느 화면에서 어떤 버튼을 누르는지)
-CREATE TABLE guide_step (
+CREATE TABLE IF NOT EXISTS guide_step (
     id        BIGINT AUTO_INCREMENT PRIMARY KEY,
     task_code VARCHAR(40) NOT NULL,
     step_no   INT         NOT NULL,
@@ -43,7 +31,7 @@ CREATE TABLE guide_step (
 );
 
 -- 단계 안내 문구 (언어별). 화면은 한국어라서 버튼 이름은 한국어 그대로 넣고 뜻을 덧붙인다.
-CREATE TABLE guide_step_text (
+CREATE TABLE IF NOT EXISTS guide_step_text (
     id        BIGINT AUTO_INCREMENT PRIMARY KEY,
     task_code VARCHAR(40)  NOT NULL,
     step_no   INT          NOT NULL,
@@ -52,7 +40,7 @@ CREATE TABLE guide_step_text (
 );
 
 -- 업무와 무관한 시스템 문구 (경로 이탈, 완료, 모르는 질문, 되묻기)
-CREATE TABLE ui_text (
+CREATE TABLE IF NOT EXISTS ui_text (
     id       BIGINT AUTO_INCREMENT PRIMARY KEY,
     text_key VARCHAR(40)  NOT NULL,
     lang     VARCHAR(5)   NOT NULL,
@@ -60,7 +48,7 @@ CREATE TABLE ui_text (
 );
 
 -- LLM 호출이 실패했을 때 쓰는 대체 키워드
-CREATE TABLE intent_keyword (
+CREATE TABLE IF NOT EXISTS intent_keyword (
     id        BIGINT AUTO_INCREMENT PRIMARY KEY,
     task_code VARCHAR(40) NOT NULL,
     keyword   VARCHAR(40) NOT NULL,
@@ -70,7 +58,7 @@ CREATE TABLE intent_keyword (
 -- 고객 행동 기록. 상담원 요약에는 지금 진행 중인 안내(session_id)의 기록만 쓰고,
 -- 대화(conversation_id) 단위 기록은 서비스 개선 분석용으로만 저장한다 (개인정보 최소화)
 -- 한 대화에서 안내를 여러 번 시작할 수 있고, 안내 한 번마다 session_id가 새로 생긴다
-CREATE TABLE guide_event (
+CREATE TABLE IF NOT EXISTS guide_event (
     id              BIGINT AUTO_INCREMENT PRIMARY KEY,
     conversation_id VARCHAR(36),                -- chat_message·handoff_ticket과 같은 값 (보내지 않은 옛 화면은 NULL)
     session_id      VARCHAR(36)  NOT NULL,
@@ -81,7 +69,7 @@ CREATE TABLE guide_event (
 );
 
 -- 4단계: 채팅 기록 (고객 원문 그대로 보관). 화면을 연 순간부터 하나의 conversation_id로 묶는다.
-CREATE TABLE chat_message (
+CREATE TABLE IF NOT EXISTS chat_message (
     id              BIGINT AUTO_INCREMENT PRIMARY KEY,
     conversation_id VARCHAR(36)   NOT NULL,
     sender          VARCHAR(10)   NOT NULL,   -- CUSTOMER, AI, AGENT
@@ -92,7 +80,7 @@ CREATE TABLE chat_message (
 );
 
 -- 4단계: 상담원에게 넘기는 티켓
-CREATE TABLE handoff_ticket (
+CREATE TABLE IF NOT EXISTS handoff_ticket (
     id              BIGINT AUTO_INCREMENT PRIMARY KEY,
     ticket_no       VARCHAR(30)   NOT NULL,   -- T-20261026-0001
     conversation_id VARCHAR(36)   NOT NULL,
@@ -115,7 +103,7 @@ CREATE TABLE handoff_ticket (
 
 -- 데모용 가상 고객. 실제 서비스라면 은행 고객 정보 시스템에서 읽어 온다.
 -- 체류자격·만료일은 개인정보라서 LLM에 보내지 않는다.
-CREATE TABLE customer_profile (
+CREATE TABLE IF NOT EXISTS customer_profile (
     customer_id     VARCHAR(10)  PRIMARY KEY,  -- A, B, C
     name            VARCHAR(50)  NOT NULL,     -- Nguyen
     nationality_ko  VARCHAR(30)  NOT NULL,     -- 베트남 (상담원용)
@@ -128,7 +116,7 @@ CREATE TABLE customer_profile (
 );
 
 -- 가입 자격을 판단하는 상품. 상품 하나 = 화면 안내 업무 하나.
-CREATE TABLE product (
+CREATE TABLE IF NOT EXISTS product (
     code      VARCHAR(30) PRIMARY KEY,         -- CHECK_CARD, CREDIT_CARD, TIME_DEPOSIT, SAVINGS
     category  VARCHAR(10) NOT NULL,            -- CARD, JOIN (챗봇 메뉴)
     task_code VARCHAR(40) NOT NULL,            -- 안내 업무 (이름도 guide_task_text에서 가져온다)
@@ -137,7 +125,7 @@ CREATE TABLE product (
 );
 
 -- 데모용 가상 규칙. 한 상품의 규칙을 모두 만족해야 가입 가능.
-CREATE TABLE product_rule (
+CREATE TABLE IF NOT EXISTS product_rule (
     id           BIGINT AUTO_INCREMENT PRIMARY KEY,
     product_code VARCHAR(30)  NOT NULL,
     rule_type    VARCHAR(30)  NOT NULL,  -- REQUIRES_ARC, REQUIRES_ACCOUNT, VISA_IN, MIN_STAY_MONTHS,
@@ -150,7 +138,7 @@ CREATE TABLE product_rule (
 
 -- 자격 판단 기록. 상담원 연결 쪽(팀원 담당)이 conversation_id로 찾아 티켓에 붙일 재료.
 -- 개인정보가 들어 있으므로 LLM 요약 입력에는 넣지 않는다.
-CREATE TABLE eligibility_check (
+CREATE TABLE IF NOT EXISTS eligibility_check (
     id              BIGINT AUTO_INCREMENT PRIMARY KEY,
     conversation_id VARCHAR(36)   NOT NULL,   -- chat_message·handoff_ticket과 같은 값
     customer_id     VARCHAR(10)   NOT NULL,   -- customer_profile.customer_id
@@ -163,7 +151,7 @@ CREATE TABLE eligibility_check (
 );
 
 -- 상담원이 고객 정보를 조회한 기록 (은행의 개인정보 접속기록에 해당). 조회할 때마다 한 줄씩 쌓고 고치거나 지우지 않는다
-CREATE TABLE customer_info_access (
+CREATE TABLE IF NOT EXISTS customer_info_access (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     ticket_no   VARCHAR(30)  NOT NULL,
     customer_id VARCHAR(10)  NOT NULL,

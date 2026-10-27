@@ -19,7 +19,7 @@ spring:
     show-sql: true
   sql:
     init:
-      mode: always           # 서버 시작 시 schema.sql → data.sql 실행
+      mode: always           # 서버 시작 시 schema.sql(없는 테이블만 생성) → data.sql(기준 데이터 다시 넣기) 실행
       encoding: UTF-8
 
   # 3단계: LLM 의도 분류
@@ -74,3 +74,15 @@ spring:
     url: jdbc:mysql://localhost:3306/bank_guide?createDatabaseIfNotExist=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: root
     password: ${MYSQL_PASSWORD}
+
+---
+# 전체 초기화: Active profiles에 reset을 더한다 (예: mysql,reset).
+# 상담 기록까지 모든 테이블을 지우고 새로 만든다. 리허설 뒤 깨끗하게 시연을 시작할 때, schema.sql을 바꾼 뒤에 쓴다.
+# 한 번 켜서 초기화한 다음에는 reset을 빼고 실행해야 기록이 남는다.
+spring:
+  config:
+    activate:
+      on-profile: reset
+  sql:
+    init:
+      schema-locations: classpath:reset.sql, classpath:schema.sql

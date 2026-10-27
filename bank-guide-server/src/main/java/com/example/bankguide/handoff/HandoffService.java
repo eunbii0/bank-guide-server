@@ -111,7 +111,9 @@ public class HandoffService {
         String queue = "FRAUD".equals(reason) || "FRAUD_SUSPECTED".equals(summary.riskFlag()) ? "FRAUD"
                 : "ko".equals(lang) ? "GENERAL"
                 : "FOREIGN";
-        String ticketNo = "T-" + LocalDate.now().format(DAY) + "-" + String.format("%04d", ticketRepository.count() + 1);
+        // 재시작해도 티켓이 남으므로 전체 개수가 아니라 오늘 만든 개수로 번호를 매긴다
+        String prefix = "T-" + LocalDate.now().format(DAY) + "-";
+        String ticketNo = prefix + String.format("%04d", ticketRepository.countByTicketNoStartingWith(prefix) + 1);
 
         // 고객 정보는 티켓에 복사하지 않고 고객 id만 둔다. 상담원은 상담 중 고객이 허용했을 때만 정보를 본다
         String customerId = req.customerId() != null && customerRepository.existsById(req.customerId())
