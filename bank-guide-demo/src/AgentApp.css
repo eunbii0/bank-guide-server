@@ -204,6 +204,46 @@
   padding-left: 20px;
   line-height: 1.6;
 }
+/* 요약에 쓰인 기록 (기본 접힘) */
+.sources {
+  margin: -4px 0 16px;
+}
+.sources-toggle {
+  padding: 4px 10px;
+  border: 1px dashed #d0d5dd;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+.sources-body {
+  margin-top: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+.sources-hint {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.sources-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.sources-table th,
+.sources-table td {
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+.sources-table th {
+  color: var(--muted);
+  font-weight: 600;
+}
 /* 상담원 답장 번역 실패 → 다시 번역 / 그대로 보내기 */
 .translate-failed {
   display: grid;

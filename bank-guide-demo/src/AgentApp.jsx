@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import './AgentApp.css';
 import * as api from './api/guideApi';
 import CustomerInfoBox from './components/CustomerInfoBox';
+import SummarySources from './components/SummarySources';
 
 const QUEUES = [
   { code: 'ALL', name: '전체' },
@@ -218,6 +219,8 @@ export default function AgentApp() {
                 </ul>
               </div>
             </div>
+
+            <SummarySources ticketNo={detail.ticketNo} />
 
             <CustomerInfoBox
               ticket={detail}

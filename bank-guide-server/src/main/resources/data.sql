@@ -336,11 +336,11 @@ INSERT INTO ui_text (text_key, lang, content) VALUES
 -- 데모용 가상 고객 3명 (기준일 2026-10-27)
 --  A: 체크카드 O, 신용카드 X(E-9), 예금·적금은 6개월만
 --  B: 모든 상품 가능
---  C: 은행 기록상 만료 2026-12-15 → [아니요, 연장했어요] 시나리오
+--  C: 은행 기록상 만료 2026-12-15 → [아니요, 연장했어요] 시나리오. 영어 사용자 (유학생)
 INSERT INTO customer_profile (customer_id, name, nationality_ko, visa_type, stay_expiry, has_arc, has_account, income_verified, preferred_lang) VALUES
-('A', 'Nguyen', '베트남',       'E-9', DATE '2027-05-31', TRUE, TRUE, TRUE,  'ko'),
-('B', 'Li Wei', '중국',         'F-5', NULL,              TRUE, TRUE, TRUE,  'ko'),
-('C', 'Aziz',   '우즈베키스탄', 'D-2', DATE '2026-12-15', TRUE, TRUE, FALSE, 'ko');
+('A', 'Nguyen',       '베트남', 'E-9', DATE '2027-05-31', TRUE, TRUE, TRUE,  'ko'),
+('B', 'Li Wei',       '중국',   'F-5', NULL,              TRUE, TRUE, TRUE,  'ko'),
+('C', 'Emily Carter', '미국',   'D-2', DATE '2026-12-15', TRUE, TRUE, FALSE, 'en');
 
 INSERT INTO product (code, category, task_code, sort) VALUES
 ('CHECK_CARD',   'CARD', 'CHECK_CARD',        1),

@@ -3,6 +3,7 @@ package com.example.bankguide.api;
 import com.example.bankguide.api.ApiDtos.AgentPoll;
 import com.example.bankguide.api.ApiDtos.CustomerInfoView;
 import com.example.bankguide.api.ApiDtos.CustomerMessageRequest;
+import com.example.bankguide.api.ApiDtos.EventView;
 import com.example.bankguide.api.ApiDtos.HandoffRequest;
 import com.example.bankguide.api.ApiDtos.HandoffResponse;
 import com.example.bankguide.api.ApiDtos.InfoConsentRequest;
@@ -51,6 +52,12 @@ public class HandoffController {
     @GetMapping("/tickets/{ticketNo}")
     public TicketView ticket(@PathVariable String ticketNo) {
         return handoffService.ticket(ticketNo);
+    }
+
+    /** 요약에 쓰인 화면 이동 기록 (상담원 화면의 '요약에 쓰인 기록' 토글) */
+    @GetMapping("/tickets/{ticketNo}/events")
+    public List<EventView> events(@PathVariable String ticketNo) {
+        return handoffService.events(ticketNo);
     }
 
     /** 티켓 상태 변경 (WAITING, IN_PROGRESS, CLOSED) */

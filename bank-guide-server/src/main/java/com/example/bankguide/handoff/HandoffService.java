@@ -248,6 +248,15 @@ public class HandoffService {
         return new AgentPoll(t.getStatus(), messages, t.getInfoConsent());
     }
 
+    /**
+     * 상담원 화면: 이 티켓의 요약에 쓰인 화면 이동 기록 (연결 당시 진행 중이던 안내의 guide_event).
+     * 안내 없이 채팅으로만 연결된 티켓이면 빈 목록. 요약의 다른 재료인 대화 원문은 티켓에 이미 있다
+     */
+    public List<EventView> events(String ticketNo) {
+        HandoffTicket t = find(ticketNo);
+        return t.getSessionId() == null ? List.of() : guideService.events(t.getSessionId());
+    }
+
     HandoffTicket find(String ticketNo) {
         return ticketRepository.findByTicketNo(ticketNo)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ticket not found: " + ticketNo));

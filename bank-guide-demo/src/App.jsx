@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import './App.css';
 import {
+  LoginPage,
   LanguagePage,
   HomePage,
   ProductPage,
@@ -32,18 +33,24 @@ const params = new URLSearchParams(window.location.search);
 // 시연할 때는 주소 뒤에 ?stuck=5 를 붙이면 5초로 줄어든다.
 const STUCK_SECONDS = Number(params.get('stuck')) || 30;
 
-// 데모용 가상 고객 (A: Nguyen, B: Li Wei, C: Aziz). 주소에 ?customer=B 를 붙이거나 오른쪽 패널에서 바꾼다.
+// 데모용 가상 고객 (A: Nguyen, B: Li Wei, C: Emily Carter). 첫 화면(로그인 대신)에서 고른다.
+// 주소에 ?customer=B 를 붙이면 그 고객으로 바로 들어간다.
 const INITIAL_CUSTOMER = (params.get('customer') || 'A').toUpperCase();
+
+// 화면 ↔ 서버 통신 로그는 개발용이라 평소에는 숨긴다. 주소에 ?debug=1 을 붙이면 오른쪽에 보인다.
+// (상담원 요약에 쓰이는 행동 기록은 상담원 화면의 '요약에 쓰인 기록'에서 본다)
+const DEBUG = params.has('debug');
 
 export default function App() {
   // 화면 이동: history 배열의 마지막이 현재 화면
   const [history, setHistory] = useState(['home']);
   const page = history.at(-1);
 
-  // 시연 고객. 고객 정보(체류자격·만료일)는 서버에만 있고, 화면은 id만 들고 있다.
+  // 시연 고객 (로그인 대신 첫 화면에서 고른다). 고객 정보(체류자격·만료일)는 서버에만 있고, 화면은 id만 들고 있다.
   const [customerId, setCustomerId] = useState(INITIAL_CUSTOMER);
   const [customers, setCustomers] = useState([]);
-  const [customerOpen, setCustomerOpen] = useState(false);
+  const [customersFailed, setCustomersFailed] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(params.has('customer'));
 
   // 이 화면을 연 고객의 대화 전체를 묶는 id (4단계: 서버가 채팅 원문을 이 id로 저장). 고객을 바꾸면 새로 만든다.
   const [conversationId, setConversationId] = useState(newId);
@@ -182,7 +189,7 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketNo]);
 
-  // 서버와 주고받은 내용 (오른쪽 패널)
+  // 서버와 주고받은 내용 (?debug=1일 때 오른쪽 패널)
   const [traffic, setTraffic] = useState([]);
   const [logsOpen, setLogsOpen] = useState(false);
   const [dbEvents, setDbEvents] = useState(null);
@@ -236,9 +243,9 @@ export default function App() {
   }, [sessionId, guide, page, offer, chatOpen]);
 
   // ---------- 챗봇 메뉴 + 가입 자격 판단 ----------
-  // 시연 고객 목록 (오른쪽 패널)
+  // 시연 고객 목록 (첫 화면)
   useEffect(() => {
-    api.fetchCustomers().then(setCustomers).catch(() => {});
+    api.fetchCustomers().then(setCustomers).catch(() => setCustomersFailed(true));
   }, []);
 
   // 메뉴 버튼(카드 발급 / 상품 해지 / 상품 가입)을 서버에서 l 언어로 받아온다.
@@ -550,8 +557,20 @@ export default function App() {
     loadMenu(lang, true);
   };
 
-  // 시연 고객 바꾸기: 다른 사람이 앱을 연 것처럼 대화와 안내를 처음부터 다시 시작한다.
-  // 언어도 다시 고르게 언어 선택 화면으로 돌아간다.
+  // 로그인(고객 고르기)·로그아웃: 다른 사람이 앱을 연 것처럼 대화와 안내를 처음부터 다시 시작한다.
+  // 로그인하면 언어 선택 화면으로, 로그아웃하면 첫 화면으로 간다.
+  const login = (id) => {
+    switchCustomer(id);
+    setLoggedIn(true);
+  };
+  const logout = () => {
+    switchCustomer(customerId);
+    setLoggedIn(false);
+    // 새로고침했을 때 바로 들어가지 않고 첫 화면이 나오게 주소의 ?customer= 를 지운다
+    const url = new URL(window.location.href);
+    url.searchParams.delete('customer');
+    window.history.replaceState(null, '', url);
+  };
   const switchCustomer = (id) => {
     if (sessionId) api.stopGuide(sessionId).catch(() => {});
     const url = new URL(window.location.href);
@@ -580,13 +599,19 @@ export default function App() {
     setDbEvents(null);
     setLastSessionId(null);
   };
-  const customer = customers.find((c) => c.customerId === customerId);
 
   // 언어를 고르기 전(또는 다시 고르는 중)에는 메인 화면 대신 언어 선택 화면만 보여준다
   const selectingLang = !langChosen || pickingLang;
 
   const pages = {
-    home: <HomePage lang={lang} go={go} onChangeLang={langLocked ? undefined : () => setPickingLang(true)} />,
+    home: (
+      <HomePage
+        lang={lang}
+        go={go}
+        onChangeLang={langLocked ? undefined : () => setPickingLang(true)}
+        onLogout={langLocked ? undefined : logout}
+      />
+    ),
     product: <ProductPage lang={lang} go={go} back={back} />,
     loan: <LoanPage lang={lang} back={back} />,
     'deposit-list': <DepositListPage lang={lang} go={go} back={back} />,
@@ -611,7 +636,11 @@ export default function App() {
   return (
     <main className="layout">
       <div className="phone">
-        {selectingLang ? (
+        {!loggedIn ? (
+          <div className="screen">
+            <LoginPage customers={customers} failed={customersFailed} onPick={login} />
+          </div>
+        ) : selectingLang ? (
           <div className="screen">
             <LanguagePage languages={LANGUAGES} onPick={changeLang} title={tp(lang, 'pickLang')} />
           </div>
@@ -668,63 +697,8 @@ export default function App() {
         )}
       </div>
 
-      <aside className="dev-panel" aria-label="시연 설정">
-        <section className="customer-box" aria-labelledby="customer-heading">
-          <h2 id="customer-heading" className="customer-toggle-heading">
-            <button
-              type="button"
-              className="customer-toggle"
-              aria-expanded={customerOpen}
-              aria-controls="customer-details"
-              onClick={() => setCustomerOpen((open) => !open)}
-            >
-              <span className="customer-toggle-summary">
-                <span>시연 고객</span>
-                <span className="customer-current">{customer?.name ?? `고객 ${customerId}`}</span>
-              </span>
-              <span className="customer-toggle-action">{customerOpen ? '접기 −' : '펼치기 +'}</span>
-            </button>
-          </h2>
-          <div id="customer-details" className="customer-details" hidden={!customerOpen}>
-          {customer ? (
-            <div className="customer-profile">
-              <span className="profile-caption">선택한 고객 정보</span>
-              <h3>{customer.name}</h3>
-              <dl className="customer-facts">
-                <div><dt>국적</dt><dd>{customer.nationality}</dd></div>
-                <div><dt>체류자격</dt><dd>{customer.visaType}</dd></div>
-                <div><dt>체류 만료일</dt><dd>{customer.stayExpiry ?? '만료 없음'}</dd></div>
-                <div><dt>선호 언어</dt><dd>{LANGUAGES.find((l) => l.code === customer.lang)?.label ?? customer.lang}</dd></div>
-              </dl>
-            </div>
-          ) : (
-            <p className="customer-empty" role="status">고객 {customerId} · 고객 정보를 불러오지 못했습니다. 서버 연결을 확인해 주세요.</p>
-          )}
-          <p className="customer-intro">고객을 선택하고 앱에서 시연을 시작하세요.</p>
-          <div className="customer-options" role="group" aria-label="시연 고객 선택">
-            {customers.map((c) => (
-              <button
-                key={c.customerId}
-                type="button"
-                className={`customer-option${c.customerId === customerId ? ' selected' : ''}`}
-                aria-pressed={c.customerId === customerId}
-                onClick={() => c.customerId !== customerId && switchCustomer(c.customerId)}
-              >
-                <span className="customer-avatar" aria-hidden="true">{c.customerId}</span>
-                <span className="customer-option-copy">
-                  <strong>{c.name}</strong>
-                  <span>{c.nationality} · {c.visaType}</span>
-                </span>
-                <span className="customer-selection">{c.customerId === customerId ? '선택됨' : '선택'}</span>
-              </button>
-            ))}
-          </div>
-          <p className="customer-note">
-            고객을 변경하면 대화와 앱 화면이 처음부터 시작됩니다.
-          </p>
-          </div>
-        </section>
-
+      {DEBUG && (
+      <aside className="dev-panel" aria-label="개발용 통신 로그">
         <button
           type="button"
           className="log-toggle"
@@ -794,6 +768,7 @@ export default function App() {
 
         {ticketNo && <TicketPreview ticketNo={ticketNo} />}
       </aside>
+      )}
     </main>
   );
 }
