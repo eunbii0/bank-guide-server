@@ -3,6 +3,7 @@ import './App.css';
 import {
   LanguagePage,
   HomePage,
+  TabBar,
   ProductPage,
   LoanPage,
   DepositListPage,
@@ -61,6 +62,7 @@ export default function App() {
 
   // 채팅
   const [chatOpen, setChatOpen] = useState(false);
+  const [endAsk, setEndAsk] = useState(false); // "상담을 종료할까요?" 확인 창
   const [busy, setBusy] = useState(false);
   // 첫 인사. 그 아래 메뉴 버튼은 챗봇을 열 때 서버(/api/chat/menu)에서 받아온다.
   const [messages, setMessages] = useState([{ from: 'ai', text: t('ko', 'welcome') }]);
@@ -124,8 +126,15 @@ export default function App() {
     if (menuRequested.current === conversationId) loadMenu(code);
   };
 
+  // 챗봇을 닫았다가 직접 다시 열면 이전 대화 기록만 남기고, 기다리던 [네]/[아니요]·선택지·연결 제안은 지운 뒤 메뉴를 새로 띄운다.
+  // (상담원과 연결 중이면 대화가 이어지므로 그대로 둔다)
   const openChat = () => {
+    const reopened = closedBefore.current;
     beginNewSession(true);
+    if (reopened && !talkingToAgent) {
+      clearPending();
+      loadMenu(lang);
+    }
     setChatOpen(true);
   };
 
@@ -489,8 +498,9 @@ export default function App() {
   }
 
   // 고객이 직접 상담을 끝낸다 → 서버 티켓이 CLOSED가 되고 상담원 화면에도 종료로 보인다
-  const endChat = async () => {
-    if (!window.confirm(t(lang, 'endConfirm'))) return;
+  const endChat = () => setEndAsk(true);
+  const confirmEndChat = async () => {
+    setEndAsk(false);
     try {
       log('out', `POST /api/tickets/${ticketNo}/customer-close`, {});
       const res = await api.closeTicketByCustomer(ticketNo);
@@ -586,31 +596,31 @@ export default function App() {
   const selectingLang = !langChosen || pickingLang;
 
   const pages = {
-    home: <HomePage lang={lang} go={go} onChangeLang={langLocked ? undefined : () => setPickingLang(true)} />,
+    home: <HomePage lang={lang} go={go} onAsk={openChat} userName={customer?.name} onChangeLang={langLocked ? undefined : () => setPickingLang(true)} />,
     product: <ProductPage lang={lang} go={go} back={back} />,
     loan: <LoanPage lang={lang} back={back} />,
     'deposit-list': <DepositListPage lang={lang} go={go} back={back} />,
     'deposit-cancel': <DepositCancelPage lang={lang} go={go} back={back} />,
-    'deposit-done': <DonePage lang={lang} text={tp(lang, 'doneDeposit')} home={home} />,
+    'deposit-done': <DonePage lang={lang} text={tp(lang, 'doneDeposit')} home={home} back={back} />,
     transfer: <TransferPage lang={lang} go={go} back={back} />,
-    'transfer-done': <DonePage lang={lang} text={tp(lang, 'doneTransfer')} home={home} />,
+    'transfer-done': <DonePage lang={lang} text={tp(lang, 'doneTransfer')} home={home} back={back} />,
     certificate: <CertificatePage lang={lang} go={go} back={back} />,
     'cert-issue': <CertIssuePage lang={lang} go={go} back={back} />,
-    'cert-done': <DonePage lang={lang} text={tp(lang, 'doneCert')} home={home} />,
+    'cert-done': <DonePage lang={lang} text={tp(lang, 'doneCert')} home={home} back={back} />,
     card: <CardPage lang={lang} go={go} back={back} />,
     'card-check-apply': <CardApplyPage lang={lang} kind="check" go={go} back={back} />,
     'card-credit-apply': <CardApplyPage lang={lang} kind="credit" go={go} back={back} />,
-    'card-done': <DonePage lang={lang} text={tp(lang, 'doneCard')} home={home} />,
+    'card-done': <DonePage lang={lang} text={tp(lang, 'doneCard')} home={home} back={back} />,
     join: <JoinPage lang={lang} go={go} back={back} />,
     'deposit-join': <JoinTermPage lang={lang} kind="deposit" onPick={pickTerm} back={back} />,
     'savings-join': <JoinTermPage lang={lang} kind="savings" onPick={pickTerm} back={back} />,
     'join-confirm': <JoinConfirmPage lang={lang} draft={joinDraft} go={go} back={back} />,
-    'join-done': <DonePage lang={lang} text={tp(lang, 'doneJoin')} home={home} />,
+    'join-done': <DonePage lang={lang} text={tp(lang, 'doneJoin')} home={home} back={back} />,
   };
 
   return (
     <main className="layout">
-      <div className="phone">
+      <div className={`phone${page === 'home' && !selectingLang ? ' has-tabbar' : ''}`}>
         {selectingLang ? (
           <div className="screen">
             <LanguagePage languages={LANGUAGES} onPick={changeLang} title={tp(lang, 'pickLang')} />
@@ -631,9 +641,11 @@ export default function App() {
           </div>
         )}
 
-        {!chatOpen && !guide && (
+        {page === 'home' && <TabBar lang={lang} go={go} />}
+
+        {!chatOpen && !guide && !talkingToAgent && page !== 'home' && (
           <button className="ask-fab" onClick={openChat}>
-            {ticketNo ? t(lang, 'waiting') : tp(lang, 'fab')}
+            {tp(lang, 'fab')}
           </button>
         )}
         <ChatPanel
@@ -664,6 +676,21 @@ export default function App() {
           onProductHandoff={onProductHandoff}
           onRestart={restartChat}
         />
+        {endAsk && (
+          <div className="modal-backdrop" role="alertdialog" aria-modal="true">
+            <div className="modal-card">
+              <p>{t(lang, 'endConfirm')}</p>
+              <div className="modal-actions">
+                <button className="modal-cancel" onClick={() => setEndAsk(false)}>
+                  {t(lang, 'endCancel')}
+                </button>
+                <button className="modal-ok" onClick={confirmEndChat}>
+                  {t(lang, 'endChat')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
           </>
         )}
       </div>

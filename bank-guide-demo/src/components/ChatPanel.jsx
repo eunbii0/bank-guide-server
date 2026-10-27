@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { t } from '../i18n';
 import EligibilityList from './EligibilityList';
+import { Icon, BeeAvatar } from './HomeArt';
 
 // AI 채팅창. 고객 질문을 받아 onAsk로 넘기고, 상황에 따라 버튼을 보여준다.
 //  - 확인 버튼(네/아니요): 업무를 맞게 알아들었는지
@@ -39,11 +40,14 @@ export default function ChatPanel({
   return (
     <div className="chat-panel" role="dialog" aria-label={t(lang, 'chatTitle')}>
       <div className="chat-head">
-        <strong>{t(lang, 'chatTitle')}</strong>
+        <div className="chat-title">
+          <BeeAvatar />
+          <strong>{t(lang, 'chatTitle')}</strong>
+        </div>
         <div className="chat-head-actions">
           {!waiting && (
             <button className="chat-restart-icon" onClick={onRestart} disabled={busy} title={t(lang, 'restart')} aria-label={t(lang, 'restart')}>
-              ↺
+              <Icon name="restart" size={19} />
             </button>
           )}
           {waiting && (
@@ -57,7 +61,7 @@ export default function ChatPanel({
             </button>
           )}
           <button className="chat-close" onClick={onClose} aria-label="Close">
-            ×
+            <Icon name="close" size={20} />
           </button>
         </div>
       </div>
@@ -74,7 +78,13 @@ export default function ChatPanel({
             </div>
           ),
         )}
-        {busy && <p className="bubble ai typing">…</p>}
+        {busy && (
+          <p className="bubble ai typing" role="status" aria-label="...">
+            <i />
+            <i />
+            <i />
+          </p>
+        )}
         {pendingIntent && (
           <div className="confirm-row">
             <button className="pill-btn" onClick={() => onConfirm(true)}>
@@ -161,8 +171,8 @@ export default function ChatPanel({
           onChange={(e) => setText(e.target.value)}
           placeholder={t(lang, waiting ? 'placeholderAgent' : 'placeholder')}
         />
-        <button type="submit" disabled={busy}>
-          {t(lang, 'send')}
+        <button type="submit" disabled={busy} aria-label={t(lang, 'send')} title={t(lang, 'send')}>
+          <Icon name="send" size={20} />
         </button>
       </form>
     </div>
