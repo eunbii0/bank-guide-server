@@ -16,6 +16,15 @@ public final class PageNames {
             Map.entry("transfer-done", "이체 완료"),
             Map.entry("certificate", "증명서 목록"),
             Map.entry("cert-issue", "예금잔액증명서 발급"),
+            Map.entry("card", "카드 메뉴"),
+            Map.entry("card-check-apply", "체크카드 신청"),
+            Map.entry("card-credit-apply", "신용카드 신청"),
+            Map.entry("card-done", "카드 신청 완료"),
+            Map.entry("join", "상품가입 메뉴"),
+            Map.entry("savings-join", "적금 가입 (기간 선택)"),
+            Map.entry("deposit-join", "정기예금 가입 (기간 선택)"),
+            Map.entry("join-confirm", "가입 내용 확인"),
+            Map.entry("join-done", "가입 신청 완료"),
             Map.entry("cert-done", "증명서 발급 완료"));
 
     private PageNames() {}

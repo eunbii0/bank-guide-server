@@ -11,27 +11,41 @@ import {
   CertificatePage,
   CertIssuePage,
   DonePage,
+  CardPage,
+  CardApplyPage,
+  JoinPage,
+  JoinTermPage,
+  JoinConfirmPage,
 } from './pages/Pages';
 import ChatPanel from './components/ChatPanel';
 import GuideOverlay from './components/GuideOverlay';
 import TicketPreview from './components/TicketPreview';
 import * as api from './api/guideApi';
-import { t, tp, LANGUAGES } from './i18n';
+import { t, tp, months, LANGUAGES } from './i18n';
 
 const now = () => new Date().toTimeString().slice(0, 8);
 const newId = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
 
+const params = new URLSearchParams(window.location.search);
+
 // 같은 화면에서 이 시간(초) 동안 아무것도 안 누르면 '멈춤'으로 본다.
 // 시연할 때는 주소 뒤에 ?stuck=5 를 붙이면 5초로 줄어든다.
-const STUCK_SECONDS = Number(new URLSearchParams(window.location.search).get('stuck')) || 30;
+const STUCK_SECONDS = Number(params.get('stuck')) || 30;
+
+// 데모용 가상 고객 (A: Nguyen, B: Li Wei, C: Aziz). 주소에 ?customer=B 를 붙이거나 오른쪽 패널에서 바꾼다.
+const INITIAL_CUSTOMER = (params.get('customer') || 'A').toUpperCase();
 
 export default function App() {
   // 화면 이동: history 배열의 마지막이 현재 화면
   const [history, setHistory] = useState(['home']);
   const page = history.at(-1);
 
-  // 이 화면을 연 고객의 대화 전체를 묶는 id (4단계: 서버가 채팅 원문을 이 id로 저장)
-  const [conversationId] = useState(newId);
+  // 시연 고객. 고객 정보(체류자격·만료일)는 서버에만 있고, 화면은 id만 들고 있다.
+  const [customerId, setCustomerId] = useState(INITIAL_CUSTOMER);
+  const [customers, setCustomers] = useState([]);
+
+  // 이 화면을 연 고객의 대화 전체를 묶는 id (4단계: 서버가 채팅 원문을 이 id로 저장). 고객을 바꾸면 새로 만든다.
+  const [conversationId, setConversationId] = useState(newId);
 
   // 고객 언어. 앱을 켜면 맨 먼저 언어 선택 화면이 나오고(null = 아직 안 고름),
   // 고른 언어가 은행 앱 화면·챗봇·서버 안내 문구 전체에 똑같이 적용된다.
@@ -47,16 +61,24 @@ export default function App() {
   // 채팅
   const [chatOpen, setChatOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [messages, setMessages] = useState([{ from: 'ai', text: t('en', 'welcome') }]);
+  // 첫 인사. 그 아래 메뉴 버튼은 챗봇을 열 때 서버(/api/chat/menu)에서 받아온다.
+  const [messages, setMessages] = useState([{ from: 'ai', text: t('ko', 'welcome') }]);
   const [pendingIntent, setPendingIntent] = useState(null); // 네/아니요를 기다리는 업무
-  const [options, setOptions] = useState([]); // 애매할 때 보여줄 선택지
-  const [offer, setOffer] = useState(null); // 상담원 연결 제안 { reason }
+  const [options, setOptions] = useState([]); // 애매할 때 보여줄 선택지, 또는 첫 메뉴 버튼
+  const [offer, setOffer] = useState(null); // 상담원 연결 제안 { reason, intent }
   const [ticketNo, setTicketNo] = useState(null); // 상담원에게 넘어간 티켓
+  const [restartOffered, setRestartOffered] = useState(false); // "다른 업무도 도와드릴까요?" 뒤의 [처음으로] 버튼
   const [ticketClosed, setTicketClosed] = useState(false); // 상담원이 상담을 끝냈는지
   const [agentJoined, setAgentJoined] = useState(false); // 상담원이 상담을 시작했는지 (대기 → 연결됨)
   const [aiSuggestions, setAiSuggestions] = useState([]); // 대화 맥락으로 AI가 만든 추천 문장 (없으면 고정 예시)
   const talkingToAgent = Boolean(ticketNo) && !ticketClosed; // true면 입력창이 상담원에게 바로 간다
   const say = (...msgs) => setMessages((m) => [...m, ...msgs]);
+
+  // 가입 자격 판단 (데모용 가상 규칙)
+  const [verifyCategory, setVerifyCategory] = useState(null); // 고객 정보 확인 [네]/[아니요]를 기다리는 메뉴 (CARD, JOIN)
+  const [eligibility, setEligibility] = useState(null); // 서버가 판단한 상품별 결과
+  const [joinDraft, setJoinDraft] = useState({ kind: null, months: null }); // 앱 화면에서 고른 예금·적금과 기간
+  const menuRequested = useRef(null); // 이 대화에서 메뉴를 이미 불렀는지 (conversationId)
 
   // 채팅을 닫았다가 다시 열면 구분선을 넣어, 그 위 대화가 '이전 대화'로 보이게 한다.
   // 인사는 고객이 직접 열 때만 하고, 상담원 답장·연결 제안처럼 저절로 열릴 때는 구분선만 넣는다.
@@ -75,7 +97,15 @@ export default function App() {
         : t(lang, 'welcome');
     setMessages((m) => [...m, { divider: true }, ...(greet ? [{ from: 'ai', text: hello }] : [])]);
   };
+  // 안내가 끝났거나 혼자 계속하기로 했을 때: 다른 업무로 넘어갈 수 있게 [처음으로]를 한 번 더 보여준다
+  const offerRestart = () => {
+    beginNewSession(false);
+    say({ from: 'ai', text: t(lang, 'anotherTask') });
+    setRestartOffered(true);
+  };
+
   // 언어 선택. 아직 대화가 없으면 첫 인사를 그 언어로 바꾸고, 대화가 있으면 그 언어로 인사를 덧붙인다.
+  // 메뉴 버튼을 이미 받아 둔 대화라면 그 언어로 다시 받아온다 (기다리던 버튼은 정리).
   // 안내 중이거나 상담원과 연결된 뒤에는 언어가 이미 정해져 있어서 홈의 언어 변경 버튼을 숨긴다.
   const langLocked = talkingToAgent || Boolean(sessionId);
   const changeLang = (code) => {
@@ -87,6 +117,9 @@ export default function App() {
         ? [{ from: 'ai', text: t(code, 'welcome') }]
         : [...m, { from: 'ai', text: t(code, 'greeting') }],
     );
+    clearPending();
+    // 챗봇을 아직 안 열었다면 처음 열 때 새 언어로 메뉴를 받아오므로 여기서는 부르지 않는다
+    if (menuRequested.current === conversationId) loadMenu(code);
   };
 
   const openChat = () => {
@@ -147,11 +180,15 @@ export default function App() {
     setChatOpen(true);
   };
 
-  // 상담원 연결 제안을 띄운다 (판단 질문·멈춤·이탈 반복)
-  const showOffer = (text, reason) => {
+  // 상담원 연결 제안을 띄운다 (판단 질문·멈춤·이탈 반복·고객 정보 불일치)
+  // intent는 연결할 때 /api/handoff에 함께 보낼 업무 (기본은 안내 중인 업무)
+  const showOffer = (text, reason, intent = currentIntent) => {
     setPendingIntent(null);
     setOptions([]);
-    setOffer({ reason });
+    setVerifyCategory(null);
+    setEligibility(null);
+    setRestartOffered(false);
+    setOffer({ reason, intent });
     beginNewSession(false);
     say({ from: 'ai', text });
     setChatOpen(true);
@@ -180,6 +217,47 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, guide, page, offer, chatOpen]);
 
+  // ---------- 챗봇 메뉴 + 가입 자격 판단 ----------
+  // 시연 고객 목록 (오른쪽 패널)
+  useEffect(() => {
+    api.fetchCustomers().then(setCustomers).catch(() => {});
+  }, []);
+
+  // 메뉴 버튼(카드 발급 / 상품 해지 / 상품 가입)을 서버에서 l 언어로 받아온다.
+  // announce=false면 버튼만 바꾸고(첫 인사가 이미 있으므로), true면 "도움이 필요하세요?"도 말한다.
+  const loadMenu = async (l, announce = false) => {
+    try {
+      log('out', 'POST /api/chat/menu', { customerId, lang: l });
+      const res = await api.menu(conversationId, customerId, l);
+      log('in', 'menu', res);
+      if (announce) {
+        showChatResult(res);
+      } else {
+        setOptions(res.options);
+      }
+    } catch (e) {
+      fail(e);
+    }
+  };
+
+  // 기다리던 네/아니요·선택지·연결 제안·상품 목록 버튼을 정리한다
+  const clearPending = () => {
+    setPendingIntent(null);
+    setOptions([]);
+    setOffer(null);
+    setVerifyCategory(null);
+    setEligibility(null);
+    setRestartOffered(false);
+  };
+
+  // 챗봇을 처음 열면 첫 인사 아래에 메뉴 버튼을 띄운다. 대화마다 한 번만.
+  useEffect(() => {
+    if (!chatOpen || talkingToAgent || menuRequested.current === conversationId) return;
+    menuRequested.current = conversationId;
+    loadMenu(lang);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatOpen, conversationId]);
+
   // 서버의 분류 결과를 채팅창에 반영한다
   const showChatResult = (res) => {
     if (res.escalation === 'FRAUD') {
@@ -188,8 +266,12 @@ export default function App() {
       doHandoff('FRAUD');
     } else if (res.escalation === 'ADVICE') {
       showOffer(res.message, 'ADVICE');
-    } else if (res.intent === 'AMBIGUOUS') {
+    } else if (res.intent === 'AMBIGUOUS' || res.intent === 'MENU') {
       setOptions(res.options);
+      say({ from: 'ai', text: res.message });
+    } else if (res.intent === 'VERIFY') {
+      // 카드 발급·상품 가입: 서버의 고객 정보로 확인 질문 → [네]/[아니요]
+      setVerifyCategory(res.category);
       say({ from: 'ai', text: res.message });
     } else if (res.intent === 'UNKNOWN') {
       say({ from: 'ai', text: res.message });
@@ -209,7 +291,11 @@ export default function App() {
       const res = await api.sendPageEnter(sessionId, next);
       log('in', 'guide', res);
       setGuide(res.guide);
-      if (res.guide.type === 'DONE') setSessionId(null);
+      if (res.guide.type === 'DONE') {
+        setSessionId(null);
+        offerRestart();
+        setChatOpen(true);
+      }
       if (res.offer) showOffer(res.offer, 'OFF_PATH'); // 경로 이탈 3회째
     } catch (e) {
       setGuide(null);
@@ -227,6 +313,12 @@ export default function App() {
     setHistory(['home']);
     setGuide(null);
     setSessionId(null);
+  };
+
+  // 앱 화면의 예금·적금 기간 버튼 → 가입 내용 확인 화면
+  const pickTerm = (kind, m) => {
+    setJoinDraft({ kind, months: m });
+    go('join-confirm');
   };
 
   // 채팅 질문 → 서버(LLM)가 업무·언어·이관 필요 여부를 판단
@@ -248,11 +340,14 @@ export default function App() {
     setOptions([]);
     setPendingIntent(null);
     setOffer(null);
+    setVerifyCategory(null);
+    setEligibility(null);
+    setRestartOffered(false);
     setBusy(true);
     try {
       const hint = langChosen ? lang : undefined; // 직접 고른 언어가 있으면 서버에 알린다
-      log('out', 'POST /api/chat', { text, lang: hint });
-      const res = await api.chat(conversationId, text, hint);
+      log('out', 'POST /api/chat', { text, customerId, lang: hint });
+      const res = await api.chat(conversationId, text, customerId, hint);
       log('in', `chat (${res.source})`, res);
       showChatResult(res);
     } catch (e) {
@@ -262,14 +357,16 @@ export default function App() {
     }
   };
 
-  // 되묻기 선택지를 골랐을 때
+  // 되묻기 선택지 또는 첫 메뉴 버튼을 골랐을 때
   const onChoose = async (intent) => {
     const chosen = options.find((o) => o.intent === intent);
     setOptions([]);
+    setEligibility(null);
+    setRestartOffered(false);
     say({ from: 'user', text: chosen?.name ?? intent });
     try {
-      log('out', 'POST /api/chat/choose', { intent, lang });
-      const res = await api.choose(conversationId, intent, lang);
+      log('out', 'POST /api/chat/choose', { intent, lang, customerId });
+      const res = await api.choose(conversationId, intent, lang, customerId);
       log('in', 'choose', res);
       showChatResult(res);
     } catch (e) {
@@ -286,9 +383,53 @@ export default function App() {
       return;
     }
     say({ from: 'user', text: t(lang, 'yes') });
+    beginGuide(intent);
+  };
+
+  // 고객 정보 확인 [네]/[아니요] → 서버가 규칙으로 가입 자격 판단
+  const onVerify = async (yes) => {
+    const category = verifyCategory;
+    setVerifyCategory(null);
+    say({ from: 'user', text: t(lang, yes ? 'yes' : 'noChanged') });
+    setBusy(true);
     try {
-      log('out', 'POST /api/guide/start', { intent, page, lang });
-      const res = await api.startGuide(intent, page, lang);
+      const body = { conversationId, customerId, category, lang, confirmed: yes };
+      log('out', 'POST /api/eligibility', body);
+      const res = await api.checkEligibility(body);
+      log('in', `eligibility (${res.status})`, res);
+      if (res.status === 'MISMATCH') {
+        // 은행 정보가 오래됨: 체류정보 갱신 안내 + "상담원을 연결해 드릴까요?"
+        say({ from: 'ai', text: res.message });
+        showOffer(res.offer, 'CUSTOMER_REQUEST', null);
+      } else {
+        say({ from: 'ai', text: res.message });
+        setEligibility(res);
+      }
+    } catch (e) {
+      fail(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // 가입 자격 결과에서 상품(·기간)을 고름 → 화면 안내 시작. 마지막 신청 버튼은 고객이 직접 누른다.
+  const onPickProduct = (intent, name, term = null) => {
+    setEligibility(null);
+    say({ from: 'user', text: term ? `${name} · ${months(lang, term)}` : name });
+    beginGuide(intent, term);
+  };
+
+  // 가입 불가 상품의 [상담원 연결]
+  const onProductHandoff = (intent) => {
+    setEligibility(null);
+    say({ from: 'user', text: t(lang, 'connect') });
+    doHandoff('CUSTOMER_REQUEST', lang, intent);
+  };
+
+  const beginGuide = async (intent, term = null) => {
+    try {
+      log('out', 'POST /api/guide/start', { intent, page, lang, term });
+      const res = await api.startGuide(intent, page, lang, term);
       log('in', 'start', res);
       setSessionId(res.sessionId);
       setLastSessionId(res.sessionId);
@@ -303,11 +444,12 @@ export default function App() {
   };
 
   // ---------- 4단계: 상담원 연결 ----------
-  async function doHandoff(reason, l = lang) {
+  // 요청 모양은 develop의 /api/handoff 그대로. 가입 자격 쪽 사유·결과는 서버가 eligibility_check에 저장해 둔다.
+  async function doHandoff(reason, l = lang, intent = currentIntent) {
     setOffer(null);
     setBusy(true);
     try {
-      const body = { conversationId, sessionId, reason, page, lang: l, intent: currentIntent };
+      const body = { conversationId, sessionId, reason, page, lang: l, intent };
       log('out', 'POST /api/handoff', body);
       const res = await api.handoff(body);
       log('in', 'handoff', res);
@@ -346,11 +488,12 @@ export default function App() {
 
   const acceptOffer = () => {
     say({ from: 'user', text: t(lang, 'connect') });
-    doHandoff(offer.reason);
+    doHandoff(offer.reason, lang, offer.intent);
   };
   const declineOffer = () => {
     say({ from: 'user', text: t(lang, 'continueSelf') });
     setOffer(null);
+    offerRestart();
     if (sessionId) closeChat();
   };
 
@@ -363,6 +506,47 @@ export default function App() {
   };
 
   const loadDbEvents = async () => setDbEvents(await api.fetchEvents(lastSessionId));
+
+  // 챗봇 [↺ 처음으로]: 안내를 멈추고 기다리던 버튼을 정리한 뒤 메뉴를 다시 띄운다.
+  // 지난 대화와 conversationId는 그대로 둔다 (상담원 요약 재료). 은행 앱 화면도 그대로.
+  const restartChat = () => {
+    if (sessionId) stopGuide();
+    setGuide(null);
+    clearPending();
+    loadMenu(lang, true);
+  };
+
+  // 시연 고객 바꾸기: 다른 사람이 앱을 연 것처럼 대화와 안내를 처음부터 다시 시작한다.
+  // 언어도 다시 고르게 언어 선택 화면으로 돌아간다.
+  const switchCustomer = (id) => {
+    if (sessionId) api.stopGuide(sessionId).catch(() => {});
+    const url = new URL(window.location.href);
+    url.searchParams.set('customer', id);
+    window.history.replaceState(null, '', url);
+
+    setCustomerId(id);
+    setConversationId(newId());
+    setLang(null);
+    setPickingLang(false);
+    setHistory(['home']);
+    setSessionId(null);
+    setGuide(null);
+    setCurrentIntent(null);
+    setChatOpen(false);
+    closedBefore.current = false;
+    setMessages([{ from: 'ai', text: t('ko', 'welcome') }]);
+    clearPending();
+    setTicketNo(null);
+    setTicketClosed(false);
+    setAgentJoined(false);
+    setAiSuggestions([]);
+    lastAgentId.current = 0;
+    closedNotified.current = false;
+    setTraffic([]);
+    setDbEvents(null);
+    setLastSessionId(null);
+  };
+  const customer = customers.find((c) => c.customerId === customerId);
 
   // 언어를 고르기 전(또는 다시 고르는 중)에는 메인 화면 대신 언어 선택 화면만 보여준다
   const selectingLang = !langChosen || pickingLang;
@@ -379,6 +563,15 @@ export default function App() {
     certificate: <CertificatePage lang={lang} go={go} back={back} />,
     'cert-issue': <CertIssuePage lang={lang} go={go} back={back} />,
     'cert-done': <DonePage lang={lang} text={tp(lang, 'doneCert')} home={home} />,
+    card: <CardPage lang={lang} go={go} back={back} />,
+    'card-check-apply': <CardApplyPage lang={lang} kind="check" go={go} back={back} />,
+    'card-credit-apply': <CardApplyPage lang={lang} kind="credit" go={go} back={back} />,
+    'card-done': <DonePage lang={lang} text={tp(lang, 'doneCard')} home={home} />,
+    join: <JoinPage lang={lang} go={go} back={back} />,
+    'deposit-join': <JoinTermPage lang={lang} kind="deposit" onPick={pickTerm} back={back} />,
+    'savings-join': <JoinTermPage lang={lang} kind="savings" onPick={pickTerm} back={back} />,
+    'join-confirm': <JoinConfirmPage lang={lang} draft={joinDraft} go={go} back={back} />,
+    'join-done': <DonePage lang={lang} text={tp(lang, 'doneJoin')} home={home} />,
   };
 
   return (
@@ -422,23 +615,46 @@ export default function App() {
           agentJoined={agentJoined}
           suggestions={talkingToAgent ? aiSuggestions : []}
           onEndChat={endChat}
+          verifying={Boolean(verifyCategory)}
+          eligibility={eligibility}
+          restartOffered={restartOffered}
           onAsk={onAsk}
           onConfirm={onConfirm}
           onChoose={onChoose}
           onAcceptOffer={acceptOffer}
           onDeclineOffer={declineOffer}
+          onVerify={onVerify}
+          onPickProduct={onPickProduct}
+          onProductHandoff={onProductHandoff}
+          onRestart={restartChat}
         />
           </>
         )}
       </div>
 
       <aside className="dev-panel">
+        <div className="customer-box">
+          <label htmlFor="customer-select">시연 고객 (데모용 가상 고객)</label>
+          <select id="customer-select" value={customerId} onChange={(e) => switchCustomer(e.target.value)}>
+            {customers.length === 0 && <option value={customerId}>{customerId}</option>}
+            {customers.map((c) => (
+              <option key={c.customerId} value={c.customerId}>
+                {c.customerId}. {c.name} ({c.nationality}, {c.visaType})
+              </option>
+            ))}
+          </select>
+          <p className="dev-hint">
+            {customer && <>체류 만료 {customer.stayExpiry ?? '없음'} · 선호 언어 {customer.lang} · </>}
+            바꾸면 대화를 처음부터 다시 시작합니다. 주소에 <code>?customer=B</code>로도 고를 수 있어요.
+          </p>
+        </div>
+
         <h2>서버 통신 로그</h2>
         <p className="dev-hint">
           화면 ↔ Spring Boot 서버(8080)가 주고받은 내용입니다. 멈춤 판단: {STUCK_SECONDS}초
         </p>
         <p className="dev-state">
-          현재 화면 <code>{page}</code> · 고객 언어 <code>{lang}</code>
+          고객 <code>{customerId}</code> · 현재 화면 <code>{page}</code> · 고객 언어 <code>{lang}</code>
           {sessionId && (
             <>
               {' '}

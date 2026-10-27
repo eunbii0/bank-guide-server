@@ -32,7 +32,7 @@ public class GuideController {
     /** 의도 확인 후 안내 시작 → 세션 id + 첫 안내 */
     @PostMapping("/start")
     public StartResponse start(@RequestBody StartRequest request) {
-        return guideService.start(request.intent(), request.page(), request.lang());
+        return guideService.start(request.intent(), request.page(), request.lang(), request.term());
     }
 
     /** 화면에 들어올 때마다 호출 → 다음 안내 (+ 이탈 3회째면 상담원 연결 제안) */

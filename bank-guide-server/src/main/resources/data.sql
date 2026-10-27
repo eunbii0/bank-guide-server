@@ -1,10 +1,16 @@
 -- 지원 언어: ko(한국어), en(영어), vi(베트남어), zh(중국어)
 -- 앱 화면은 고객이 고른 언어로 보이므로, 안내 문구의 버튼 이름은 프론트 i18n.js(PAGE)의 화면 표기와 똑같이 맞춘다.
 
+-- priority: 키워드 대체 분류 시 검사 순서. '예금 가입'이 '예금'(해지)보다 먼저 걸리도록 가입 업무를 앞에 둔다.
+-- 신용카드를 체크카드보다 먼저 검사한다: '카드'만 있는 문장은 체크카드 키워드에 걸려 카드 메뉴(고객 정보 확인)로 간다.
 INSERT INTO guide_task (code, goal_page, priority, description) VALUES
-('CERTIFICATE',    'cert-done',     1, 'Get a bank certificate such as a certificate of deposit balance (예금잔액증명서)'),
-('DEPOSIT_CANCEL', 'deposit-done',  2, 'Close a time deposit (정기예금) before maturity and take the money out'),
-('TRANSFER',       'transfer-done', 3, 'Send money to another person or another bank account');
+('CREDIT_CARD',       'card-done',     1, 'Get a new credit card (신용카드)'),
+('CHECK_CARD',        'card-done',     2, 'Get a new debit card (체크카드) linked to the bank account'),
+('SAVINGS_OPEN',      'join-done',     3, 'Open a new installment savings account (적금), saving a fixed amount every month'),
+('TIME_DEPOSIT_OPEN', 'join-done',     4, 'Open a new time deposit (정기예금 가입), putting in a lump sum for a fixed term'),
+('CERTIFICATE',       'cert-done',     5, 'Get a bank certificate such as a certificate of deposit balance (예금잔액증명서)'),
+('DEPOSIT_CANCEL',    'deposit-done',  6, 'Close a time deposit (정기예금) before maturity and take the money out'),
+('TRANSFER',          'transfer-done', 7, 'Send money to another person or another bank account');
 
 INSERT INTO guide_task_text (task_code, lang, name, confirm_text) VALUES
 ('DEPOSIT_CANCEL', 'ko', '예금 중도해지',            '만기 전에 정기예금을 해지하고 싶으신 거죠?'),
@@ -18,7 +24,24 @@ INSERT INTO guide_task_text (task_code, lang, name, confirm_text) VALUES
 ('CERTIFICATE',    'ko', '증명서 발급',              '예금잔액증명서 같은 증명서를 발급받고 싶으신 거죠?'),
 ('CERTIFICATE',    'en', 'Certificate issuance',     'You want to get a certificate, such as a certificate of deposit balance, right?'),
 ('CERTIFICATE',    'vi', 'Cấp giấy chứng nhận',      'Bạn muốn được cấp giấy chứng nhận, ví dụ giấy xác nhận số dư tiền gửi, đúng không?'),
-('CERTIFICATE',    'zh', '开具证明',                 '您是想开具证明，例如存款余额证明，对吗？');
+('CERTIFICATE',    'zh', '开具证明',                 '您是想开具证明，例如存款余额证明，对吗？'),
+-- 카드 발급·상품 가입 (챗봇 메뉴). 이 업무들은 확인 질문 대신 고객 정보 확인 → 가입 자격 판단을 먼저 거친다.
+('CHECK_CARD',        'ko', '체크카드 발급',           '체크카드를 발급받고 싶으신 거죠?'),
+('CHECK_CARD',        'en', 'Debit card application',  'You want to get a debit card, right?'),
+('CHECK_CARD',        'vi', 'Đăng ký thẻ ghi nợ',      'Bạn muốn làm thẻ ghi nợ, đúng không?'),
+('CHECK_CARD',        'zh', '办理借记卡',              '您是想办理借记卡，对吗？'),
+('CREDIT_CARD',       'ko', '신용카드 발급',           '신용카드를 발급받고 싶으신 거죠?'),
+('CREDIT_CARD',       'en', 'Credit card application', 'You want to get a credit card, right?'),
+('CREDIT_CARD',       'vi', 'Đăng ký thẻ tín dụng',    'Bạn muốn làm thẻ tín dụng, đúng không?'),
+('CREDIT_CARD',       'zh', '办理信用卡',              '您是想办理信用卡，对吗？'),
+('SAVINGS_OPEN',      'ko', '적금 가입',               '적금에 가입하고 싶으신 거죠?'),
+('SAVINGS_OPEN',      'en', 'Open installment savings', 'You want to open an installment savings account, right?'),
+('SAVINGS_OPEN',      'vi', 'Mở tiết kiệm góp',        'Bạn muốn mở tài khoản tiết kiệm góp hằng tháng, đúng không?'),
+('SAVINGS_OPEN',      'zh', '开立零存整取',            '您是想开立零存整取储蓄，对吗？'),
+('TIME_DEPOSIT_OPEN', 'ko', '정기예금 가입',           '정기예금에 가입하고 싶으신 거죠?'),
+('TIME_DEPOSIT_OPEN', 'en', 'Open a time deposit',     'You want to open a time deposit, right?'),
+('TIME_DEPOSIT_OPEN', 'vi', 'Mở tiền gửi có kỳ hạn',   'Bạn muốn mở khoản tiền gửi có kỳ hạn, đúng không?'),
+('TIME_DEPOSIT_OPEN', 'zh', '开立定期存款',            '您是想开立定期存款，对吗？');
 
 INSERT INTO guide_step (task_code, step_no, page, target) VALUES
 ('DEPOSIT_CANCEL', 1, 'home',           'btn-product'),
@@ -29,7 +52,22 @@ INSERT INTO guide_step (task_code, step_no, page, target) VALUES
 ('TRANSFER',       2, 'transfer',       'btn-transfer-next'),
 ('CERTIFICATE',    1, 'home',           'btn-certificate'),
 ('CERTIFICATE',    2, 'certificate',    'btn-cert-balance'),
-('CERTIFICATE',    3, 'cert-issue',     'btn-cert-issue');
+('CERTIFICATE',    3, 'cert-issue',     'btn-cert-issue'),
+-- {term}은 고객이 고른 가입 기간(개월)으로 바뀐다. 예) btn-term-6
+('CHECK_CARD',        1, 'home',              'btn-card'),
+('CHECK_CARD',        2, 'card',              'btn-card-check'),
+('CHECK_CARD',        3, 'card-check-apply',  'btn-card-apply'),
+('CREDIT_CARD',       1, 'home',              'btn-card'),
+('CREDIT_CARD',       2, 'card',              'btn-card-credit'),
+('CREDIT_CARD',       3, 'card-credit-apply', 'btn-card-apply'),
+('SAVINGS_OPEN',      1, 'home',              'btn-join'),
+('SAVINGS_OPEN',      2, 'join',              'btn-join-savings'),
+('SAVINGS_OPEN',      3, 'savings-join',      'btn-term-{term}'),
+('SAVINGS_OPEN',      4, 'join-confirm',      'btn-join-submit'),
+('TIME_DEPOSIT_OPEN', 1, 'home',              'btn-join'),
+('TIME_DEPOSIT_OPEN', 2, 'join',              'btn-join-deposit'),
+('TIME_DEPOSIT_OPEN', 3, 'deposit-join',      'btn-term-{term}'),
+('TIME_DEPOSIT_OPEN', 4, 'join-confirm',      'btn-join-submit');
 
 INSERT INTO guide_step_text (task_code, step_no, lang, message) VALUES
 ('DEPOSIT_CANCEL', 1, 'ko', '아래 ''상품관리''를 눌러주세요'),
@@ -67,7 +105,64 @@ INSERT INTO guide_step_text (task_code, step_no, lang, message) VALUES
 ('CERTIFICATE',    3, 'ko', '발급 내용을 확인하시고 ''발급하기''를 눌러주세요'),
 ('CERTIFICATE',    3, 'en', 'Check the details, then tap ''Issue'''),
 ('CERTIFICATE',    3, 'vi', 'Kiểm tra thông tin rồi nhấn ''Cấp'''),
-('CERTIFICATE',    3, 'zh', '确认内容后，请点击「开具」');
+('CERTIFICATE',    3, 'zh', '确认内容后，请点击「开具」'),
+-- 마지막 신청 버튼은 고객이 직접 누른다 (안내는 하이라이트만)
+('CHECK_CARD',        1, 'ko', '아래 ''카드''를 눌러주세요'),
+('CHECK_CARD',        1, 'en', 'Tap ''Cards'' below'),
+('CHECK_CARD',        1, 'vi', 'Nhấn ''Thẻ'' ở bên dưới'),
+('CHECK_CARD',        1, 'zh', '请点击下方的「银行卡」'),
+('CHECK_CARD',        2, 'ko', '''체크카드 신청''을 눌러주세요'),
+('CHECK_CARD',        2, 'en', 'Tap ''Apply for a debit card'''),
+('CHECK_CARD',        2, 'vi', 'Nhấn ''Đăng ký thẻ ghi nợ'''),
+('CHECK_CARD',        2, 'zh', '请点击「申请借记卡」'),
+('CHECK_CARD',        3, 'ko', '내용을 확인하시고 ''신청하기''를 직접 눌러주세요'),
+('CHECK_CARD',        3, 'en', 'Check the details, then tap ''Apply'' yourself'),
+('CHECK_CARD',        3, 'vi', 'Kiểm tra thông tin rồi tự nhấn ''Đăng ký'''),
+('CHECK_CARD',        3, 'zh', '确认内容后，请您亲自点击「申请」'),
+('CREDIT_CARD',       1, 'ko', '아래 ''카드''를 눌러주세요'),
+('CREDIT_CARD',       1, 'en', 'Tap ''Cards'' below'),
+('CREDIT_CARD',       1, 'vi', 'Nhấn ''Thẻ'' ở bên dưới'),
+('CREDIT_CARD',       1, 'zh', '请点击下方的「银行卡」'),
+('CREDIT_CARD',       2, 'ko', '''신용카드 신청''을 눌러주세요'),
+('CREDIT_CARD',       2, 'en', 'Tap ''Apply for a credit card'''),
+('CREDIT_CARD',       2, 'vi', 'Nhấn ''Đăng ký thẻ tín dụng'''),
+('CREDIT_CARD',       2, 'zh', '请点击「申请信用卡」'),
+('CREDIT_CARD',       3, 'ko', '내용을 확인하시고 ''신청하기''를 직접 눌러주세요'),
+('CREDIT_CARD',       3, 'en', 'Check the details, then tap ''Apply'' yourself'),
+('CREDIT_CARD',       3, 'vi', 'Kiểm tra thông tin rồi tự nhấn ''Đăng ký'''),
+('CREDIT_CARD',       3, 'zh', '确认内容后，请您亲自点击「申请」'),
+('SAVINGS_OPEN',      1, 'ko', '아래 ''상품가입''을 눌러주세요'),
+('SAVINGS_OPEN',      1, 'en', 'Tap ''Open a product'' below'),
+('SAVINGS_OPEN',      1, 'vi', 'Nhấn ''Đăng ký sản phẩm'' ở bên dưới'),
+('SAVINGS_OPEN',      1, 'zh', '请点击下方的「办理新产品」'),
+('SAVINGS_OPEN',      2, 'ko', '''적금''을 눌러주세요'),
+('SAVINGS_OPEN',      2, 'en', 'Tap ''Installment savings'''),
+('SAVINGS_OPEN',      2, 'vi', 'Nhấn ''Tiết kiệm góp'''),
+('SAVINGS_OPEN',      2, 'zh', '请点击「零存整取」'),
+('SAVINGS_OPEN',      3, 'ko', '가입 기간 ''{term}개월''을 눌러주세요'),
+('SAVINGS_OPEN',      3, 'en', 'Tap ''{term} months'' for the term'),
+('SAVINGS_OPEN',      3, 'vi', 'Chọn kỳ hạn ''{term} tháng'''),
+('SAVINGS_OPEN',      3, 'zh', '请选择期限「{term}个月」'),
+('SAVINGS_OPEN',      4, 'ko', '내용을 확인하시고 ''가입하기''를 직접 눌러주세요'),
+('SAVINGS_OPEN',      4, 'en', 'Check the details, then tap ''Open'' yourself'),
+('SAVINGS_OPEN',      4, 'vi', 'Kiểm tra thông tin rồi tự nhấn ''Đăng ký'''),
+('SAVINGS_OPEN',      4, 'zh', '确认内容后，请您亲自点击「开立」'),
+('TIME_DEPOSIT_OPEN', 1, 'ko', '아래 ''상품가입''을 눌러주세요'),
+('TIME_DEPOSIT_OPEN', 1, 'en', 'Tap ''Open a product'' below'),
+('TIME_DEPOSIT_OPEN', 1, 'vi', 'Nhấn ''Đăng ký sản phẩm'' ở bên dưới'),
+('TIME_DEPOSIT_OPEN', 1, 'zh', '请点击下方的「办理新产品」'),
+('TIME_DEPOSIT_OPEN', 2, 'ko', '''정기예금''을 눌러주세요'),
+('TIME_DEPOSIT_OPEN', 2, 'en', 'Tap ''Time deposit'''),
+('TIME_DEPOSIT_OPEN', 2, 'vi', 'Nhấn ''Tiền gửi có kỳ hạn'''),
+('TIME_DEPOSIT_OPEN', 2, 'zh', '请点击「定期存款」'),
+('TIME_DEPOSIT_OPEN', 3, 'ko', '가입 기간 ''{term}개월''을 눌러주세요'),
+('TIME_DEPOSIT_OPEN', 3, 'en', 'Tap ''{term} months'' for the term'),
+('TIME_DEPOSIT_OPEN', 3, 'vi', 'Chọn kỳ hạn ''{term} tháng'''),
+('TIME_DEPOSIT_OPEN', 3, 'zh', '请选择期限「{term}个月」'),
+('TIME_DEPOSIT_OPEN', 4, 'ko', '내용을 확인하시고 ''가입하기''를 직접 눌러주세요'),
+('TIME_DEPOSIT_OPEN', 4, 'en', 'Check the details, then tap ''Open'' yourself'),
+('TIME_DEPOSIT_OPEN', 4, 'vi', 'Kiểm tra thông tin rồi tự nhấn ''Đăng ký'''),
+('TIME_DEPOSIT_OPEN', 4, 'zh', '确认内容后，请您亲自点击「开立」');
 
 INSERT INTO ui_text (text_key, lang, content) VALUES
 ('OFF_PATH', 'ko', '여기는 다른 화면이에요. 왼쪽 위 뒤로가기(‹)를 눌러주세요.'),
@@ -78,10 +173,10 @@ INSERT INTO ui_text (text_key, lang, content) VALUES
 ('DONE',     'en', 'Guidance for {name} is complete.'),
 ('DONE',     'vi', 'Đã hoàn tất hướng dẫn {name}.'),
 ('DONE',     'zh', '{name}的指引已完成。'),
-('UNKNOWN',  'ko', '어떤 업무인지 잘 모르겠어요. 예) 예금 해지, 이체, 증명서 발급'),
-('UNKNOWN',  'en', 'I''m not sure which service you need. e.g. close a deposit, transfer money, get a certificate'),
-('UNKNOWN',  'vi', 'Tôi chưa rõ bạn cần dịch vụ nào. Ví dụ: tất toán tiền gửi, chuyển khoản, cấp giấy chứng nhận'),
-('UNKNOWN',  'zh', '我不太确定您需要办理什么业务。例如：解约存款、转账、开具证明'),
+('UNKNOWN',  'ko', '어떤 업무인지 잘 모르겠어요. 예) 카드 발급, 예금 해지, 적금 가입'),
+('UNKNOWN',  'en', 'I''m not sure which service you need. e.g. get a card, close a deposit, open a savings account'),
+('UNKNOWN',  'vi', 'Tôi chưa rõ bạn cần dịch vụ nào. Ví dụ: làm thẻ, tất toán tiền gửi, mở tiết kiệm góp'),
+('UNKNOWN',  'zh', '我不太确定您需要办理什么业务。例如：办卡、解约存款、开立零存整取'),
 ('CLARIFY',  'ko', '어떤 업무를 말씀하시는 건가요?'),
 ('CLARIFY',  'en', 'Which one do you mean?'),
 ('CLARIFY',  'vi', 'Bạn muốn nói đến dịch vụ nào?'),
@@ -117,7 +212,144 @@ INSERT INTO intent_keyword (task_code, keyword) VALUES
 ('TRANSFER',       '송금'),
 ('TRANSFER',       '보내'),
 ('TRANSFER',       'transfer'),
-('TRANSFER',       'send');
+('TRANSFER',       'send'),
+('CHECK_CARD',        '체크카드'),
+('CHECK_CARD',        '체크 카드'),
+('CHECK_CARD',        'check card'),
+('CHECK_CARD',        'debit card'),
+('CHECK_CARD',        '카드'),          -- 종류 없이 '카드'만: 카드 메뉴로 (신용카드는 앞에서 먼저 걸린다)
+('CREDIT_CARD',       '신용카드'),
+('CREDIT_CARD',       '신용 카드'),
+('CREDIT_CARD',       'credit card'),
+('SAVINGS_OPEN',      '적금'),
+('SAVINGS_OPEN',      'savings'),
+('TIME_DEPOSIT_OPEN', '예금 가입'),
+('TIME_DEPOSIT_OPEN', '예금에 가입'),
+('TIME_DEPOSIT_OPEN', '예금 들'),
+('TIME_DEPOSIT_OPEN', '예금 만들'),
+('TIME_DEPOSIT_OPEN', '예금을 만들'),
+('TIME_DEPOSIT_OPEN', 'open a deposit'),
+('TIME_DEPOSIT_OPEN', 'new deposit');
+
+-- ---------- 챗봇 메뉴 + 가입 자격 판단 ----------
+
+INSERT INTO ui_text (text_key, lang, content) VALUES
+('MENU_GREETING', 'ko', '도움이 필요하세요? 아래에서 고르시거나 궁금한 것을 직접 써 주세요.'),
+('MENU_GREETING', 'en', 'Need help? Choose below or type your question.'),
+('MENU_GREETING', 'vi', 'Bạn cần giúp đỡ không? Hãy chọn bên dưới hoặc nhập câu hỏi.'),
+('MENU_GREETING', 'zh', '需要帮助吗？请在下方选择，或直接输入您的问题。'),
+('MENU_CARD',     'ko', '카드 발급'),
+('MENU_CARD',     'en', 'Get a card'),
+('MENU_CARD',     'vi', 'Làm thẻ'),
+('MENU_CARD',     'zh', '办理银行卡'),
+('MENU_CANCEL',   'ko', '상품 해지'),
+('MENU_CANCEL',   'en', 'Close a product'),
+('MENU_CANCEL',   'vi', 'Tất toán sản phẩm'),
+('MENU_CANCEL',   'zh', '解约产品'),
+('MENU_JOIN',     'ko', '상품 가입'),
+('MENU_JOIN',     'en', 'Open a product'),
+('MENU_JOIN',     'vi', 'Đăng ký sản phẩm'),
+('MENU_JOIN',     'zh', '办理新产品'),
+-- 고객 정보 확인 질문. {name} {visa} {expiry}는 서버가 채운다 (이 문구는 채팅 기록에 저장하지 않는다)
+('VERIFY_PROFILE', 'ko', '{name}님, {visa} 비자, 체류기간 {expiry}까지로 확인돼요. 맞으세요?'),
+('VERIFY_PROFILE', 'en', '{name}, our records show your visa type as {visa}, with your stay valid until {expiry}. Is that correct?'),
+('VERIFY_PROFILE', 'vi', 'Anh/chị {name}, ngân hàng ghi nhận thị thực {visa}, thời hạn lưu trú đến {expiry}. Thông tin này đúng không?'),
+('VERIFY_PROFILE', 'zh', '{name}您好，我们的记录显示您持{visa}签证，居留期限至{expiry}。信息正确吗？'),
+('VERIFY_PROFILE_NO_EXPIRY', 'ko', '{name}님, {visa} 비자(체류기간 만료 없음)로 확인돼요. 맞으세요?'),
+('VERIFY_PROFILE_NO_EXPIRY', 'en', '{name}, our records show your visa type as {visa}, with no expiry date. Is that correct?'),
+('VERIFY_PROFILE_NO_EXPIRY', 'vi', 'Anh/chị {name}, ngân hàng ghi nhận thị thực {visa} (không có thời hạn lưu trú). Thông tin này đúng không?'),
+('VERIFY_PROFILE_NO_EXPIRY', 'zh', '{name}您好，我们的记录显示您持{visa}签证（无居留期限）。信息正确吗？'),
+-- 가입 자격 결과
+('ELIGIBLE_HEAD',    'ko', '확인 감사합니다. 고객님 정보로 확인한 가입 가능 여부예요.'),
+('ELIGIBLE_HEAD',    'en', 'Thank you. Here is what you can apply for, based on your information.'),
+('ELIGIBLE_HEAD',    'vi', 'Cảm ơn bạn. Dưới đây là các sản phẩm bạn có thể đăng ký theo thông tin của bạn.'),
+('ELIGIBLE_HEAD',    'zh', '谢谢确认。以下是根据您的信息判断的可办理情况。'),
+('DEMO_RULE_NOTICE', 'ko', '※ 데모용 가상 규칙으로 판단한 결과예요.'),
+('DEMO_RULE_NOTICE', 'en', '※ This result uses fictional demo rules.'),
+('DEMO_RULE_NOTICE', 'vi', '※ Kết quả này dựa trên quy tắc giả định dùng cho bản demo.'),
+('DEMO_RULE_NOTICE', 'zh', '※ 此结果基于演示用的虚拟规则。'),
+('RULE_NO_ARC',      'ko', '외국인등록증이 있어야 신청할 수 있어요.'),
+('RULE_NO_ARC',      'en', 'You need a residence card (외국인등록증) to apply.'),
+('RULE_NO_ARC',      'vi', 'Bạn cần có thẻ người nước ngoài (외국인등록증) để đăng ký.'),
+('RULE_NO_ARC',      'zh', '需要外国人登录证（외국인등록증）才能申请。'),
+('RULE_NO_ACCOUNT',  'ko', '우리 은행 입출금 계좌가 있어야 신청할 수 있어요.'),
+('RULE_NO_ACCOUNT',  'en', 'You need a checking account with our bank to apply.'),
+('RULE_NO_ACCOUNT',  'vi', 'Bạn cần có tài khoản thanh toán tại ngân hàng chúng tôi để đăng ký.'),
+('RULE_NO_ACCOUNT',  'zh', '需要在本行开立活期账户才能申请。'),
+('RULE_VISA',        'ko', '체류자격({visa})으로는 신청할 수 없어요. (가능: {allowed})'),
+('RULE_VISA',        'en', 'You can''t apply with visa type {visa}. (Allowed: {allowed})'),
+('RULE_VISA',        'vi', 'Thị thực {visa} không thể đăng ký. (Được phép: {allowed})'),
+('RULE_VISA',        'zh', '{visa}签证无法申请。（可申请：{allowed}）'),
+('RULE_STAY_SHORT',  'ko', '남은 체류기간이 {months}개월 이상이어야 해요. (체류 만료 {expiry})'),
+('RULE_STAY_SHORT',  'en', 'You need at least {months} months left on your stay. (Stay expires {expiry})'),
+('RULE_STAY_SHORT',  'vi', 'Thời hạn lưu trú còn lại phải từ {months} tháng trở lên. (Hết hạn {expiry})'),
+('RULE_STAY_SHORT',  'zh', '剩余居留期限需在{months}个月以上。（居留到期：{expiry}）'),
+('RULE_INCOME',      'ko', '소득 확인 서류가 필요해요.'),
+('RULE_INCOME',      'en', 'Proof of income is required.'),
+('RULE_INCOME',      'vi', 'Cần có giấy tờ chứng minh thu nhập.'),
+('RULE_INCOME',      'zh', '需要提供收入证明。'),
+('RULE_TERM',        'ko', '만기일({maturity})이 체류 만료일({expiry}) 이후라서 선택할 수 없어요.'),
+('RULE_TERM',        'en', 'Not available: it matures on {maturity}, after your stay expires on {expiry}.'),
+('RULE_TERM',        'vi', 'Không thể chọn: ngày đáo hạn {maturity} sau ngày hết hạn lưu trú {expiry}.'),
+('RULE_TERM',        'zh', '无法选择：到期日（{maturity}）晚于居留到期日（{expiry}）。'),
+('RULE_NO_TERM',     'ko', '체류 만료일({expiry}) 전에 끝나는 가입 기간이 없어요.'),
+('RULE_NO_TERM',     'en', 'No term ends before your stay expires on {expiry}.'),
+('RULE_NO_TERM',     'vi', 'Không có kỳ hạn nào kết thúc trước ngày hết hạn lưu trú {expiry}.'),
+('RULE_NO_TERM',     'zh', '没有在居留到期日（{expiry}）之前到期的期限。'),
+('NOTE_CARD_VALID',  'ko', '카드 유효기간은 체류 만료일({expiry})까지예요.'),
+('NOTE_CARD_VALID',  'en', 'The card will be valid until your stay expires ({expiry}).'),
+('NOTE_CARD_VALID',  'vi', 'Thẻ có hiệu lực đến ngày hết hạn lưu trú ({expiry}).'),
+('NOTE_CARD_VALID',  'zh', '卡片有效期至居留到期日（{expiry}）。'),
+('ALT_SUGGEST',      'ko', '대신 ''{product}''은(는) 신청할 수 있어요.'),
+('ALT_SUGGEST',      'en', 'You can choose ''{product}'' instead.'),
+('ALT_SUGGEST',      'vi', 'Thay vào đó, bạn có thể chọn ''{product}''.'),
+('ALT_SUGGEST',      'zh', '您可以改选「{product}」。'),
+-- [아니요]: 은행 정보가 오래됨 → 체류정보 갱신 안내 (+ OFFER_HANDOFF)
+('PROFILE_MISMATCH', 'ko', '체류기간이 바뀌었다면 은행에 등록된 외국인등록증 정보를 갱신해야 해요. 새 외국인등록증을 가지고 영업점에서 갱신하거나 상담원 안내를 받을 수 있어요.'),
+('PROFILE_MISMATCH', 'en', 'If your stay was extended, the bank needs your updated residence card info. You can update it at a branch with your new card, or an agent can help you.'),
+('PROFILE_MISMATCH', 'vi', 'Nếu bạn đã gia hạn lưu trú, ngân hàng cần cập nhật thông tin thẻ người nước ngoài. Bạn có thể mang thẻ mới đến chi nhánh để cập nhật hoặc nhờ nhân viên hỗ trợ.'),
+('PROFILE_MISMATCH', 'zh', '如果您已延长居留期限，需要更新银行登记的外国人登录证信息。您可以携带新证件到网点办理，也可以由客服为您说明。'),
+-- 상담원 연결 제안 (버튼은 화면이 붙인다: [상담원 연결] [혼자 계속])
+('OFFER_HANDOFF',      'ko', '상담원을 연결해 드릴까요?'),
+('OFFER_HANDOFF',      'en', 'Shall I connect you to an agent?'),
+('OFFER_HANDOFF',      'vi', 'Bạn có muốn kết nối với nhân viên tư vấn không?'),
+('OFFER_HANDOFF',      'zh', '需要为您转接客服人员吗？'),
+('OFFER_NOT_ELIGIBLE', 'ko', '가입 조건이 궁금하시면 상담원이 고객님 상황에 맞춰 안내해 드릴 수 있어요.'),
+('OFFER_NOT_ELIGIBLE', 'en', 'If you have questions about the conditions, an agent can explain them for your situation.'),
+('OFFER_NOT_ELIGIBLE', 'vi', 'Nếu bạn có thắc mắc về điều kiện, nhân viên tư vấn có thể giải thích theo tình huống của bạn.'),
+('OFFER_NOT_ELIGIBLE', 'zh', '如果您对办理条件有疑问，客服人员可以根据您的情况为您说明。');
+
+-- 데모용 가상 고객 3명 (기준일 2026-10-27)
+--  A: 체크카드 O, 신용카드 X(E-9), 예금·적금은 6개월만
+--  B: 모든 상품 가능
+--  C: 은행 기록상 만료 2026-12-15 → [아니요, 연장했어요] 시나리오
+INSERT INTO customer_profile (customer_id, name, nationality_ko, visa_type, stay_expiry, has_arc, has_account, income_verified, preferred_lang) VALUES
+('A', 'Nguyen', '베트남',       'E-9', DATE '2027-05-31', TRUE, TRUE, TRUE,  'ko'),
+('B', 'Li Wei', '중국',         'F-5', NULL,              TRUE, TRUE, TRUE,  'ko'),
+('C', 'Aziz',   '우즈베키스탄', 'D-2', DATE '2026-12-15', TRUE, TRUE, FALSE, 'ko');
+
+INSERT INTO product (code, category, task_code, sort) VALUES
+('CHECK_CARD',   'CARD', 'CHECK_CARD',        1),
+('CREDIT_CARD',  'CARD', 'CREDIT_CARD',       2),
+('TIME_DEPOSIT', 'JOIN', 'TIME_DEPOSIT_OPEN', 1),
+('SAVINGS',      'JOIN', 'SAVINGS_OPEN',      2);
+
+-- 데모용 가상 규칙 (실제 은행 기준이 아님)
+-- MATURITY_BEFORE_EXPIRY: param은 고를 수 있는 기간, reason_key는 고를 기간이 하나도 없을 때 문구
+-- VALID_UNTIL_EXPIRY: 불가 조건이 아니라 안내 문구 (카드 유효기간 = 체류 만료일)
+INSERT INTO product_rule (product_code, rule_type, param, reason_key, alt_product) VALUES
+('CHECK_CARD',   'REQUIRES_ARC',           NULL,                  'RULE_NO_ARC',     NULL),
+('CHECK_CARD',   'REQUIRES_ACCOUNT',       NULL,                  'RULE_NO_ACCOUNT', NULL),
+('CHECK_CARD',   'VALID_UNTIL_EXPIRY',     NULL,                  'NOTE_CARD_VALID', NULL),
+('CREDIT_CARD',  'REQUIRES_ARC',           NULL,                  'RULE_NO_ARC',     'CHECK_CARD'),
+('CREDIT_CARD',  'VISA_IN',                'F-2,F-4,F-5,F-6,E-7', 'RULE_VISA',       'CHECK_CARD'),
+('CREDIT_CARD',  'MIN_STAY_MONTHS',        '6',                   'RULE_STAY_SHORT', 'CHECK_CARD'),
+('CREDIT_CARD',  'INCOME_VERIFIED',        NULL,                  'RULE_INCOME',     'CHECK_CARD'),
+('TIME_DEPOSIT', 'REQUIRES_ACCOUNT',       NULL,                  'RULE_NO_ACCOUNT', NULL),
+('TIME_DEPOSIT', 'MATURITY_BEFORE_EXPIRY', '6,12,24',             'RULE_NO_TERM',    NULL),
+('SAVINGS',      'REQUIRES_ACCOUNT',       NULL,                  'RULE_NO_ACCOUNT', NULL),
+('SAVINGS',      'MATURITY_BEFORE_EXPIRY', '6,12,24',             'RULE_NO_TERM',    NULL);
+
 
 -- 5단계: 우즈베크어(uz, 라틴 문자), 네팔어(ne), 크메르어(km, 캄보디아어) 문구
 -- 주의: 사람이 쓴 번역이 아니므로 시연 전에 해당 언어 사용자에게 한 번 확인받는다.
