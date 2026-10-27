@@ -4,7 +4,7 @@
 import { tp, months } from '../i18n';
 import { Icon, QuickIcon, Sun, Bee, PromoArt, Donut } from '../components/HomeArt';
 
-function Header({ title, onBack, backLabel, right }) {
+function Header({ title, onBack, backLabel, left, right }) {
   return (
     <header className="app-header">
       {onBack ? (
@@ -12,7 +12,7 @@ function Header({ title, onBack, backLabel, right }) {
           ‹
         </button>
       ) : (
-        <span className="back-btn-space" />
+        left ?? <span className="back-btn-space" />
       )}
       <h1>{title}</h1>
       {right ?? <span className="back-btn-space" />}
@@ -41,6 +41,40 @@ export function LanguagePage({ languages, onPick, title }) {
   );
 }
 
+// 로그인 대신 고객을 고르는 첫 화면. 언어를 고르기 전이라 한국어·영어를 함께 쓴다.
+// 고객 정보(체류자격·만료일)는 보여주지 않고 이름·국적만 보여준다.
+export function LoginPage({ customers, failed, onPick }) {
+  return (
+    <>
+      <header className="app-header">
+        <span className="back-btn-space" />
+        <h1>ForWON</h1>
+        <span className="back-btn-space" />
+      </header>
+      <div className="login-intro">
+        <h2>로그인 · Sign in</h2>
+        <p>고객을 선택하세요 · Choose your account</p>
+      </div>
+      {failed && <p className="login-status">서버에 연결할 수 없어요 · Cannot reach the server</p>}
+      {!failed && customers.length === 0 && <p className="login-status">불러오는 중… · Loading…</p>}
+      <ul className="list login-list">
+        {customers.map((c) => (
+          <li key={c.customerId}>
+            <button className="list-btn login-btn" onClick={() => onPick(c.customerId)}>
+              <span className="login-avatar" aria-hidden="true">{c.name.charAt(0)}</span>
+              <span className="login-copy">
+                <strong>{c.name}</strong>
+                <span>{c.nationality}</span>
+              </span>
+              <span>›</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
 // 최근 거래내역 (데모용 가상 데이터). 이름·종류는 고른 언어 문구를 쓴다.
 const RECENT = [
   { name: 'txShop', kind: 'txCard', time: '10. 26. 18:32', amount: -4500, color: '#0b7a55', mark: 'star' },
@@ -50,7 +84,7 @@ const RECENT = [
 ];
 const fmt = (n) => Math.abs(n).toLocaleString('en-US');
 
-export function HomePage({ lang, go, onChangeLang, onAsk, userName }) {
+export function HomePage({ lang, go, onChangeLang, onAsk, userName, onLogout }) {
   const p = (k, v) => tp(lang, k, v);
   const quick = [
     { id: 'btn-transfer', to: 'transfer', icon: 'transfer', label: p('transfer') },
@@ -110,6 +144,17 @@ export function HomePage({ lang, go, onChangeLang, onAsk, userName }) {
           >
             <Icon name="menu" size={24} />
           </button>
+          {onLogout && (
+            <button className="icon-btn" onClick={onLogout} aria-label={p('logout')} title={p('logout')}>
+              {/* 문 밖으로 나가는 화살표 (HomeArt 아이콘과 같은 선 두께) */}
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                   strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <path d="M16 17l5-5-5-5" />
+                <path d="M21 12H9" />
+              </svg>
+            </button>
+          )}
         </div>
       </header>
 

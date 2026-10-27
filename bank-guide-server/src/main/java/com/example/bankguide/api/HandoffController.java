@@ -3,6 +3,7 @@ package com.example.bankguide.api;
 import com.example.bankguide.api.ApiDtos.AgentPoll;
 import com.example.bankguide.api.ApiDtos.CustomerInfoView;
 import com.example.bankguide.api.ApiDtos.CustomerMessageRequest;
+import com.example.bankguide.api.ApiDtos.EventView;
 import com.example.bankguide.api.ApiDtos.HandoffRequest;
 import com.example.bankguide.api.ApiDtos.HandoffResponse;
 import com.example.bankguide.api.ApiDtos.InfoConsentRequest;
@@ -51,6 +52,12 @@ public class HandoffController {
     @GetMapping("/tickets/{ticketNo}")
     public TicketView ticket(@PathVariable String ticketNo) {
         return handoffService.ticket(ticketNo);
+    }
+
+    /** 고객 이동 경로 (상담원 화면 토글). 화면 이름은 한국어 */
+    @GetMapping("/tickets/{ticketNo}/events")
+    public List<EventView> events(@PathVariable String ticketNo) {
+        return handoffService.events(ticketNo);
     }
 
     /** 티켓 상태 변경 (WAITING, IN_PROGRESS, CLOSED) */

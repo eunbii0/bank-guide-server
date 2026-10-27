@@ -74,6 +74,9 @@ export const fetchTicket = (ticketNo) => get(`/api/tickets/${ticketNo}`);
 
 // ---------- 상담원 화면 (5단계) ----------
 
+/** 고객 이동 경로 (DB guide_event, 화면 이름은 한국어) → [{ time, type, page, detail }] */
+export const fetchTicketEvents = (ticketNo) => get(`/api/tickets/${ticketNo}/events`);
+
 /** 티켓 목록 (최신순) */
 export const fetchTickets = () => get('/api/tickets');
 
@@ -123,5 +126,5 @@ export const requestCustomerInfo = (ticketNo) => post(`/api/tickets/${ticketNo}/
 export const answerInfoRequest = (ticketNo, granted) => post(`/api/tickets/${ticketNo}/info-consent`, { granted });
 
 /** 상담원: 고객이 허용한 상담에서만 고객 정보·자격 판단 결과를 받는다. 부를 때마다 서버에 조회 기록이 남는다 */
-export const fetchCustomerInfo = (ticketNo, agent = 'demo-agent') =>
+export const fetchCustomerInfo = (ticketNo, agent = 'agent-01') =>
   get(`/api/tickets/${ticketNo}/customer-info?agent=${encodeURIComponent(agent)}`);

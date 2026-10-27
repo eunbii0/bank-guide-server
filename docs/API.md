@@ -238,7 +238,7 @@
 상담원 POST /api/tickets/{ticketNo}/info-request       → infoConsent: REQUESTED
 고객   GET  /api/tickets/{ticketNo}/agent-messages      → { ..., "infoConsent": "REQUESTED" } → [허용]/[거절] 카드
 고객   POST /api/tickets/{ticketNo}/info-consent {"granted": true}   → GRANTED (false면 DENIED, 상담원은 다시 요청 가능)
-상담원 GET  /api/tickets/{ticketNo}/customer-info?agent=demo-agent   → 고객 정보 + 자격 판단 결과 + 조회 기록
+상담원 GET  /api/tickets/{ticketNo}/customer-info?agent=agent-01     → 고객 정보 + 자격 판단 결과 + 조회 기록
 ```
 
 - `customer-info`는 `GRANTED`이고 상담이 끝나지 않았을 때만 응답합니다. 그 밖에는 `403`.
@@ -253,7 +253,7 @@
   "customerId": "A", "name": "Nguyen", "nationalityKo": "베트남", "visaType": "E-9",
   "stayExpiry": "2027-05-31", "hasArc": true, "hasAccount": true, "incomeVerified": true,
   "eligibility": [ { "time": "22:11:18", "category": "CARD", "confirmed": true, "result": ["[카드 발급] 고객 정보 확인: 맞음 ...", "신용카드 발급: 불가 - ..."] } ],
-  "accessLog": [ { "time": "22:12:29", "agentId": "demo-agent", "items": "PROFILE,ELIGIBILITY" } ]
+  "accessLog": [ { "time": "22:12:29", "agentId": "agent-01", "items": "PROFILE,ELIGIBILITY" } ]
 }
 ```
 
@@ -298,7 +298,7 @@
 [
   { "customerId": "A", "name": "Nguyen", "nationality": "베트남", "visaType": "E-9", "stayExpiry": "2027-05-31", "lang": "vi" },
   { "customerId": "B", "name": "Li Wei", "nationality": "중국", "visaType": "F-5", "stayExpiry": null, "lang": "zh" },
-  { "customerId": "C", "name": "Aziz", "nationality": "우즈베키스탄", "visaType": "D-2", "stayExpiry": "2026-12-15", "lang": "en" }
+  { "customerId": "C", "name": "Emily Carter", "nationality": "미국", "visaType": "D-2", "stayExpiry": "2026-12-15", "lang": "en" }
 ]
 ```
 

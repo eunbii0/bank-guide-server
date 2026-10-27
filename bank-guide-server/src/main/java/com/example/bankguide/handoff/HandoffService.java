@@ -248,6 +248,25 @@ public class HandoffService {
         return new AgentPoll(t.getStatus(), messages, t.getInfoConsent());
     }
 
+    /**
+     * 상담원 화면 '고객 이동 경로': 연결 당시 진행 중이던 안내의 guide_event (요약의 재료이기도 하다).
+     * 화면 이름과 내용은 상담원이 알아볼 수 있게 한국어로 바꾼다. 안내 없이 채팅으로만 연결된 티켓이면 빈 목록
+     */
+    public List<EventView> events(String ticketNo) {
+        HandoffTicket t = find(ticketNo);
+        if (t.getSessionId() == null) {
+            return List.of();
+        }
+        return guideService.events(t.getSessionId()).stream()
+                .map(e -> new EventView(e.time(), e.type(), PageNames.of(e.page()),
+                        PathNote.detailKo(e.type(), e.detail(), this::taskNameKo)))
+                .toList();
+    }
+
+    private String taskNameKo(String code) {
+        return taskRepository.existsById(code) ? textService.task(code, "ko").getName() : code;
+    }
+
     HandoffTicket find(String ticketNo) {
         return ticketRepository.findByTicketNo(ticketNo)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ticket not found: " + ticketNo));

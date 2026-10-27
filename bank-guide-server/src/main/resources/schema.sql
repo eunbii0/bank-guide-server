@@ -155,7 +155,7 @@ CREATE TABLE IF NOT EXISTS customer_info_access (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     ticket_no   VARCHAR(30)  NOT NULL,
     customer_id VARCHAR(10)  NOT NULL,
-    agent_id    VARCHAR(30)  NOT NULL,       -- 데모는 로그인이 없어서 화면이 보내는 값 (기본 demo-agent)
+    agent_id    VARCHAR(30)  NOT NULL,       -- 데모는 로그인이 없어서 화면이 보내는 값 (기본 agent-01)
     items       VARCHAR(100) NOT NULL,       -- 조회한 항목: PROFILE, ELIGIBILITY
     accessed_at TIMESTAMP    NOT NULL
 );
