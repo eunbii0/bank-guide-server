@@ -162,7 +162,7 @@ public class EligibilityService {
         List<ProductView> products = new ArrayList<>();
         List<ResultRow> rows = new ArrayList<>();
         List<String> linesKo = new ArrayList<>();
-        linesKo.add("[" + categoryKo + "] 고객 정보 확인: 맞음 (판단 기준일 " + today + ", 데모용 가상 규칙)");
+        linesKo.add("[" + categoryKo + "] 고객 정보 확인: 맞음 (판단 기준일 " + today + ")");
         for (Product p : productRepository.findByCategoryOrderBySortAsc(req.category())) {
             Result r = judge(p.getCode(), customer, today);
             ProductView view = view(p, r, c, customer, today, lang);

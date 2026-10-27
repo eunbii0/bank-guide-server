@@ -1013,6 +1013,28 @@
 .chat-head-actions .waiting-badge {
   margin: 0 4px 0 0;
 }
+/* 화면 폭이 좁거나 문구가 긴 언어에서 [상담 종료]·[×]가 잘리지 않게:
+   왼쪽은 제목 + 그 아래 연결 상태, 오른쪽은 버튼. 버튼은 크기를 지키고 왼쪽 칸이 줄어든다 */
+.chat-head {
+  gap: 8px;
+}
+.chat-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+.chat-title .waiting-badge {
+  margin: 0;
+  max-width: 100%;
+  white-space: normal;
+  line-height: 1.25;
+  border-radius: 10px;   /* 두 줄이 되어도 동그랗게 찌그러지지 않게 */
+}
+.chat-head-actions {
+  flex-shrink: 0;
+}
 .chat-restart-icon {
   width: 32px;
   height: 32px;

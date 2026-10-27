@@ -39,17 +39,20 @@ export default function ChatPanel({
   return (
     <div className="chat-panel" role="dialog" aria-label={t(lang, 'chatTitle')}>
       <div className="chat-head">
-        <strong>{t(lang, 'chatTitle')}</strong>
+        {/* 연결 상태는 제목 아래에 둔다: 한 줄에 다 넣으면 좁은 화면·긴 언어에서 [상담 종료]가 잘린다 */}
+        <div className="chat-title">
+          <strong>{t(lang, 'chatTitle')}</strong>
+          {waiting && (
+            <span className={`waiting-badge${agentJoined ? '' : ' pending'}`}>
+              {t(lang, agentJoined ? 'connected' : 'waiting')}
+            </span>
+          )}
+        </div>
         <div className="chat-head-actions">
           {!waiting && (
             <button className="chat-restart-icon" onClick={onRestart} disabled={busy} title={t(lang, 'restart')} aria-label={t(lang, 'restart')}>
               ↺
             </button>
-          )}
-          {waiting && (
-            <span className={`waiting-badge${agentJoined ? '' : ' pending'}`}>
-              {t(lang, agentJoined ? 'connected' : 'waiting')}
-            </span>
           )}
           {waiting && (
             <button className="end-chat" onClick={onEndChat}>

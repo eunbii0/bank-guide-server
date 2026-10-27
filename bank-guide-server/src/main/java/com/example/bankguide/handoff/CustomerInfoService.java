@@ -41,7 +41,7 @@ public class CustomerInfoService {
     private static final Logger log = LoggerFactory.getLogger(CustomerInfoService.class);
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
     private static final String ITEMS = "PROFILE,ELIGIBILITY";
-    private static final String DEFAULT_AGENT = "demo-agent";
+    private static final String DEFAULT_AGENT = "agent-01"; // 로그인이 없어서 화면이 상담원 id를 보내지 않으면 이 값
 
     private final HandoffService handoffService;
     private final HandoffTicketRepository ticketRepository;

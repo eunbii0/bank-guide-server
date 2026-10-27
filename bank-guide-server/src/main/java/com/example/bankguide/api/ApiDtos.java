@@ -177,7 +177,7 @@ public final class ApiDtos {
     /** POST /api/tickets/{ticketNo}/info-consent  {"granted":true}  고객이 상담원의 정보 확인 요청에 답한다 */
     public record InfoConsentRequest(boolean granted) {}
 
-    /** GET /api/tickets/{ticketNo}/customer-info?agent=demo-agent : 고객이 허용했을 때만 응답하고, 조회할 때마다 기록을 남긴다 */
+    /** GET /api/tickets/{ticketNo}/customer-info?agent=agent-01 : 고객이 허용했을 때만 응답하고, 조회할 때마다 기록을 남긴다 */
     public record CustomerInfoView(String customerId, String name, String nationalityKo, String visaType,
                                    String stayExpiry, boolean hasArc, boolean hasAccount, boolean incomeVerified,
                                    List<EligibilityRecordView> eligibility, List<InfoAccessView> accessLog) {}

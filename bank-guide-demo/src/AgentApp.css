@@ -367,12 +367,15 @@
 .msg.ai {
   background: var(--brand-soft);
 }
+/* 시스템 안내(정보 확인 요청·허용, 상담 종료, 번역 없이 보냄 등)는 경고가 아니라 알림이라 회색으로 둔다 */
 .msg.system {
   align-self: center;
   max-width: 100%;
-  background: #fee4e2;
-  color: #b42318;
-  font-weight: 600;
+  padding: 4px 12px;
+  border: 1px dashed #d0d5dd;
+  background: #f9fafb;
+  color: #475467;
+  font-size: 13px;
   text-align: center;
 }
 .msg.agent {
