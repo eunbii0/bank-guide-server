@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import './App.css';
 import {
+  LanguagePage,
   HomePage,
   ProductPage,
   LoanPage,
@@ -15,7 +16,7 @@ import ChatPanel from './components/ChatPanel';
 import GuideOverlay from './components/GuideOverlay';
 import TicketPreview from './components/TicketPreview';
 import * as api from './api/guideApi';
-import { t, FAB_LABEL } from './i18n';
+import { t, tp, LANGUAGES } from './i18n';
 
 const now = () => new Date().toTimeString().slice(0, 8);
 const newId = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
@@ -32,10 +33,11 @@ export default function App() {
   // 이 화면을 연 고객의 대화 전체를 묶는 id (4단계: 서버가 채팅 원문을 이 id로 저장)
   const [conversationId] = useState(newId);
 
-  // 고객 언어. 서버(LLM)가 첫 질문을 보고 알려준다.
-  const [lang, setLang] = useState('en');
-  // 고객이 채팅창 위 버튼으로 언어를 직접 골랐는지. 골랐으면 서버가 입력한 언어와 상관없이 그 언어로 답한다.
-  const [langChosen, setLangChosen] = useState(false);
+  // 고객 언어. 앱을 켜면 맨 먼저 언어 선택 화면이 나오고(null = 아직 안 고름),
+  // 고른 언어가 은행 앱 화면·챗봇·서버 안내 문구 전체에 똑같이 적용된다.
+  const [lang, setLang] = useState(null);
+  const langChosen = lang !== null;
+  const [pickingLang, setPickingLang] = useState(false); // 홈에서 언어를 다시 고르는 중
 
   // 안내 상태. 몇 번째 단계인지는 서버가 기억하고, 화면은 sessionId만 들고 있다.
   const [sessionId, setSessionId] = useState(null);
@@ -73,13 +75,13 @@ export default function App() {
         : t(lang, 'welcome');
     setMessages((m) => [...m, { divider: true }, ...(greet ? [{ from: 'ai', text: hello }] : [])]);
   };
-  // 언어 버튼. 아직 대화가 없으면 첫 인사를 그 언어로 바꾸고, 대화가 있으면 그 언어로 인사를 덧붙인다.
-  // 안내 중이거나 상담원과 연결된 뒤에는 언어가 이미 정해져 있어서 바꿀 수 없다.
+  // 언어 선택. 아직 대화가 없으면 첫 인사를 그 언어로 바꾸고, 대화가 있으면 그 언어로 인사를 덧붙인다.
+  // 안내 중이거나 상담원과 연결된 뒤에는 언어가 이미 정해져 있어서 홈의 언어 변경 버튼을 숨긴다.
   const langLocked = talkingToAgent || Boolean(sessionId);
   const changeLang = (code) => {
-    if (langLocked || (langChosen && code === lang)) return;
+    setPickingLang(false);
+    if (code === lang) return;
     setLang(code);
-    setLangChosen(true);
     setMessages((m) =>
       m.length === 1 && m[0].from === 'ai'
         ? [{ from: 'ai', text: t(code, 'welcome') }]
@@ -180,11 +182,10 @@ export default function App() {
 
   // 서버의 분류 결과를 채팅창에 반영한다
   const showChatResult = (res) => {
-    setLang(res.lang);
     if (res.escalation === 'FRAUD') {
       // 사기 의심: 경고를 보여주고 묻지 않고 바로 연결한다
       say({ from: 'ai', text: res.message, warn: true });
-      doHandoff('FRAUD', res.lang);
+      doHandoff('FRAUD');
     } else if (res.escalation === 'ADVICE') {
       showOffer(res.message, 'ADVICE');
     } else if (res.intent === 'AMBIGUOUS') {
@@ -363,23 +364,32 @@ export default function App() {
 
   const loadDbEvents = async () => setDbEvents(await api.fetchEvents(lastSessionId));
 
+  // 언어를 고르기 전(또는 다시 고르는 중)에는 메인 화면 대신 언어 선택 화면만 보여준다
+  const selectingLang = !langChosen || pickingLang;
+
   const pages = {
-    home: <HomePage go={go} />,
-    product: <ProductPage go={go} back={back} />,
-    loan: <LoanPage back={back} />,
-    'deposit-list': <DepositListPage go={go} back={back} />,
-    'deposit-cancel': <DepositCancelPage go={go} back={back} />,
-    'deposit-done': <DonePage text="예금 해지 신청이 접수되었습니다. (데모 화면)" home={home} />,
-    transfer: <TransferPage go={go} back={back} />,
-    'transfer-done': <DonePage text="이체가 완료되었습니다. (데모 화면)" home={home} />,
-    certificate: <CertificatePage go={go} back={back} />,
-    'cert-issue': <CertIssuePage go={go} back={back} />,
-    'cert-done': <DonePage text="예금잔액증명서가 발급되었습니다. (데모 화면)" home={home} />,
+    home: <HomePage lang={lang} go={go} onChangeLang={langLocked ? undefined : () => setPickingLang(true)} />,
+    product: <ProductPage lang={lang} go={go} back={back} />,
+    loan: <LoanPage lang={lang} back={back} />,
+    'deposit-list': <DepositListPage lang={lang} go={go} back={back} />,
+    'deposit-cancel': <DepositCancelPage lang={lang} go={go} back={back} />,
+    'deposit-done': <DonePage lang={lang} text={tp(lang, 'doneDeposit')} home={home} />,
+    transfer: <TransferPage lang={lang} go={go} back={back} />,
+    'transfer-done': <DonePage lang={lang} text={tp(lang, 'doneTransfer')} home={home} />,
+    certificate: <CertificatePage lang={lang} go={go} back={back} />,
+    'cert-issue': <CertIssuePage lang={lang} go={go} back={back} />,
+    'cert-done': <DonePage lang={lang} text={tp(lang, 'doneCert')} home={home} />,
   };
 
   return (
     <main className="layout">
       <div className="phone">
+        {selectingLang ? (
+          <div className="screen">
+            <LanguagePage languages={LANGUAGES} onPick={changeLang} title={tp(lang, 'pickLang')} />
+          </div>
+        ) : (
+          <>
         <div className="screen">{pages[page]}</div>
 
         <GuideOverlay guide={guide} page={page} />
@@ -396,7 +406,7 @@ export default function App() {
 
         {!chatOpen && !guide && (
           <button className="ask-fab" onClick={openChat}>
-            {ticketNo ? t(lang, 'waiting') : FAB_LABEL}
+            {ticketNo ? t(lang, 'waiting') : tp(lang, 'fab')}
           </button>
         )}
         <ChatPanel
@@ -410,8 +420,6 @@ export default function App() {
           offer={offer}
           waiting={talkingToAgent}
           agentJoined={agentJoined}
-          langLocked={langLocked}
-          onChangeLang={changeLang}
           suggestions={talkingToAgent ? aiSuggestions : []}
           onEndChat={endChat}
           onAsk={onAsk}
@@ -420,6 +428,8 @@ export default function App() {
           onAcceptOffer={acceptOffer}
           onDeclineOffer={declineOffer}
         />
+          </>
+        )}
       </div>
 
       <aside className="dev-panel">

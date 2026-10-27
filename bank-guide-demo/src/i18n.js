@@ -1,6 +1,5 @@
-// 채팅창 같은 "안내 UI" 문구만 다국어로 둔다.
-// 은행 앱 화면(상품관리, 예금 ...)은 실제 앱처럼 한국어 그대로 두고,
-// 서버가 보내는 안내 문구가 "'상품관리' (My Products)"처럼 버튼 이름과 뜻을 함께 알려준다.
+// 채팅창 같은 "안내 UI" 문구와 은행 앱 화면 문구(PAGE)를 모두 다국어로 둔다.
+// 언어는 시작 화면에서 한 번 고르고, 화면·챗봇·서버 안내 문구에 똑같이 적용된다.
 //
 // 우즈베크어(uz)·네팔어(ne)·크메르어(km) 문구는 사람이 쓴 번역이 아니므로
 // 시연 전에 해당 언어를 아는 사람에게 한 번 확인받는다.
@@ -50,7 +49,7 @@ const TEXT = {
     placeholderAgent: 'Message to the agent',
     connected: 'Connected to an agent',
     prevChat: '↑ Previous conversation',
-    welcome: 'Hello! Tell me what you want to do. Choose your language with the buttons above, or just write in any language.',
+    welcome: 'Hello! Tell me what you want to do. You can write in any language.',
     greeting: 'Hello! How can I help you?',
     greetingAgent: "Hello! You're chatting with an agent. Please send your message.",
     endChat: 'End chat',
@@ -190,8 +189,141 @@ const TEXT = {
   },
 };
 
-// 채팅창 위에서 고를 수 있는 언어 (버튼에는 그 언어 이름을 그 언어로 쓴다)
+// 은행 앱 화면 문구. 시작 화면에서 고른 언어로 화면 전체가 바뀐다.
+// 안내 버튼 이름(products, deposit, earlyCancel, cancelRequest, transfer, next,
+// certificates, certBalance, issue)은 서버 data.sql의 안내 문구와 반드시 같은 표기여야 한다.
+const PAGE = {
+  ko: {
+    fab: '도움이 필요하세요?', appTitle: '실습뱅킹', checking: '입출금 통장', won: '원',
+    transfer: '이체', inquiry: '조회', products: '상품관리', history: '거래내역', certificates: '증명서', settings: '설정',
+    deposit: '예금', savings: '적금', loan: '대출', fund: '펀드', count: '{n}건', noLoan: '보유 중인 대출 상품이 없습니다.',
+    timeDeposit: '정기예금', depositMeta: '약정이율 연 3.2% · 만기 2027.03.15', detail: '상세', earlyCancel: '중도해지',
+    principal: '원금', contractRate: '약정이율', earlyRate: '중도해지이율', expectedInterest: '예상 이자 (세전)',
+    rate32: '연 3.2%', rate05: '연 0.5%',
+    cancelNotice: '만기 전에 해지하면 약정이율보다 낮은 중도해지이율이 적용됩니다.', cancelRequest: '해지 신청',
+    recipient: '받는 분', recipientValue: '김민준 (데모은행 111-222-333)', sendAmount: '보낼 금액', next: '다음',
+    certBalance: '예금잔액증명서', certTransaction: '금융거래확인서', certDebt: '부채증명서',
+    targetAccount: '대상 계좌', targetAccountValue: '입출금 통장 외 1건', baseDate: '기준일', purpose: '발급 용도',
+    purposeValue: '제출용', fee: '수수료', feeValue: '무료 (모바일)',
+    certNotice: '발급된 증명서는 PDF로 저장하거나 제출처에 바로 보낼 수 있습니다.', issue: '발급하기',
+    doneTitle: '완료', goHome: '홈으로', back: '뒤로가기',
+    doneDeposit: '예금 해지 신청이 접수되었습니다. (데모 화면)', doneTransfer: '이체가 완료되었습니다. (데모 화면)',
+    doneCert: '예금잔액증명서가 발급되었습니다. (데모 화면)',
+    pickLang: '언어를 선택하세요', changeLang: '언어 변경',
+  },
+  en: {
+    fab: 'Need help?', appTitle: 'Practice Bank', checking: 'Checking account', won: ' KRW',
+    transfer: 'Transfer', inquiry: 'Balance', products: 'My Products', history: 'History', certificates: 'Certificates', settings: 'Settings',
+    deposit: 'Deposits', savings: 'Savings', loan: 'Loans', fund: 'Funds', count: '{n}', noLoan: 'You have no loan products.',
+    timeDeposit: 'Time deposit', depositMeta: 'Rate 3.2% p.a. · Matures 2027.03.15', detail: 'Details', earlyCancel: 'Early termination',
+    principal: 'Principal', contractRate: 'Contract rate', earlyRate: 'Early termination rate', expectedInterest: 'Expected interest (pre-tax)',
+    rate32: '3.2% p.a.', rate05: '0.5% p.a.',
+    cancelNotice: 'If you terminate before maturity, the early termination rate, which is lower than the contract rate, applies.', cancelRequest: 'Request termination',
+    recipient: 'Recipient', recipientValue: 'Kim Min-jun (Demo Bank 111-222-333)', sendAmount: 'Amount to send', next: 'Next',
+    certBalance: 'Certificate of deposit balance', certTransaction: 'Financial transaction certificate', certDebt: 'Certificate of debt',
+    targetAccount: 'Account', targetAccountValue: 'Checking account + 1 more', baseDate: 'As-of date', purpose: 'Purpose',
+    purposeValue: 'For submission', fee: 'Fee', feeValue: 'Free (mobile)',
+    certNotice: 'You can save the issued certificate as a PDF or send it straight to the recipient.', issue: 'Issue',
+    doneTitle: 'Done', goHome: 'Home', back: 'Back',
+    doneDeposit: 'Your deposit termination request has been received. (demo screen)', doneTransfer: 'Your transfer is complete. (demo screen)',
+    doneCert: 'Your certificate of deposit balance has been issued. (demo screen)',
+    pickLang: 'Choose your language', changeLang: 'Change language',
+  },
+  vi: {
+    fab: 'Cần giúp đỡ?', appTitle: 'Ngân hàng thực hành', checking: 'Tài khoản thanh toán', won: ' KRW',
+    transfer: 'Chuyển khoản', inquiry: 'Tra cứu', products: 'Quản lý sản phẩm', history: 'Lịch sử giao dịch', certificates: 'Giấy chứng nhận', settings: 'Cài đặt',
+    deposit: 'Tiền gửi', savings: 'Tiết kiệm', loan: 'Khoản vay', fund: 'Quỹ', count: '{n}', noLoan: 'Bạn chưa có khoản vay nào.',
+    timeDeposit: 'Tiền gửi có kỳ hạn', depositMeta: 'Lãi suất 3,2%/năm · Đáo hạn 2027.03.15', detail: 'Chi tiết', earlyCancel: 'Tất toán trước hạn',
+    principal: 'Số tiền gốc', contractRate: 'Lãi suất hợp đồng', earlyRate: 'Lãi suất tất toán trước hạn', expectedInterest: 'Lãi dự kiến (trước thuế)',
+    rate32: '3,2%/năm', rate05: '0,5%/năm',
+    cancelNotice: 'Nếu tất toán trước hạn, lãi suất tất toán trước hạn thấp hơn lãi suất hợp đồng sẽ được áp dụng.', cancelRequest: 'Yêu cầu tất toán',
+    recipient: 'Người nhận', recipientValue: 'Kim Min-jun (Demo Bank 111-222-333)', sendAmount: 'Số tiền chuyển', next: 'Tiếp theo',
+    certBalance: 'Giấy xác nhận số dư tiền gửi', certTransaction: 'Giấy xác nhận giao dịch tài chính', certDebt: 'Giấy xác nhận nợ',
+    targetAccount: 'Tài khoản', targetAccountValue: 'Tài khoản thanh toán và 1 tài khoản khác', baseDate: 'Ngày chốt', purpose: 'Mục đích',
+    purposeValue: 'Để nộp', fee: 'Phí', feeValue: 'Miễn phí (di động)',
+    certNotice: 'Bạn có thể lưu giấy đã cấp dưới dạng PDF hoặc gửi ngay cho nơi tiếp nhận.', issue: 'Cấp',
+    doneTitle: 'Hoàn tất', goHome: 'Về trang chủ', back: 'Quay lại',
+    doneDeposit: 'Yêu cầu tất toán tiền gửi đã được tiếp nhận. (màn hình demo)', doneTransfer: 'Đã chuyển khoản xong. (màn hình demo)',
+    doneCert: 'Đã cấp giấy xác nhận số dư tiền gửi. (màn hình demo)',
+    pickLang: 'Chọn ngôn ngữ', changeLang: 'Đổi ngôn ngữ',
+  },
+  zh: {
+    fab: '需要帮助吗？', appTitle: '实习银行', checking: '活期账户', won: ' KRW',
+    transfer: '转账', inquiry: '查询', products: '产品管理', history: '交易明细', certificates: '证明书', settings: '设置',
+    deposit: '存款', savings: '储蓄', loan: '贷款', fund: '基金', count: '{n}笔', noLoan: '您没有持有的贷款产品。',
+    timeDeposit: '定期存款', depositMeta: '约定利率 年3.2% · 到期 2027.03.15', detail: '详情', earlyCancel: '提前解约',
+    principal: '本金', contractRate: '约定利率', earlyRate: '提前解约利率', expectedInterest: '预计利息（税前）',
+    rate32: '年3.2%', rate05: '年0.5%',
+    cancelNotice: '到期前解约将适用低于约定利率的提前解约利率。', cancelRequest: '申请解约',
+    recipient: '收款人', recipientValue: '金敏俊（示范银行 111-222-333）', sendAmount: '转账金额', next: '下一步',
+    certBalance: '存款余额证明', certTransaction: '金融交易确认书', certDebt: '负债证明',
+    targetAccount: '对象账户', targetAccountValue: '活期账户等 1 个', baseDate: '基准日', purpose: '开具用途',
+    purposeValue: '提交用', fee: '手续费', feeValue: '免费（手机）',
+    certNotice: '已开具的证明可保存为 PDF，或直接发送给提交方。', issue: '开具',
+    doneTitle: '完成', goHome: '回到首页', back: '返回',
+    doneDeposit: '存款解约申请已受理。（演示画面）', doneTransfer: '转账已完成。（演示画面）',
+    doneCert: '存款余额证明已开具。（演示画面）',
+    pickLang: '请选择语言', changeLang: '更改语言',
+  },
+  uz: {
+    fab: 'Yordam kerakmi?', appTitle: 'Amaliy bank', checking: 'Joriy hisob', won: ' KRW',
+    transfer: 'Oʻtkazma', inquiry: 'Maʼlumot', products: 'Mening mahsulotlarim', history: 'Operatsiyalar', certificates: 'Maʼlumotnomalar', settings: 'Sozlamalar',
+    deposit: 'Omonatlar', savings: 'Jamgʻarma', loan: 'Kreditlar', fund: 'Fondlar', count: '{n} ta', noLoan: 'Sizda kredit mahsulotlari yoʻq.',
+    timeDeposit: 'Muddatli omonat', depositMeta: 'Foiz yiliga 3,2% · Muddati 2027.03.15', detail: 'Batafsil', earlyCancel: 'Muddatidan oldin yopish',
+    principal: 'Asosiy summa', contractRate: 'Shartnoma foizi', earlyRate: 'Muddatidan oldin yopish foizi', expectedInterest: 'Kutilayotgan foiz (soliqsiz)',
+    rate32: 'yiliga 3,2%', rate05: 'yiliga 0,5%',
+    cancelNotice: 'Muddatidan oldin yopsangiz, shartnoma foizidan past foiz qoʻllanadi.', cancelRequest: 'Yopish uchun ariza',
+    recipient: 'Qabul qiluvchi', recipientValue: 'Kim Min-jun (Demo Bank 111-222-333)', sendAmount: 'Yuboriladigan summa', next: 'Keyingi',
+    certBalance: 'Omonat qoldigʻi maʼlumotnomasi', certTransaction: 'Moliyaviy operatsiyalar tasdigʻi', certDebt: 'Qarz maʼlumotnomasi',
+    targetAccount: 'Hisob', targetAccountValue: 'Joriy hisob va yana 1 ta', baseDate: 'Sana', purpose: 'Maqsad',
+    purposeValue: 'Topshirish uchun', fee: 'Komissiya', feeValue: 'Bepul (mobil)',
+    certNotice: 'Berilgan maʼlumotnomani PDF sifatida saqlash yoki darhol yuborish mumkin.', issue: 'Olish',
+    doneTitle: 'Tayyor', goHome: 'Bosh sahifa', back: 'Orqaga',
+    doneDeposit: 'Omonatni yopish arizasi qabul qilindi. (demo ekran)', doneTransfer: 'Oʻtkazma bajarildi. (demo ekran)',
+    doneCert: 'Omonat qoldigʻi maʼlumotnomasi berildi. (demo ekran)',
+    pickLang: 'Tilni tanlang', changeLang: 'Tilni oʻzgartirish',
+  },
+  ne: {
+    fab: 'मद्दत चाहियो?', appTitle: 'अभ्यास बैंक', checking: 'चल्ती खाता', won: ' KRW',
+    transfer: 'ट्रान्सफर', inquiry: 'हेर्नुहोस्', products: 'मेरा उत्पादन', history: 'कारोबार विवरण', certificates: 'प्रमाणपत्र', settings: 'सेटिङ',
+    deposit: 'निक्षेप', savings: 'बचत', loan: 'ऋण', fund: 'कोष', count: '{n}', noLoan: 'तपाईंसँग कुनै ऋण उत्पादन छैन।',
+    timeDeposit: 'मुद्दती निक्षेप', depositMeta: 'ब्याज दर वार्षिक 3.2% · म्याद 2027.03.15', detail: 'विवरण', earlyCancel: 'म्याद अगावै बन्द',
+    principal: 'मूल रकम', contractRate: 'सम्झौता ब्याज दर', earlyRate: 'म्याद अगावै बन्द ब्याज दर', expectedInterest: 'अनुमानित ब्याज (कर अघि)',
+    rate32: 'वार्षिक 3.2%', rate05: 'वार्षिक 0.5%',
+    cancelNotice: 'म्याद अगावै बन्द गरेमा सम्झौता ब्याज दरभन्दा कम ब्याज दर लागू हुन्छ।', cancelRequest: 'बन्द गर्ने अनुरोध',
+    recipient: 'प्राप्तकर्ता', recipientValue: 'Kim Min-jun (Demo Bank 111-222-333)', sendAmount: 'पठाउने रकम', next: 'अर्को',
+    certBalance: 'निक्षेप मौज्दात प्रमाणपत्र', certTransaction: 'वित्तीय कारोबार पुष्टि पत्र', certDebt: 'ऋण प्रमाणपत्र',
+    targetAccount: 'खाता', targetAccountValue: 'चल्ती खाता सहित १ थप', baseDate: 'मिति', purpose: 'उद्देश्य',
+    purposeValue: 'बुझाउनका लागि', fee: 'शुल्क', feeValue: 'निःशुल्क (मोबाइल)',
+    certNotice: 'जारी गरिएको प्रमाणपत्र PDF मा सेभ गर्न वा सिधै पठाउन सकिन्छ।', issue: 'जारी गर्नुहोस्',
+    doneTitle: 'सम्पन्न', goHome: 'गृहपृष्ठ', back: 'पछाडि',
+    doneDeposit: 'निक्षेप बन्द गर्ने अनुरोध प्राप्त भयो। (डेमो स्क्रिन)', doneTransfer: 'ट्रान्सफर सम्पन्न भयो। (डेमो स्क्रिन)',
+    doneCert: 'निक्षेप मौज्दात प्रमाणपत्र जारी भयो। (डेमो स्क्रिन)',
+    pickLang: 'भाषा छान्नुहोस्', changeLang: 'भाषा परिवर्तन',
+  },
+  km: {
+    fab: 'ត្រូវការជំនួយទេ?', appTitle: 'ធនាគារអនុវត្ត', checking: 'គណនីចរន្ត', won: ' KRW',
+    transfer: 'ផ្ទេរប្រាក់', inquiry: 'មើល', products: 'ផលិតផលរបស់ខ្ញុំ', history: 'ប្រវត្តិប្រតិបត្តិការ', certificates: 'លិខិតបញ្ជាក់', settings: 'ការកំណត់',
+    deposit: 'គណនីសន្សំ', savings: 'សន្សំ', loan: 'ប្រាក់កម្ចី', fund: 'មូលនិធិ', count: '{n}', noLoan: 'អ្នកមិនមានផលិតផលប្រាក់កម្ចីទេ។',
+    timeDeposit: 'គណនីសន្សំមានកំណត់', depositMeta: 'អត្រា 3.2% ក្នុងមួយឆ្នាំ · ផុតកំណត់ 2027.03.15', detail: 'ព័ត៌មានលម្អិត', earlyCancel: 'បិទមុនកំណត់',
+    principal: 'ប្រាក់ដើម', contractRate: 'អត្រាតាមកិច្ចសន្យា', earlyRate: 'អត្រាបិទមុនកំណត់', expectedInterest: 'ការប្រាក់ប៉ាន់ស្មាន (មុនពន្ធ)',
+    rate32: '3.2% ក្នុងមួយឆ្នាំ', rate05: '0.5% ក្នុងមួយឆ្នាំ',
+    cancelNotice: 'ប្រសិនបើបិទមុនកំណត់ អត្រាបិទមុនកំណត់ដែលទាបជាងអត្រាតាមកិច្ចសន្យានឹងត្រូវអនុវត្ត។', cancelRequest: 'ស្នើសុំបិទ',
+    recipient: 'អ្នកទទួល', recipientValue: 'Kim Min-jun (Demo Bank 111-222-333)', sendAmount: 'ចំនួនទឹកប្រាក់ផ្ញើ', next: 'បន្ទាប់',
+    certBalance: 'លិខិតបញ្ជាក់សមតុល្យគណនីសន្សំ', certTransaction: 'លិខិតបញ្ជាក់ប្រតិបត្តិការហិរញ្ញវត្ថុ', certDebt: 'លិខិតបញ្ជាក់បំណុល',
+    targetAccount: 'គណនី', targetAccountValue: 'គណនីចរន្ត និងមួយទៀត', baseDate: 'កាលបរិច្ឆេទយោង', purpose: 'គោលបំណង',
+    purposeValue: 'សម្រាប់ដាក់ជូន', fee: 'ថ្លៃសេវា', feeValue: 'ឥតគិតថ្លៃ (ទូរស័ព្ទ)',
+    certNotice: 'លិខិតដែលបានចេញអាចរក្សាទុកជា PDF ឬផ្ញើទៅអ្នកទទួលភ្លាមៗ។', issue: 'ចេញលិខិត',
+    doneTitle: 'រួចរាល់', goHome: 'ទៅទំព័រដើម', back: 'ត្រឡប់ក្រោយ',
+    doneDeposit: 'សំណើបិទគណនីសន្សំត្រូវបានទទួល។ (អេក្រង់សាកល្បង)', doneTransfer: 'ការផ្ទេរប្រាក់បានបញ្ចប់។ (អេក្រង់សាកល្បង)',
+    doneCert: 'លិខិតបញ្ជាក់សមតុល្យគណនីសន្សំត្រូវបានចេញ។ (អេក្រង់សាកល្បង)',
+    pickLang: 'សូមជ្រើសរើសភាសា', changeLang: 'ប្តូរភាសា',
+  },
+};
+
+// 시작 화면에서 고를 수 있는 언어 (버튼에는 그 언어 이름을 그 언어로 쓴다)
 export const LANGUAGES = [
+  { code: 'ko', label: '한국어' },
   { code: 'en', label: 'English' },
   { code: 'zh', label: '中文' },
   { code: 'vi', label: 'Tiếng Việt' },
@@ -200,6 +332,10 @@ export const LANGUAGES = [
   { code: 'km', label: 'ខ្មែរ' },
 ];
 
-export const FAB_LABEL = 'Need help? · 도움이 필요하세요?';
-
 export const t = (lang, key) => (TEXT[lang] ?? TEXT.en)[key] ?? TEXT.en[key];
+
+// 은행 앱 화면 문구. {n} 같은 자리표시자는 vars로 채운다.
+export const tp = (lang, key, vars) => {
+  const s = (PAGE[lang] ?? PAGE.en)[key] ?? PAGE.en[key];
+  return vars ? s.replace(/\{(\w+)\}/g, (_, k) => vars[k]) : s;
+};
