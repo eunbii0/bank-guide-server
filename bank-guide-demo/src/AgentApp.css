@@ -284,6 +284,10 @@
   font-size: 13px;
   cursor: pointer;
 }
+.templates button.templates-toggle {
+  border-style: dashed;
+  color: var(--muted);
+}
 .templates.ai span::before {
   content: '✨ ';
 }
