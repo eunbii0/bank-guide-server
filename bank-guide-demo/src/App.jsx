@@ -43,6 +43,7 @@ export default function App() {
   // 시연 고객. 고객 정보(체류자격·만료일)는 서버에만 있고, 화면은 id만 들고 있다.
   const [customerId, setCustomerId] = useState(INITIAL_CUSTOMER);
   const [customers, setCustomers] = useState([]);
+  const [customerOpen, setCustomerOpen] = useState(false);
 
   // 이 화면을 연 고객의 대화 전체를 묶는 id (4단계: 서버가 채팅 원문을 이 id로 저장). 고객을 바꾸면 새로 만든다.
   const [conversationId, setConversationId] = useState(newId);
@@ -168,6 +169,7 @@ export default function App() {
 
   // 서버와 주고받은 내용 (오른쪽 패널)
   const [traffic, setTraffic] = useState([]);
+  const [logsOpen, setLogsOpen] = useState(false);
   const [dbEvents, setDbEvents] = useState(null);
   const [lastSessionId, setLastSessionId] = useState(null);
   const log = (dir, label, data) => setTraffic((prev) => [...prev, { t: now(), dir, label, data }]);
@@ -632,29 +634,79 @@ export default function App() {
         )}
       </div>
 
-      <aside className="dev-panel">
-        <div className="customer-box">
-          <label htmlFor="customer-select">시연 고객 (데모용 가상 고객)</label>
-          <select id="customer-select" value={customerId} onChange={(e) => switchCustomer(e.target.value)}>
-            {customers.length === 0 && <option value={customerId}>{customerId}</option>}
+      <aside className="dev-panel" aria-label="시연 설정">
+        <section className="customer-box" aria-labelledby="customer-heading">
+          <h2 id="customer-heading" className="customer-toggle-heading">
+            <button
+              type="button"
+              className="customer-toggle"
+              aria-expanded={customerOpen}
+              aria-controls="customer-details"
+              onClick={() => setCustomerOpen((open) => !open)}
+            >
+              <span className="customer-toggle-summary">
+                <span>시연 고객</span>
+                <span className="customer-current">{customer?.name ?? `고객 ${customerId}`}</span>
+              </span>
+              <span className="customer-toggle-action">{customerOpen ? '접기 −' : '펼치기 +'}</span>
+            </button>
+          </h2>
+          <div id="customer-details" className="customer-details" hidden={!customerOpen}>
+          {customer ? (
+            <div className="customer-profile">
+              <span className="profile-caption">선택한 고객 정보</span>
+              <h3>{customer.name}</h3>
+              <dl className="customer-facts">
+                <div><dt>국적</dt><dd>{customer.nationality}</dd></div>
+                <div><dt>체류자격</dt><dd>{customer.visaType}</dd></div>
+                <div><dt>체류 만료일</dt><dd>{customer.stayExpiry ?? '만료 없음'}</dd></div>
+                <div><dt>선호 언어</dt><dd>{LANGUAGES.find((l) => l.code === customer.lang)?.label ?? customer.lang}</dd></div>
+              </dl>
+            </div>
+          ) : (
+            <p className="customer-empty" role="status">고객 {customerId} · 고객 정보를 불러오지 못했습니다. 서버 연결을 확인해 주세요.</p>
+          )}
+          <p className="customer-intro">고객을 선택하고 앱에서 시연을 시작하세요.</p>
+          <div className="customer-options" role="group" aria-label="시연 고객 선택">
             {customers.map((c) => (
-              <option key={c.customerId} value={c.customerId}>
-                {c.customerId}. {c.name} ({c.nationality}, {c.visaType})
-              </option>
+              <button
+                key={c.customerId}
+                type="button"
+                className={`customer-option${c.customerId === customerId ? ' selected' : ''}`}
+                aria-pressed={c.customerId === customerId}
+                onClick={() => c.customerId !== customerId && switchCustomer(c.customerId)}
+              >
+                <span className="customer-avatar" aria-hidden="true">{c.customerId}</span>
+                <span className="customer-option-copy">
+                  <strong>{c.name}</strong>
+                  <span>{c.nationality} · {c.visaType}</span>
+                </span>
+                <span className="customer-selection">{c.customerId === customerId ? '선택됨' : '선택'}</span>
+              </button>
             ))}
-          </select>
-          <p className="dev-hint">
-            {customer && <>체류 만료 {customer.stayExpiry ?? '없음'} · 선호 언어 {customer.lang} · </>}
-            바꾸면 대화를 처음부터 다시 시작합니다. 주소에 <code>?customer=B</code>로도 고를 수 있어요.
+          </div>
+          <p className="customer-note">
+            고객을 변경하면 대화와 앱 화면이 처음부터 시작됩니다.
           </p>
-        </div>
+          </div>
+        </section>
 
-        <h2>서버 통신 로그</h2>
+        <button
+          type="button"
+          className="log-toggle"
+          aria-expanded={logsOpen}
+          aria-controls="server-logs"
+          onClick={() => setLogsOpen((open) => !open)}
+        >
+          <span>서버 통신 로그 <span className="log-count">{traffic.length}</span></span>
+          <span>{logsOpen ? '접기 −' : '펼치기 +'}</span>
+        </button>
+        <section id="server-logs" className="log-content" hidden={!logsOpen} aria-label="서버 통신 로그">
         <p className="dev-hint">
           화면 ↔ Spring Boot 서버(8080)가 주고받은 내용입니다. 멈춤 판단: {STUCK_SECONDS}초
         </p>
         <p className="dev-state">
-          고객 <code>{customerId}</code> · 현재 화면 <code>{page}</code> · 고객 언어 <code>{lang}</code>
+          고객 <code>{customerId}</code> · 현재 화면 <code>{page}</code> · 고객 언어 <code>{lang ?? '미선택'}</code>
           {sessionId && (
             <>
               {' '}
@@ -703,6 +755,8 @@ export default function App() {
             )}
           </div>
         )}
+
+        </section>
 
         {ticketNo && <TicketPreview ticketNo={ticketNo} />}
       </aside>
