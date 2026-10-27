@@ -10,3 +10,7 @@ spring:
         options:
           model: qwen3:4b-instruct
           temperature: 0.2
+  # PC에서 도는 모델은 OpenAI보다 느려서 응답 대기 시간을 늘린다 (기본 application.yml은 10초)
+  http:
+    client:
+      read-timeout: 60s

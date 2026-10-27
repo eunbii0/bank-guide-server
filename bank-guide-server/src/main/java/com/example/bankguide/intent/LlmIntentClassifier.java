@@ -27,14 +27,16 @@ public class LlmIntentClassifier {
             Rules for "intent":
             - If exactly one service clearly fits, put its code in "intent" and leave "candidates" empty.
             - If two or more services could fit, set "intent" to "AMBIGUOUS" and list their codes in "candidates".
-            - If none fits (including services not in the list, such as installment savings, loans,
-              exchange rates, overseas remittance or account opening), set "intent" to "UNKNOWN".
+            - If none fits (including services not in the list, such as loans, exchange rates,
+              overseas remittance or opening a new checking account), set "intent" to "UNKNOWN".
             - Never invent a code that is not in the list.
             - Questions about how to do something ("How do I get a credit card?", "Can I open a deposit?")
               are NOT advice requests. Classify them by the service they ask about.
               Examples:
                 "How do I get a credit card?" -> intent CREDIT_CARD, escalation NONE
                 "How can I open a time deposit?" -> intent TIME_DEPOSIT_OPEN, escalation NONE
+                "I want to start an installment savings" -> intent SAVINGS_OPEN, escalation NONE
+                "적금 들고 싶어요" -> intent SAVINGS_OPEN, escalation NONE
                 "How do I send money to another bank?" -> intent TRANSFER, escalation NONE
                 "신용카드는 어떻게 만들어요?" -> intent CREDIT_CARD, escalation NONE
               Only a question that asks for a judgment stays ADVICE, even if it names a service:
@@ -43,8 +45,9 @@ public class LlmIntentClassifier {
             - If the customer only wants a card but does not say credit or debit, set "intent" to "AMBIGUOUS"
               and list both card codes.
             - Greetings, thanks and small talk ("hello", "thank you", "안녕하세요") are "UNKNOWN".
-            - Overseas remittance, opening a new bank account and loans are NOT in the list: "UNKNOWN",
+            - Overseas remittance, opening a new checking (입출금) account and loans are NOT in the list: "UNKNOWN",
               even though they mention sending money or an account.
+              Opening an installment savings (적금) or a time deposit (정기예금) IS in the list.
             - Account numbers or ID numbers in the sentence are normal personal data, not a sign of fraud.
 
             Rules for "language":
