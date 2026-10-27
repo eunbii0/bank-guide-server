@@ -85,8 +85,15 @@ export const changeTicketStatus = (ticketNo, status) =>
     body: JSON.stringify({ status }),
   });
 
-/** 상담원 답장(한국어). 서버가 고객 언어로 번역해 저장한다 → 바뀐 티켓 */
-export const replyTicket = (ticketNo, text) => post(`/api/tickets/${ticketNo}/reply`, { text });
+/** 상담원 답장 번역이 실패했을 때 서버가 보내는 오류 메시지 (422). 이때 답장은 저장되지 않는다 */
+export const TRANSLATION_FAILED = 'TRANSLATION_FAILED';
+
+/**
+ * 상담원 답장(한국어). 서버가 고객 언어로 번역해 저장한다 → 바뀐 티켓.
+ * sendOriginal=true면 번역 없이 입력한 그대로 보낸다 (번역 실패 후 상담원이 고른 경우)
+ */
+export const replyTicket = (ticketNo, text, sendOriginal = false) =>
+  post(`/api/tickets/${ticketNo}/reply`, { text, sendOriginal });
 
 /** 상담 중 고객이 상담원에게 보내는 말(고객 언어 그대로). 서버가 한국어로 번역해 저장한다 */
 export const sendCustomerMessage = (ticketNo, text) => post(`/api/tickets/${ticketNo}/customer-message`, { text });

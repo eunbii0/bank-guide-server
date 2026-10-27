@@ -62,7 +62,7 @@ public class HandoffController {
     /** 상담원 답장 (한국어) → 고객 언어로 번역해 저장 */
     @PostMapping("/tickets/{ticketNo}/reply")
     public TicketView reply(@PathVariable String ticketNo, @RequestBody ReplyRequest request) {
-        return handoffService.reply(ticketNo, request.text());
+        return handoffService.reply(ticketNo, request.text(), request.original());
     }
 
     /** 상담 중 고객이 상담원에게 보내는 말 (고객 언어 그대로). 서버가 한국어로 번역해 저장한다 */

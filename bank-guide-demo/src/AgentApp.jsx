@@ -99,20 +99,30 @@ export default function AgentApp() {
     }
   };
 
-  const send = async (e) => {
-    e.preventDefault();
+  // 번역이 실패하면 보내지 않고 [다시 번역] / [입력한 그대로 보내기]를 고르게 한다
+  const [translateFailed, setTranslateFailed] = useState(false);
+  useEffect(() => setTranslateFailed(false), [selected]);
+
+  const sendReply = async (sendOriginal) => {
     const text = reply.trim();
     if (!text || sending) return;
     setSending(true);
     try {
-      setDetail(await api.replyTicket(detail.ticketNo, text));
+      setDetail(await api.replyTicket(detail.ticketNo, text, sendOriginal));
       setReply('');
+      setTranslateFailed(false);
       setTickets(await api.fetchTickets());
     } catch (err) {
-      setError(message(err));
+      if (err.message === api.TRANSLATION_FAILED) setTranslateFailed(true);
+      else setError(message(err));
     } finally {
       setSending(false);
     }
+  };
+
+  const send = (e) => {
+    e.preventDefault();
+    sendReply(false);
   };
 
   const shown = tickets.filter((t) => queue === 'ALL' || t.queue === queue);
@@ -262,6 +272,25 @@ export default function AgentApp() {
                       {s}
                     </button>
                   ))}
+              </div>
+            )}
+            {translateFailed && detail.status !== 'CLOSED' && (
+              <div className="translate-failed" role="alert">
+                <p>
+                  <strong>번역에 실패해 보내지 않았습니다.</strong> 그대로 보내면 고객에게 입력한 문장이 번역 없이 보입니다.
+                  고객이 읽을 수 있게 쉬운 영어로 고쳐 쓴 뒤 보내도 됩니다.
+                </p>
+                <div className="translate-failed-actions">
+                  <button type="button" onClick={() => sendReply(false)} disabled={sending}>
+                    다시 번역
+                  </button>
+                  <button type="button" onClick={() => sendReply(true)} disabled={sending}>
+                    입력한 그대로 보내기
+                  </button>
+                  <button type="button" className="ghost" onClick={() => setTranslateFailed(false)} disabled={sending}>
+                    취소
+                  </button>
+                </div>
               </div>
             )}
             <form className="reply" onSubmit={send}>
