@@ -20,6 +20,14 @@ const TEXT = {
     connect: '상담원 연결',
     continueSelf: '혼자 계속할게요',
     waiting: '상담원 연결 대기 중',
+    // 챗봇 메뉴 + 가입 자격 판단
+    noChanged: '아니요, 바뀌었어요',
+    eligible: '가입 가능',
+    notEligible: '가입 불가',
+    select: '이걸로 할게요',
+    termLabel: '가입 기간을 고르세요',
+    months: '{n}개월',
+    anotherTask: '다른 업무도 도와드릴까요?',
     closed: '상담이 종료되었어요. 필요하시면 다시 말씀해 주세요.',
     placeholderAgent: '상담원에게 보낼 메시지',
     connected: '상담원과 연결됨',
@@ -29,7 +37,7 @@ const TEXT = {
     greetingAgent: '안녕하세요! 상담원과 대화 중이에요. 메시지를 보내 주세요.',
     endChat: '상담 종료',
     endConfirm: '상담을 종료할까요?',
-    examples: ['예금을 중도해지하고 싶어요', '다른 계좌로 이체하고 싶어요', '예금잔액증명서를 발급받고 싶어요'],
+    examples: ['체크카드 만들고 싶어요', '적금 들고 싶어요', '예금을 중도해지하고 싶어요'],
     examplesAgent: ['제 영문 이름이 계속 오류가 나요', '어느 버튼을 눌러야 하는지 모르겠어요', '이 단계를 도와주실 수 있나요?'],
   },
   en: {
@@ -46,6 +54,14 @@ const TEXT = {
     connect: 'Connect to an agent',
     continueSelf: "I'll continue myself",
     waiting: 'Waiting for an agent',
+    // 챗봇 메뉴 + 가입 자격 판단
+    noChanged: 'No, it has changed',
+    eligible: 'Available',
+    notEligible: 'Not available',
+    select: 'Choose this',
+    termLabel: 'Choose a term',
+    months: '{n} months',
+    anotherTask: 'Is there anything else I can help you with?',
     closed: 'The chat with the agent has ended. Ask me again if you need anything.',
     placeholderAgent: 'Message to the agent',
     connected: 'Connected to an agent',
@@ -55,7 +71,7 @@ const TEXT = {
     greetingAgent: "Hello! You're chatting with an agent. Please send your message.",
     endChat: 'End chat',
     endConfirm: 'End the chat with the agent?',
-    examples: ['I want to close my deposit early', 'How do I send money to another account?', 'I need a certificate of deposit balance'],
+    examples: ['I want to get a debit card', 'I want to open a savings account', 'I want to close my deposit early'],
     examplesAgent: ['My name does not work', 'I cannot find the button', 'Can you help me with this step?'],
   },
   vi: {
@@ -72,6 +88,14 @@ const TEXT = {
     connect: 'Kết nối nhân viên',
     continueSelf: 'Tôi sẽ tự làm tiếp',
     waiting: 'Đang chờ nhân viên tư vấn',
+    // 챗봇 메뉴 + 가입 자격 판단
+    noChanged: 'Không, đã thay đổi',
+    eligible: 'Có thể đăng ký',
+    notEligible: 'Không thể đăng ký',
+    select: 'Chọn sản phẩm này',
+    termLabel: 'Chọn kỳ hạn',
+    months: '{n} tháng',
+    anotherTask: 'Tôi có thể giúp bạn việc khác không?',
     closed: 'Cuộc tư vấn đã kết thúc. Hãy hỏi lại nếu bạn cần thêm.',
     placeholderAgent: 'Tin nhắn gửi nhân viên',
     connected: 'Đã kết nối với nhân viên',
@@ -81,7 +105,7 @@ const TEXT = {
     greetingAgent: 'Xin chào! Bạn đang trò chuyện với nhân viên. Hãy gửi tin nhắn nhé.',
     endChat: 'Kết thúc',
     endConfirm: 'Kết thúc cuộc tư vấn với nhân viên?',
-    examples: ['Tôi muốn rút tiền gửi trước hạn', 'Tôi muốn chuyển tiền sang tài khoản khác', 'Tôi muốn xin giấy xác nhận số dư tiền gửi'],
+    examples: ['Tôi muốn làm thẻ ghi nợ', 'Tôi muốn mở tiết kiệm góp', 'Tôi muốn tất toán tiền gửi trước hạn'],
     examplesAgent: ['Tên của tôi không được chấp nhận', 'Tôi không tìm thấy nút', 'Bạn có thể giúp tôi bước này không?'],
   },
   zh: {
@@ -98,6 +122,14 @@ const TEXT = {
     connect: '转接客服',
     continueSelf: '我自己继续',
     waiting: '正在等待客服',
+    // 챗봇 메뉴 + 가입 자격 판단
+    noChanged: '不对，已经变了',
+    eligible: '可以办理',
+    notEligible: '无法办理',
+    select: '选这个',
+    termLabel: '请选择期限',
+    months: '{n}个月',
+    anotherTask: '还需要办理其他业务吗？',
     closed: '咨询已结束。如需帮助，请再次告诉我。',
     placeholderAgent: '发给客服的消息',
     connected: '已连接客服',
@@ -107,7 +139,7 @@ const TEXT = {
     greetingAgent: '您好！您正在与客服对话，请发送消息。',
     endChat: '结束咨询',
     endConfirm: '要结束与客服的咨询吗？',
-    examples: ['我想提前解约定期存款', '我想转账到其他账户', '我想开存款余额证明'],
+    examples: ['我想办理借记卡', '我想开立零存整取', '我想提前解约定期存款'],
     examplesAgent: ['我的名字无法通过', '我找不到按钮', '您能帮我完成这一步吗？'],
   },
   uz: {
@@ -133,7 +165,7 @@ const TEXT = {
     greetingAgent: 'Salom! Siz xodim bilan suhbatlashyapsiz. Xabaringizni yuboring.',
     endChat: 'Tugatish',
     endConfirm: 'Xodim bilan suhbatni tugatamizmi?',
-    examples: ['Omonatni muddatidan oldin yopmoqchiman', 'Boshqa hisobga qanday pul yuboraman?', 'Omonat qoldigʻi maʼlumotnomasi kerak'],
+    examples: ['Debet karta ochmoqchiman', 'Jamgʻarma hisobi ochmoqchiman', 'Omonatni muddatidan oldin yopmoqchiman'],
     examplesAgent: ['Ismim qabul qilinmayapti', 'Tugmani topa olmayapman', 'Bu bosqichda yordam bera olasizmi?'],
   },
   ne: {
@@ -159,7 +191,7 @@ const TEXT = {
     greetingAgent: 'नमस्ते! तपाईं कर्मचारीसँग कुराकानी गर्दै हुनुहुन्छ। सन्देश पठाउनुहोस्।',
     endChat: 'सकाउनुहोस्',
     endConfirm: 'कर्मचारीसँगको कुराकानी सकाउने?',
-    examples: ['म्याद अगावै निक्षेप बन्द गर्न चाहन्छु', 'अर्को खातामा पैसा कसरी पठाउने?', 'निक्षेप मौज्दात प्रमाणपत्र चाहियो'],
+    examples: ['म डेबिट कार्ड बनाउन चाहन्छु', 'म बचत खाता खोल्न चाहन्छु', 'म्याद अगावै निक्षेप बन्द गर्न चाहन्छु'],
     examplesAgent: ['मेरो नाम स्वीकार भइरहेको छैन', 'मैले बटन भेट्टाउन सकिनँ', 'यो चरणमा मद्दत गर्न सक्नुहुन्छ?'],
   },
   km: {
@@ -185,13 +217,14 @@ const TEXT = {
     greetingAgent: 'សួស្តី! អ្នកកំពុងសន្ទនាជាមួយបុគ្គលិក។ សូមផ្ញើសាររបស់អ្នក។',
     endChat: 'បញ្ចប់',
     endConfirm: 'បញ្ចប់ការសន្ទនាជាមួយបុគ្គលិកឬទេ?',
-    examples: ['ខ្ញុំចង់បិទគណនីសន្សំមុនកំណត់', 'តើខ្ញុំផ្ញើប្រាក់ទៅគណនីផ្សេងដោយរបៀបណា?', 'ខ្ញុំត្រូវការលិខិតបញ្ជាក់សមតុល្យគណនីសន្សំ'],
+    examples: ['ខ្ញុំចង់ធ្វើកាតឥណពន្ធ', 'ខ្ញុំចង់បើកគណនីសន្សំប្រចាំខែ', 'ខ្ញុំចង់បិទគណនីសន្សំមុនកំណត់'],
     examplesAgent: ['ឈ្មោះរបស់ខ្ញុំមិនត្រូវបានទទួលយកទេ', 'ខ្ញុំរកប៊ូតុងមិនឃើញ', 'តើអ្នកអាចជួយខ្ញុំក្នុងជំហាននេះបានទេ?'],
   },
 };
 
 // 채팅창 위에서 고를 수 있는 언어 (버튼에는 그 언어 이름을 그 언어로 쓴다)
 export const LANGUAGES = [
+  { code: 'ko', label: '한국어' },
   { code: 'en', label: 'English' },
   { code: 'zh', label: '中文' },
   { code: 'vi', label: 'Tiếng Việt' },
@@ -203,3 +236,6 @@ export const LANGUAGES = [
 export const FAB_LABEL = 'Need help? · 도움이 필요하세요?';
 
 export const t = (lang, key) => (TEXT[lang] ?? TEXT.en)[key] ?? TEXT.en[key];
+
+/** 6 → '6개월' / '6 months' */
+export const months = (lang, n) => t(lang, 'months').replace('{n}', n);
