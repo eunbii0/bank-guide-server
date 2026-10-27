@@ -4,6 +4,7 @@ package com.example.bankguide.engine;
 public class GuideSession {
 
     private final String sessionId;
+    private final String conversationId; // 이 안내를 시작한 대화. 행동 기록(guide_event)에 함께 남긴다
     private final String intent;
     private final String lang;
     private final Integer term; // 예금·적금 가입 기간(개월). 그 밖의 업무는 null
@@ -11,11 +12,12 @@ public class GuideSession {
     private int offPathCount;
 
     public GuideSession(String sessionId, String intent, String lang) {
-        this(sessionId, intent, lang, null);
+        this(sessionId, null, intent, lang, null);
     }
 
-    public GuideSession(String sessionId, String intent, String lang, Integer term) {
+    public GuideSession(String sessionId, String conversationId, String intent, String lang, Integer term) {
         this.sessionId = sessionId;
+        this.conversationId = conversationId;
         this.intent = intent;
         this.lang = lang;
         this.term = term;
@@ -31,6 +33,7 @@ public class GuideSession {
     }
 
     public String getSessionId() { return sessionId; }
+    public String getConversationId() { return conversationId; }
     public String getIntent() { return intent; }
     public String getLang() { return lang; }
     public Integer getTerm() { return term; }

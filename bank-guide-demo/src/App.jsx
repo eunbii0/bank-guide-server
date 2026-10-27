@@ -430,8 +430,8 @@ export default function App() {
 
   const beginGuide = async (intent, term = null) => {
     try {
-      log('out', 'POST /api/guide/start', { intent, page, lang, term });
-      const res = await api.startGuide(intent, page, lang, term);
+      log('out', 'POST /api/guide/start', { conversationId, intent, page, lang, term });
+      const res = await api.startGuide(conversationId, intent, page, lang, term);
       log('in', 'start', res);
       setSessionId(res.sessionId);
       setLastSessionId(res.sessionId);

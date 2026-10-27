@@ -82,6 +82,8 @@ public class HandoffService {
 
         guideService.endForHandoff(req.sessionId(), reason);
 
+        // 개인정보 최소화: 상담원에게는 지금 진행 중인 안내의 기록만 넘긴다.
+        // 같은 대화에서 그만둔 다른 안내 기록은 서비스 개선용으로 저장만 하고 요약에 넣지 않는다
         List<EventView> events = req.sessionId() == null ? List.of() : guideService.events(req.sessionId());
         List<MessageView> messages = messages(req.conversationId());
         HandoffNote.Input input = new HandoffNote.Input(lang, intentNameKo, reason, req.page(), events, messages);

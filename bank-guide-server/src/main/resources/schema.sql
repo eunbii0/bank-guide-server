@@ -66,14 +66,17 @@ CREATE TABLE intent_keyword (
     FOREIGN KEY (task_code) REFERENCES guide_task (code)
 );
 
--- 고객 행동 기록 (4단계 요약의 재료)
+-- 고객 행동 기록. 상담원 요약에는 지금 진행 중인 안내(session_id)의 기록만 쓰고,
+-- 대화(conversation_id) 단위 기록은 서비스 개선 분석용으로만 저장한다 (개인정보 최소화)
+-- 한 대화에서 안내를 여러 번 시작할 수 있고, 안내 한 번마다 session_id가 새로 생긴다
 CREATE TABLE guide_event (
-    id         BIGINT AUTO_INCREMENT PRIMARY KEY,
-    session_id VARCHAR(36)  NOT NULL,
-    event_type VARCHAR(30)  NOT NULL,       -- GUIDE_START, PAGE_ENTER, GUIDE_STOP
-    page       VARCHAR(60),
-    detail     VARCHAR(500),
-    created_at TIMESTAMP    NOT NULL
+    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
+    conversation_id VARCHAR(36),                -- chat_message·handoff_ticket과 같은 값 (보내지 않은 옛 화면은 NULL)
+    session_id      VARCHAR(36)  NOT NULL,
+    event_type      VARCHAR(30)  NOT NULL,       -- GUIDE_START, PAGE_ENTER, GUIDE_STOP
+    page            VARCHAR(60),
+    detail          VARCHAR(500),
+    created_at      TIMESTAMP    NOT NULL
 );
 
 -- 4단계: 채팅 기록 (고객 원문 그대로 보관). 화면을 연 순간부터 하나의 conversation_id로 묶는다.

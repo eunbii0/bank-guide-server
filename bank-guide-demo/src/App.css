@@ -771,6 +771,13 @@
   font-size: 12px;
   color: var(--muted);
 }
+/* 상담원 연결 버튼 아래: 상담원에게 무엇이 전달되는지 */
+.handoff-notice {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
 .customer-box {
   display: grid;
   gap: 18px;

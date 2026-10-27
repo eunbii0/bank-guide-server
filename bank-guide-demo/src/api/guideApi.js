@@ -48,8 +48,9 @@ export const checkEligibility = (body) => post('/api/eligibility', body);
 
 // ---------- 안내 ----------
 
-/** 안내 시작 → { sessionId, guide }  (term: 예금·적금 가입 기간, 개월) */
-export const startGuide = (intent, page, lang, term = null) => post('/api/guide/start', { intent, page, lang, term });
+/** 안내 시작 → { sessionId, guide }  (term: 예금·적금 가입 기간, 개월. conversationId: 채팅과 같은 값) */
+export const startGuide = (conversationId, intent, page, lang, term = null) =>
+  post('/api/guide/start', { conversationId, intent, page, lang, term });
 
 /** 화면 진입 → { guide, offer }  (offer: 경로 이탈 3회째일 때 상담원 연결 제안 문구) */
 export const sendPageEnter = (sessionId, page) => post('/api/guide/event', { sessionId, page });

@@ -84,10 +84,11 @@ public final class ApiDtos {
     // ---------- 안내 ----------
 
     /**
-     * POST /api/guide/start  {"intent":"DEPOSIT_CANCEL","page":"home","lang":"en","term":null}
+     * POST /api/guide/start  {"conversationId":"...","intent":"DEPOSIT_CANCEL","page":"home","lang":"en","term":null}
      * term: 예금·적금 가입 기간(개월). 안내 문구와 하이라이트 버튼(btn-term-6)에 들어간다.
+     * conversationId: 채팅과 같은 값. 행동 기록(guide_event)을 대화 단위로 모은다 (선택값)
      */
-    public record StartRequest(String intent, String page, String lang, Integer term) {}
+    public record StartRequest(String conversationId, String intent, String page, String lang, Integer term) {}
 
     /** {"sessionId":"...","guide":{...}} */
     public record StartResponse(String sessionId, Guide guide) {}

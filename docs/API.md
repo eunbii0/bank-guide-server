@@ -106,8 +106,15 @@
 `POST /api/guide/start`
 
 ```json
-{ "intent": "DEPOSIT_CANCEL", "page": "home", "lang": "en", "term": null }
+{ "conversationId": "c1a2...", "intent": "DEPOSIT_CANCEL", "page": "home", "lang": "en", "term": null }
 ```
+
+`conversationId`(선택): 채팅과 같은 값. 보내면 `guide_event`에 함께 저장되어, 한 대화에서 시작한
+여러 안내 기록을 묶어 볼 수 있습니다 (서비스 개선 분석용).
+
+**개인정보 최소화**: 상담원 연결 때 요약에는 **지금 진행 중인 안내의 기록만** 들어갑니다.
+같은 대화에서 그만둔 다른 안내 기록은 저장만 하고 상담원에게 넘기지 않습니다.
+화면은 [상담원 연결] 버튼 아래에 "이 채팅 내용과 지금 진행 중인 안내 상황만 전달된다"는 문구를 보여줍니다.
 
 응답
 

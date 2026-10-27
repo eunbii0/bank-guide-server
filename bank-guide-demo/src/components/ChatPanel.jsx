@@ -120,6 +120,7 @@ export default function ChatPanel({
             <button className="pill-btn ghost" onClick={onDeclineOffer}>
               {t(lang, 'continueSelf')}
             </button>
+            <p className="handoff-notice">{t(lang, 'handoffNotice')}</p>
           </div>
         )}
       </div>

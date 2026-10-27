@@ -76,6 +76,8 @@ export default function EligibilityList({ lang, result, onPick, onHandoff }) {
         </section>
       ))}
       {offer && <p className="elig-offer">{offer}</p>}
+      {/* 가입 불가 상품마다 [상담원 연결]이 있으니, 무엇이 전달되는지 목록 끝에 한 번 알린다 */}
+      {products.some((p) => !p.eligible) &&<p className="handoff-notice">{t(lang, 'handoffNotice')}</p>}
       <p className="elig-notice">{notice}</p>
     </div>
   );

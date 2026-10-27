@@ -17,6 +17,8 @@ const TEXT = {
     serverDown: '서버에 연결할 수 없어요. Spring Boot 서버(8080)가 켜져 있는지 확인해 주세요.',
     ask: '질문하기',
     connect: '상담원 연결',
+    // 연결 직전에 상담원에게 무엇이 전달되는지 알린다 (개인정보 최소화)
+    handoffNotice: '연결하면 이 채팅 내용과 지금 진행 중인 안내 상황(보고 있는 화면, 막힌 단계)만 상담원에게 전달돼요.',
     continueSelf: '혼자 계속할게요',
     waiting: '상담원 연결 대기 중',
     // 챗봇 메뉴 + 가입 자격 판단
@@ -52,6 +54,7 @@ const TEXT = {
     serverDown: 'Cannot reach the server. Check that the Spring Boot server (8080) is running.',
     ask: 'Ask',
     connect: 'Connect to an agent',
+    handoffNotice: 'If you connect, only this chat and your current guide progress (the screen you are on and the step where you got stuck) are shared with the agent.',
     continueSelf: "I'll continue myself",
     waiting: 'Waiting for an agent',
     // 챗봇 메뉴 + 가입 자격 판단
@@ -87,6 +90,7 @@ const TEXT = {
     serverDown: 'Không kết nối được máy chủ. Hãy kiểm tra máy chủ Spring Boot (8080).',
     ask: 'Hỏi',
     connect: 'Kết nối nhân viên',
+    handoffNotice: 'Khi kết nối, chỉ nội dung trò chuyện này và tình trạng hướng dẫn hiện tại (màn hình bạn đang xem, bước bạn gặp khó) được chuyển cho nhân viên.',
     continueSelf: 'Tôi sẽ tự làm tiếp',
     waiting: 'Đang chờ nhân viên tư vấn',
     // 챗봇 메뉴 + 가입 자격 판단
@@ -122,6 +126,7 @@ const TEXT = {
     serverDown: '无法连接服务器。请确认 Spring Boot 服务器（8080）已启动。',
     ask: '提问',
     connect: '转接客服',
+    handoffNotice: '转接后，只会把本次聊天内容和当前的引导进度（正在查看的画面、卡住的步骤）告知客服。',
     continueSelf: '我自己继续',
     waiting: '正在等待客服',
     // 챗봇 메뉴 + 가입 자격 판단
@@ -157,6 +162,7 @@ const TEXT = {
     serverDown: 'Serverga ulanib boʻlmadi. Spring Boot serveri (8080) ishlayotganini tekshiring.',
     ask: 'Savol berish',
     connect: 'Xodim bilan ulanish',
+    handoffNotice: 'Ulansangiz, xodimga faqat shu suhbat va hozirgi yoʻriqnoma holati (ochiq turgan ekran, qiynalgan qadam) yuboriladi.',
     continueSelf: 'Oʻzim davom etaman',
     waiting: 'Xodim kutilmoqda',
     closed: 'Xodim bilan suhbat tugadi. Kerak boʻlsa, yana soʻrang.',
@@ -191,6 +197,7 @@ const TEXT = {
     serverDown: 'सर्भरसँग जोडिन सकिएन। Spring Boot सर्भर (8080) चलिरहेको छ कि जाँच गर्नुहोस्।',
     ask: 'प्रश्न सोध्नुहोस्',
     connect: 'कर्मचारीसँग जोडिनुहोस्',
+    handoffNotice: 'जोड्नुभयो भने यो च्याट र अहिलेको मार्गदर्शनको स्थिति (तपाईंले हेरिरहनुभएको स्क्रिन, अड्किएको चरण) मात्र कर्मचारीलाई पठाइन्छ।',
     continueSelf: 'म आफै जारी राख्छु',
     waiting: 'कर्मचारीको प्रतीक्षा गर्दै',
     closed: 'कर्मचारीसँगको कुराकानी सकियो। केही चाहिएमा फेरि सोध्नुहोस्।',
@@ -225,6 +232,7 @@ const TEXT = {
     serverDown: 'មិនអាចភ្ជាប់ទៅម៉ាស៊ីនមេបានទេ។ សូមពិនិត្យថា Spring Boot (8080) កំពុងដំណើរការ។',
     ask: 'សួរសំណួរ',
     connect: 'ភ្ជាប់ទៅបុគ្គលិក',
+    handoffNotice: 'ពេលភ្ជាប់ មានតែការសន្ទនានេះ និងស្ថានភាពការណែនាំបច្ចុប្បន្ន (អេក្រង់ដែលអ្នកកំពុងមើល ជំហានដែលអ្នកជាប់គាំង) ប៉ុណ្ណោះ ដែលត្រូវបានផ្ញើទៅបុគ្គលិក។',
     continueSelf: 'ខ្ញុំនឹងធ្វើបន្តខ្លួនឯង',
     waiting: 'កំពុងរង់ចាំបុគ្គលិក',
     closed: 'ការសន្ទនាជាមួយបុគ្គលិកបានបញ្ចប់។ សូមសួរម្ដងទៀតប្រសិនបើត្រូវការ។',
