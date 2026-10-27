@@ -95,7 +95,7 @@ public class HandoffService {
         SummaryResult summary;
         String source;
         try {
-            summary = HandoffNote.sanitize(summarizer.summarize(input), reason);
+            summary = HandoffNote.sanitize(summarizer.summarize(input), reason, input.intentNameKo());
             if (summary == null) {
                 throw new IllegalStateException("LLM 요약이 비어 있음");
             }

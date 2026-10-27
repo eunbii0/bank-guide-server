@@ -26,6 +26,7 @@ spring:
   ai:
     model:
       chat: openai   # 두 LLM이 함께 들어 있어서 하나만 켠다. ollama 프로필(application-ollama.yml)에서 ollama로 바뀐다
+      embedding: none   # 임베딩은 쓰지 않는다 (OpenAI·Ollama 임베딩 모델이 둘 다 만들어지는 것 방지)
     openai:
       # IntelliJ Run Configuration → Environment variables에 OPENAI_API_KEY=sk-... 입력
       # 키가 없거나 호출이 실패하면 서버는 키워드 분류로 대신 동작한다

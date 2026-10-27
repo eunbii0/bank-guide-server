@@ -100,6 +100,15 @@ public final class HandoffNote {
 
     /** LLM 요약을 검사하고 다듬는다. 쓸 수 없으면 null → 호출한 쪽이 fallback을 쓴다. */
     public static SummaryResult sanitize(SummaryResult llm, String reason) {
+        return sanitize(llm, reason, null);
+    }
+
+    /**
+     * intentNameKo: 고객이 하던 업무 이름 (없으면 null).
+     * "제3자가 시켰는지" 확인 항목은 이체·해지·사기 의심일 때만 남긴다
+     * (LLM이 카드 발급 같은 평범한 상담에도 끼워 넣어서 상담원과 AI 추천 답변에 군더더기가 된다).
+     */
+    public static SummaryResult sanitize(SummaryResult llm, String reason, String intentNameKo) {
         if (llm == null || llm.summary() == null || llm.summary().isEmpty()) {
             return null;
         }
@@ -111,10 +120,16 @@ public final class HandoffNote {
         if (summary.isEmpty()) {
             return null;
         }
-        List<String> checkpoints = llm.checkpoints() == null ? List.of()
-                : llm.checkpoints().stream().filter(s -> s != null && !s.isBlank()).limit(3).toList();
         // 사기 의심으로 넘어온 건은 LLM 판단과 상관없이 위험 표시를 유지한다
         String risk = "FRAUD".equals(reason) || "FRAUD_SUSPECTED".equals(llm.riskFlag()) ? "FRAUD_SUSPECTED" : "NONE";
+        boolean moneyTask = intentNameKo == null || intentNameKo.contains("이체")
+                || intentNameKo.contains("송금") || intentNameKo.contains("해지");
+        boolean keepThirdParty = "FRAUD_SUSPECTED".equals(risk) || moneyTask;
+        List<String> checkpoints = llm.checkpoints() == null ? List.of()
+                : llm.checkpoints().stream()
+                        .filter(s -> s != null && !s.isBlank())
+                        .filter(s -> keepThirdParty || !(s.contains("제3자") || s.contains("타인")))
+                        .limit(3).toList();
         return new SummaryResult(summary, checkpoints, risk);
     }
 }
