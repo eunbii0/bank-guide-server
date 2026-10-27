@@ -68,9 +68,10 @@ export default function ChatPanel({
               <span>{t(lang, 'prevChat')}</span>
             </div>
           ) : (
-            <p key={i} className={`bubble ${m.from}${m.warn ? ' warn' : ''}${i < lastDivider ? ' old' : ''}`}>
-              {m.text}
-            </p>
+            <div key={i} className={`bubble-wrap ${m.from}`}>
+              <p className={`bubble ${m.from}${m.warn ? ' warn' : ''}${i < lastDivider ? ' old' : ''}`}>{m.text}</p>
+              {m.note && <p className="bubble-note">{m.note}</p>}
+            </div>
           ),
         )}
         {busy && <p className="bubble ai typing">…</p>}

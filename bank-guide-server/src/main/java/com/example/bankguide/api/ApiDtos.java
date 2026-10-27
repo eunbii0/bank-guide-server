@@ -147,13 +147,24 @@ public final class ApiDtos {
     public record StatusRequest(String status) {}
 
     /** POST /api/tickets/{ticketNo}/reply  {"text":"영문 이름을 여권과 똑같이 입력해 주세요"}  상담원은 한국어로 쓴다 */
-    public record ReplyRequest(String text) {}
+    public record ReplyRequest(String text, Boolean sendOriginal) {
+        /**
+         * sendOriginal=true: 번역하지 않고 입력한 그대로 보낸다 (번역 실패 후 상담원이 고른 경우).
+         * 보내지 않거나 false면 고객 언어로 번역하고, 번역이 실패하면 422 TRANSLATION_FAILED로 알린다 (저장하지 않음)
+         */
+        public boolean original() {
+            return Boolean.TRUE.equals(sendOriginal);
+        }
+    }
 
     /** POST /api/tickets/{ticketNo}/customer-message  {"text":"My name doesn't work"}  고객 언어 그대로 보낸다 */
     public record CustomerMessageRequest(String text) {}
 
-    /** 고객 화면이 가져가는 상담원 답장. text는 고객 언어로 번역된 문장 */
-    public record AgentMessageView(long id, String time, String text) {}
+    /**
+     * 고객 화면이 가져가는 상담원 답장. text는 고객 언어로 번역된 문장.
+     * untranslated=true면 번역이 안 돼서 상담원이 쓴 그대로 온 문장 → 고객 화면이 안내를 붙인다
+     */
+    public record AgentMessageView(long id, String time, String text, boolean untranslated) {}
 
     /**
      * GET /api/tickets/{ticketNo}/agent-messages?after=0 : 티켓 상태 + after 이후의 상담원 답장.

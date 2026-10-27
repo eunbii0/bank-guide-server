@@ -156,7 +156,8 @@ export default function App() {
         if (res.messages.length > 0) {
           lastAgentId.current = res.messages.at(-1).id;
           beginNewSession(false);
-          say(...res.messages.map((m) => ({ from: 'agent', text: m.text })));
+          // 번역이 안 돼서 상담원이 쓴 그대로 온 말에는 고객 언어로 안내를 붙인다
+          say(...res.messages.map((m) => ({ from: 'agent', text: m.text, note: m.untranslated ? t(lang, 'untranslated') : null })));
           setChatOpen(true);
           // 상담원의 새 말에 이어 보낼 만한 문장을 AI에게 받는다 (실패하면 고정 예시가 그대로 보인다)
           api.fetchSuggestions(ticketNo, 'customer').then((r) => alive && setAiSuggestions(r.suggestions));

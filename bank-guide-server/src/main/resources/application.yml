@@ -36,6 +36,24 @@ spring:
           model: gpt-5-mini
           temperature: 1.0           # gpt-5 계열은 1.0만 허용
           reasoning-effort: minimal  # 분류는 깊게 생각할 필요가 없어서 응답을 빠르게
+    # [데모용 설정] 시연 중 LLM 장애로 화면이 멈추지 않게, 재시도 없이 빨리 대체 동작으로 넘어가도록 정한 값.
+    # 실제 서비스에서는 일시 오류(요청 한도 초과, 5xx)에 짧게 재시도하고, 호출별(분류·요약·번역) 대기 시간을 따로 정한다.
+    # LLM이 안 될 때 오래 기다리지 않고 키워드 분류·규칙 요약으로 넘어가게 한다.
+    # 기본값(최대 10번, 2초→10초→50초→3분 간격)이면 장애 때 상담원 연결이 몇 분씩 멈춘다.
+    # 다시 시도하면 응답 없는 LLM을 read-timeout만큼 한 번 더 기다리므로 (2번이면 약 22초) 다시 시도하지 않는다
+    retry:
+      max-attempts: 1
+      backoff:                     # max-attempts가 1이라 쓰이지 않지만, 값이 잘못되면 서버가 뜨지 않는다
+        initial-interval: 500ms
+        multiplier: 2              # Spring Retry 제약: 배수는 1보다, 최대 간격은 시작 간격보다 커야 한다
+        max-interval: 1s
+
+  # [데모용 설정] LLM 호출(RestClient)의 대기 시간. 응답이 없으면 실패로 보고 대체 동작으로 넘어간다.
+  # 이 값은 서버의 모든 RestClient에 적용되므로, 실제 서비스에서 다른 외부 API를 부르게 되면 따로 나눠야 한다
+  http:
+    client:
+      connect-timeout: 3s
+      read-timeout: 10s            # 분류·요약·번역은 보통 몇 초 안에 끝난다
 
 # 가입 자격 판단(데모용 가상 규칙)의 기준일. 비우면 실제 오늘 날짜.
 # 시연 결과를 고정하려면 2026-10-27처럼 넣는다 (환경변수 DEMO_TODAY도 가능)
