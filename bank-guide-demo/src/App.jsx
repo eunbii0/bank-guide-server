@@ -38,7 +38,7 @@ const STUCK_SECONDS = Number(params.get('stuck')) || 30;
 const INITIAL_CUSTOMER = (params.get('customer') || 'A').toUpperCase();
 
 // 화면 ↔ 서버 통신 로그는 개발용이라 평소에는 숨긴다. 주소에 ?debug=1 을 붙이면 오른쪽에 보인다.
-// (상담원 요약에 쓰이는 행동 기록은 상담원 화면의 '요약에 쓰인 기록'에서 본다)
+// (상담원 요약에 쓰이는 행동 기록은 상담원 화면의 '고객 이동 경로'에서 본다)
 const DEBUG = params.has('debug');
 
 export default function App() {

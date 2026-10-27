@@ -54,7 +54,7 @@ public class HandoffController {
         return handoffService.ticket(ticketNo);
     }
 
-    /** 요약에 쓰인 화면 이동 기록 (상담원 화면의 '요약에 쓰인 기록' 토글) */
+    /** 고객 이동 경로 (상담원 화면 토글). 화면 이름은 한국어 */
     @GetMapping("/tickets/{ticketNo}/events")
     public List<EventView> events(@PathVariable String ticketNo) {
         return handoffService.events(ticketNo);

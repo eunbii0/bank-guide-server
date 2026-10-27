@@ -74,7 +74,7 @@ export const fetchTicket = (ticketNo) => get(`/api/tickets/${ticketNo}`);
 
 // ---------- 상담원 화면 (5단계) ----------
 
-/** 요약에 쓰인 화면 이동 기록 (DB guide_event) → [{ time, type, page, detail }] */
+/** 고객 이동 경로 (DB guide_event, 화면 이름은 한국어) → [{ time, type, page, detail }] */
 export const fetchTicketEvents = (ticketNo) => get(`/api/tickets/${ticketNo}/events`);
 
 /** 티켓 목록 (최신순) */

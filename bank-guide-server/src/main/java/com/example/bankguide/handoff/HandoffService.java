@@ -249,12 +249,17 @@ public class HandoffService {
     }
 
     /**
-     * 상담원 화면: 이 티켓의 요약에 쓰인 화면 이동 기록 (연결 당시 진행 중이던 안내의 guide_event).
-     * 안내 없이 채팅으로만 연결된 티켓이면 빈 목록. 요약의 다른 재료인 대화 원문은 티켓에 이미 있다
+     * 상담원 화면 '고객 이동 경로': 연결 당시 진행 중이던 안내의 guide_event (요약의 재료이기도 하다).
+     * 화면 이름은 상담원이 알아볼 수 있게 한국어로 바꾼다. 안내 없이 채팅으로만 연결된 티켓이면 빈 목록
      */
     public List<EventView> events(String ticketNo) {
         HandoffTicket t = find(ticketNo);
-        return t.getSessionId() == null ? List.of() : guideService.events(t.getSessionId());
+        if (t.getSessionId() == null) {
+            return List.of();
+        }
+        return guideService.events(t.getSessionId()).stream()
+                .map(e -> new EventView(e.time(), e.type(), PageNames.of(e.page()), e.detail()))
+                .toList();
     }
 
     HandoffTicket find(String ticketNo) {
