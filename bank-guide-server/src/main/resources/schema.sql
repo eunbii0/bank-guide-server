@@ -1,4 +1,8 @@
 -- 데모용: 서버를 켤 때마다 테이블을 새로 만든다 (MySQL 프로필에서도 동일)
+DROP TABLE IF EXISTS eligibility_check;
+DROP TABLE IF EXISTS product_rule;
+DROP TABLE IF EXISTS product;
+DROP TABLE IF EXISTS customer_profile;
 DROP TABLE IF EXISTS handoff_ticket;
 DROP TABLE IF EXISTS chat_message;
 DROP TABLE IF EXISTS guide_event;
@@ -98,5 +102,54 @@ CREATE TABLE handoff_ticket (
     risk_flag       VARCHAR(20)   NOT NULL,   -- NONE, FRAUD_SUSPECTED
     summary_source  VARCHAR(10)   NOT NULL,   -- LLM, RULE
     status          VARCHAR(20)   NOT NULL,   -- WAITING, IN_PROGRESS, CLOSED
+    created_at      TIMESTAMP     NOT NULL
+);
+
+-- 데모용 가상 고객. 실제 서비스라면 은행 고객 정보 시스템에서 읽어 온다.
+-- 체류자격·만료일은 개인정보라서 LLM에 보내지 않는다.
+CREATE TABLE customer_profile (
+    customer_id     VARCHAR(10)  PRIMARY KEY,  -- A, B, C
+    name            VARCHAR(50)  NOT NULL,     -- Nguyen
+    nationality_ko  VARCHAR(30)  NOT NULL,     -- 베트남 (상담원용)
+    visa_type       VARCHAR(10)  NOT NULL,     -- E-9
+    stay_expiry     DATE,                      -- NULL = 만료 없음 (F-5 영주 등)
+    has_arc         BOOLEAN      NOT NULL,     -- 외국인등록증
+    has_account     BOOLEAN      NOT NULL,     -- 우리 은행 입출금 계좌
+    income_verified BOOLEAN      NOT NULL,     -- 소득 확인 서류 제출
+    preferred_lang  VARCHAR(5)   NOT NULL      -- 고객이 말하기 전 메뉴를 보여줄 언어
+);
+
+-- 가입 자격을 판단하는 상품. 상품 하나 = 화면 안내 업무 하나.
+CREATE TABLE product (
+    code      VARCHAR(30) PRIMARY KEY,         -- CHECK_CARD, CREDIT_CARD, TIME_DEPOSIT, SAVINGS
+    category  VARCHAR(10) NOT NULL,            -- CARD, JOIN (챗봇 메뉴)
+    task_code VARCHAR(40) NOT NULL,            -- 안내 업무 (이름도 guide_task_text에서 가져온다)
+    sort      INT         NOT NULL,
+    FOREIGN KEY (task_code) REFERENCES guide_task (code)
+);
+
+-- 데모용 가상 규칙. 한 상품의 규칙을 모두 만족해야 가입 가능.
+CREATE TABLE product_rule (
+    id           BIGINT AUTO_INCREMENT PRIMARY KEY,
+    product_code VARCHAR(30)  NOT NULL,
+    rule_type    VARCHAR(30)  NOT NULL,  -- REQUIRES_ARC, REQUIRES_ACCOUNT, VISA_IN, MIN_STAY_MONTHS,
+                                         -- INCOME_VERIFIED, MATURITY_BEFORE_EXPIRY, VALID_UNTIL_EXPIRY
+    param        VARCHAR(100),           -- 'F-2,F-4,F-5,F-6,E-7' / '6' / 가입 기간 '6,12,24'
+    reason_key   VARCHAR(40)  NOT NULL,  -- 고객에게 보여줄 문구 (ui_text)
+    alt_product  VARCHAR(30),            -- 불가일 때 추천할 상품
+    FOREIGN KEY (product_code) REFERENCES product (code)
+);
+
+-- 자격 판단 기록. 상담원 연결 쪽(팀원 담당)이 conversation_id로 찾아 티켓에 붙일 재료.
+-- 개인정보가 들어 있으므로 LLM 요약 입력에는 넣지 않는다.
+CREATE TABLE eligibility_check (
+    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
+    conversation_id VARCHAR(36)   NOT NULL,   -- chat_message·handoff_ticket과 같은 값
+    customer_id     VARCHAR(10)   NOT NULL,   -- customer_profile.customer_id
+    category        VARCHAR(10)   NOT NULL,   -- CARD, JOIN
+    confirmed       BOOLEAN       NOT NULL,   -- 고객이 정보가 맞다고 했는지
+    handoff_reason  VARCHAR(20),              -- 연결 제안을 띄운 원래 사유: PROFILE_MISMATCH, NOT_ELIGIBLE (없으면 NULL)
+    result_ko       VARCHAR(1000),            -- 줄바꿈으로 구분한 한국어 결과 (상담원이 그대로 읽을 수 있게)
+    result_json     VARCHAR(2000),            -- 상품별 결과 (JSON 배열, 프로그램이 읽을 때)
     created_at      TIMESTAMP     NOT NULL
 );

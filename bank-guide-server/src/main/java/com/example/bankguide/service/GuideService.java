@@ -6,6 +6,7 @@ import com.example.bankguide.api.ApiDtos.StartResponse;
 import com.example.bankguide.api.ApiDtos.StuckResponse;
 import com.example.bankguide.domain.GuideEvent;
 import com.example.bankguide.domain.GuideEventRepository;
+import com.example.bankguide.domain.GuideStep;
 import com.example.bankguide.domain.GuideStepRepository;
 import com.example.bankguide.domain.GuideTask;
 import com.example.bankguide.domain.GuideTaskRepository;
@@ -34,6 +35,7 @@ public class GuideService {
 
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
     private static final int OFF_PATH_LIMIT = 3;
+    private static final String TERM = "{term}";
 
     private final GuideTaskRepository taskRepository;
     private final GuideStepRepository stepRepository;
@@ -53,20 +55,22 @@ public class GuideService {
         this.textService = textService;
     }
 
-    public StartResponse start(String intent, String page, String lang) {
+    /** term: 예금·적금 가입 기간(개월). 단계에 {term}이 있는 업무는 꼭 필요하다 */
+    public StartResponse start(String intent, String page, String lang, Integer term) {
         String l = textService.normalize(lang);
-        Route route = loadRoute(intent, l);
-        GuideSession session = new GuideSession(UUID.randomUUID().toString(), intent, l);
+        Route route = loadRoute(intent, l, term);
+        GuideSession session = new GuideSession(UUID.randomUUID().toString(), intent, l, term);
         sessions.put(session.getSessionId(), session);
 
         Guide guide = enter(session, route, page);
-        eventRepository.save(new GuideEvent(session.getSessionId(), "GUIDE_START", page, intent + " (" + l + ")"));
+        String detail = intent + (term == null ? "" : " " + term + "개월") + " (" + l + ")";
+        eventRepository.save(new GuideEvent(session.getSessionId(), "GUIDE_START", page, detail));
         return new StartResponse(session.getSessionId(), guide);
     }
 
     public EventResponse onPageEnter(String sessionId, String page) {
         GuideSession session = findSession(sessionId);
-        Guide guide = enter(session, loadRoute(session.getIntent(), session.getLang()), page);
+        Guide guide = enter(session, loadRoute(session.getIntent(), session.getLang(), session.getTerm()), page);
 
         eventRepository.save(new GuideEvent(sessionId, "PAGE_ENTER", page, describe(guide)));
         if ("DONE".equals(guide.type())) {
@@ -118,14 +122,23 @@ public class GuideService {
         return result.guide();
     }
 
-    /** DB에서 업무 경로와 고객 언어의 문구를 읽어 엔진이 쓰는 Route로 만든다. */
-    private Route loadRoute(String intent, String lang) {
+    /**
+     * DB에서 업무 경로와 고객 언어의 문구를 읽어 엔진이 쓰는 Route로 만든다.
+     * 버튼 id·문구의 {term}은 고객이 고른 가입 기간으로 바꾼다. 예) btn-term-{term} → btn-term-6
+     */
+    private Route loadRoute(String intent, String lang, Integer term) {
         GuideTask task = taskRepository.findById(intent)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown service: " + intent));
         Map<Integer, String> messages = textService.stepMessages(intent, lang);
 
-        List<Step> steps = stepRepository.findByTaskCodeOrderByStepNoAsc(intent).stream()
-                .map(s -> new Step(s.getPage(), s.getTarget(), messages.getOrDefault(s.getStepNo(), "")))
+        List<GuideStep> rows = stepRepository.findByTaskCodeOrderByStepNoAsc(intent);
+        if (term == null && rows.stream().anyMatch(s -> s.getTarget().contains(TERM))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "term is required for " + intent);
+        }
+        String months = term == null ? "" : String.valueOf(term);
+        List<Step> steps = rows.stream()
+                .map(s -> new Step(s.getPage(), s.getTarget().replace(TERM, months),
+                        messages.getOrDefault(s.getStepNo(), "").replace(TERM, months)))
                 .toList();
         String name = textService.task(intent, lang).getName();
 

@@ -17,6 +17,14 @@ const TEXT = {
     connect: '상담원 연결',
     continueSelf: '혼자 계속할게요',
     waiting: '상담원 연결 대기 중',
+    // 챗봇 메뉴 + 가입 자격 판단
+    noChanged: '아니요, 바뀌었어요',
+    eligible: '가입 가능',
+    notEligible: '가입 불가',
+    select: '이걸로 할게요',
+    termLabel: '가입 기간을 고르세요',
+    months: '{n}개월',
+    anotherTask: '다른 업무도 도와드릴까요?',
   },
   en: {
     chatTitle: 'AI Guide',
@@ -32,6 +40,14 @@ const TEXT = {
     connect: 'Connect to an agent',
     continueSelf: "I'll continue myself",
     waiting: 'Waiting for an agent',
+    // 챗봇 메뉴 + 가입 자격 판단
+    noChanged: 'No, it has changed',
+    eligible: 'Available',
+    notEligible: 'Not available',
+    select: 'Choose this',
+    termLabel: 'Choose a term',
+    months: '{n} months',
+    anotherTask: 'Is there anything else I can help you with?',
   },
   vi: {
     chatTitle: 'Hướng dẫn AI',
@@ -47,6 +63,14 @@ const TEXT = {
     connect: 'Kết nối nhân viên',
     continueSelf: 'Tôi sẽ tự làm tiếp',
     waiting: 'Đang chờ nhân viên tư vấn',
+    // 챗봇 메뉴 + 가입 자격 판단
+    noChanged: 'Không, đã thay đổi',
+    eligible: 'Có thể đăng ký',
+    notEligible: 'Không thể đăng ký',
+    select: 'Chọn sản phẩm này',
+    termLabel: 'Chọn kỳ hạn',
+    months: '{n} tháng',
+    anotherTask: 'Tôi có thể giúp bạn việc khác không?',
   },
   zh: {
     chatTitle: 'AI 指引',
@@ -62,17 +86,20 @@ const TEXT = {
     connect: '转接客服',
     continueSelf: '我自己继续',
     waiting: '正在等待客服',
+    // 챗봇 메뉴 + 가입 자격 판단
+    noChanged: '不对，已经变了',
+    eligible: '可以办理',
+    notEligible: '无法办理',
+    select: '选这个',
+    termLabel: '请选择期限',
+    months: '{n}个月',
+    anotherTask: '还需要办理其他业务吗？',
   },
 };
-
-// 처음엔 고객 언어를 모르므로 네 언어로 함께 인사한다.
-export const GREETING = [
-  '안녕하세요! 하고 싶은 업무를 편한 언어로 말씀해 주세요.',
-  'Hello! Tell me what you want to do, in any language.',
-  'Xin chào! Hãy cho tôi biết bạn muốn làm gì, bằng bất kỳ ngôn ngữ nào.',
-  '你好！请用您习惯的语言告诉我您想办理的业务。',
-].join('\n');
 
 export const FAB_LABEL = 'Need help? · 도움이 필요하세요?';
 
 export const t = (lang, key) => (TEXT[lang] ?? TEXT.en)[key] ?? TEXT.en[key];
+
+/** 6 → '6개월' / '6 months' */
+export const months = (lang, n) => t(lang, 'months').replace('{n}', n);

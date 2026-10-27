@@ -34,6 +34,11 @@ spring:
           temperature: 1.0           # gpt-5 계열은 1.0만 허용
           reasoning-effort: minimal  # 분류는 깊게 생각할 필요가 없어서 응답을 빠르게
 
+# 가입 자격 판단(데모용 가상 규칙)의 기준일. 비우면 실제 오늘 날짜.
+# 시연 결과를 고정하려면 2026-10-27처럼 넣는다 (환경변수 DEMO_TODAY도 가능)
+demo:
+  today: ${DEMO_TODAY:}
+
 logging:
   level:
     com.example.bankguide: INFO      # 콘솔에서 [LLM 분류] 로그 확인
