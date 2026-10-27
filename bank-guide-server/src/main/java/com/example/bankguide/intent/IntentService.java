@@ -75,9 +75,17 @@ public class IntentService {
                 new ChatResponse(MENU, null, l, textService.ui("MENU_GREETING", l), options, "MENU", "NONE"));
     }
 
-    public ChatResponse classify(String conversationId, String text, String customerId) {
+    public ChatResponse classify(String conversationId, String text) {
+        return classify(conversationId, text, null, null);
+    }
+
+    /**
+     * customerId: 데모용 가상 고객 (카드·가입 업무의 고객 정보 확인에 쓴다. 없으면 A).
+     * preferredLang: 고객이 화면에서 직접 고른 언어. 있으면 입력한 언어와 상관없이 그 언어로 답한다.
+     */
+    public ChatResponse classify(String conversationId, String text, String customerId, String preferredLang) {
         if (text == null || text.isBlank()) {
-            return reply(conversationId, unknown("en", "NONE"));
+            return reply(conversationId, unknown(textService.isSupported(preferredLang) ? preferredLang : "en", "NONE"));
         }
         List<GuideTask> tasks = taskRepository.findAllByOrderByPriorityAsc();
         String safeText = Masking.mask(text);
@@ -97,7 +105,9 @@ public class IntentService {
             source = "KEYWORD";
         }
 
-        String lang = textService.normalize(result.language());
+        String lang = textService.isSupported(preferredLang)
+                ? preferredLang.trim().toLowerCase()
+                : textService.normalize(result.language());
         conversationService.customer(conversationId, lang, text);
 
         // 4단계: 사람에게 넘겨야 하면 업무 안내보다 먼저 처리

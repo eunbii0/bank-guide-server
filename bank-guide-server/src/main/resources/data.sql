@@ -2,9 +2,10 @@
 -- 앱 화면은 한국어 그대로이므로, 안내 문구에는 화면에 보이는 한국어 버튼 이름을 넣고 뜻을 괄호로 덧붙인다.
 
 -- priority: 키워드 대체 분류 시 검사 순서. '예금 가입'이 '예금'(해지)보다 먼저 걸리도록 가입 업무를 앞에 둔다.
+-- 신용카드를 체크카드보다 먼저 검사한다: '카드'만 있는 문장은 체크카드 키워드에 걸려 카드 메뉴(고객 정보 확인)로 간다.
 INSERT INTO guide_task (code, goal_page, priority, description) VALUES
-('CHECK_CARD',        'card-done',     1, 'Get a new debit card (체크카드) linked to the bank account'),
-('CREDIT_CARD',       'card-done',     2, 'Get a new credit card (신용카드)'),
+('CREDIT_CARD',       'card-done',     1, 'Get a new credit card (신용카드)'),
+('CHECK_CARD',        'card-done',     2, 'Get a new debit card (체크카드) linked to the bank account'),
 ('SAVINGS_OPEN',      'join-done',     3, 'Open a new installment savings account (적금), saving a fixed amount every month'),
 ('TIME_DEPOSIT_OPEN', 'join-done',     4, 'Open a new time deposit (정기예금 가입), putting in a lump sum for a fixed term'),
 ('CERTIFICATE',       'cert-done',     5, 'Get a bank certificate such as a certificate of deposit balance (예금잔액증명서)'),
@@ -213,14 +214,20 @@ INSERT INTO intent_keyword (task_code, keyword) VALUES
 ('TRANSFER',       'transfer'),
 ('TRANSFER',       'send'),
 ('CHECK_CARD',        '체크카드'),
+('CHECK_CARD',        '체크 카드'),
 ('CHECK_CARD',        'check card'),
 ('CHECK_CARD',        'debit card'),
+('CHECK_CARD',        '카드'),          -- 종류 없이 '카드'만: 카드 메뉴로 (신용카드는 앞에서 먼저 걸린다)
 ('CREDIT_CARD',       '신용카드'),
+('CREDIT_CARD',       '신용 카드'),
 ('CREDIT_CARD',       'credit card'),
 ('SAVINGS_OPEN',      '적금'),
 ('SAVINGS_OPEN',      'savings'),
 ('TIME_DEPOSIT_OPEN', '예금 가입'),
+('TIME_DEPOSIT_OPEN', '예금에 가입'),
 ('TIME_DEPOSIT_OPEN', '예금 들'),
+('TIME_DEPOSIT_OPEN', '예금 만들'),
+('TIME_DEPOSIT_OPEN', '예금을 만들'),
 ('TIME_DEPOSIT_OPEN', 'open a deposit'),
 ('TIME_DEPOSIT_OPEN', 'new deposit');
 
@@ -342,3 +349,72 @@ INSERT INTO product_rule (product_code, rule_type, param, reason_key, alt_produc
 ('TIME_DEPOSIT', 'MATURITY_BEFORE_EXPIRY', '6,12,24',             'RULE_NO_TERM',    NULL),
 ('SAVINGS',      'REQUIRES_ACCOUNT',       NULL,                  'RULE_NO_ACCOUNT', NULL),
 ('SAVINGS',      'MATURITY_BEFORE_EXPIRY', '6,12,24',             'RULE_NO_TERM',    NULL);
+
+
+-- 5단계: 우즈베크어(uz, 라틴 문자), 네팔어(ne), 크메르어(km, 캄보디아어) 문구
+-- 주의: 사람이 쓴 번역이 아니므로 시연 전에 해당 언어 사용자에게 한 번 확인받는다.
+INSERT INTO guide_task_text (task_code, lang, name, confirm_text) VALUES
+('DEPOSIT_CANCEL', 'uz', 'Omonatni muddatidan oldin yopish', 'Siz muddatli omonatingizni muddatidan oldin yopmoqchisiz, toʻgʻrimi?'),
+('DEPOSIT_CANCEL', 'ne', 'म्याद अगावै निक्षेप बन्द गर्ने', 'तपाईं आफ्नो मुद्दती निक्षेप म्याद पुग्नु अगावै बन्द गर्न चाहनुहुन्छ, हो?'),
+('DEPOSIT_CANCEL', 'km', 'បិទគណនីសន្សំមុនកំណត់', 'អ្នកចង់បិទគណនីសន្សំមានកំណត់មុនដល់កំណត់ មែនទេ?'),
+('TRANSFER',       'uz', 'Pul oʻtkazish', 'Siz boshqa hisobga pul yubormoqchisiz, toʻgʻrimi?'),
+('TRANSFER',       'ne', 'रकम ट्रान्सफर', 'तपाईं अर्को खातामा पैसा पठाउन चाहनुहुन्छ, हो?'),
+('TRANSFER',       'km', 'ផ្ទេរប្រាក់', 'អ្នកចង់ផ្ញើប្រាក់ទៅគណនីផ្សេង មែនទេ?'),
+('CERTIFICATE',    'uz', 'Maʼlumotnoma olish', 'Siz omonat qoldigʻi maʼlumotnomasi kabi hujjat olmoqchisiz, toʻgʻrimi?'),
+('CERTIFICATE',    'ne', 'प्रमाणपत्र जारी', 'तपाईं निक्षेप मौज्दात प्रमाणपत्र जस्तो प्रमाणपत्र लिन चाहनुहुन्छ, हो?'),
+('CERTIFICATE',    'km', 'ការចេញលិខិតបញ្ជាក់', 'អ្នកចង់ទទួលលិខិតបញ្ជាក់ ដូចជាលិខិតបញ្ជាក់សមតុល្យគណនីសន្សំ មែនទេ?');
+
+INSERT INTO guide_step_text (task_code, step_no, lang, message) VALUES
+('DEPOSIT_CANCEL', 1, 'uz', 'Pastdagi ''상품관리'' (Mening mahsulotlarim) tugmasini bosing'),
+('DEPOSIT_CANCEL', 1, 'ne', 'तलको ''상품관리'' (मेरा उत्पादन) थिच्नुहोस्'),
+('DEPOSIT_CANCEL', 1, 'km', 'សូមចុច ''상품관리'' (ផលិតផលរបស់ខ្ញុំ) នៅខាងក្រោម'),
+('DEPOSIT_CANCEL', 2, 'uz', '''예금'' (Omonatlar) tugmasini bosing'),
+('DEPOSIT_CANCEL', 2, 'ne', '''예금'' (निक्षेप) थिच्नुहोस्'),
+('DEPOSIT_CANCEL', 2, 'km', 'សូមចុច ''예금'' (គណនីសន្សំ)'),
+('DEPOSIT_CANCEL', 3, 'uz', 'Yopmoqchi boʻlgan omonatdagi ''중도해지'' (Muddatidan oldin yopish) tugmasini bosing'),
+('DEPOSIT_CANCEL', 3, 'ne', 'बन्द गर्न चाहेको निक्षेपमा ''중도해지'' (म्याद अगावै बन्द) थिच्नुहोस्'),
+('DEPOSIT_CANCEL', 3, 'km', 'សូមចុច ''중도해지'' (បិទមុនកំណត់) លើគណនីសន្សំដែលអ្នកចង់បិទ'),
+('DEPOSIT_CANCEL', 4, 'uz', 'Maʼlumotlarni tekshiring, soʻng ''해지 신청'' (Yopish uchun ariza) tugmasini bosing'),
+('DEPOSIT_CANCEL', 4, 'ne', 'विवरण जाँच गर्नुहोस्, त्यसपछि ''해지 신청'' (बन्द गर्ने अनुरोध) थिच्नुहोस्'),
+('DEPOSIT_CANCEL', 4, 'km', 'សូមពិនិត្យព័ត៌មាន រួចចុច ''해지 신청'' (ស្នើសុំបិទ)'),
+('TRANSFER',       1, 'uz', 'Yuqoridagi ''이체'' (Oʻtkazma) tugmasini bosing'),
+('TRANSFER',       1, 'ne', 'माथिको ''이체'' (ट्रान्सफर) थिच्नुहोस्'),
+('TRANSFER',       1, 'km', 'សូមចុច ''이체'' (ផ្ទេរប្រាក់) នៅខាងលើ'),
+('TRANSFER',       2, 'uz', 'Qabul qiluvchini tekshiring, soʻng ''다음'' (Keyingi) tugmasini bosing'),
+('TRANSFER',       2, 'ne', 'प्राप्तकर्ता जाँच गर्नुहोस्, त्यसपछि ''다음'' (अर्को) थिच्नुहोस्'),
+('TRANSFER',       2, 'km', 'សូមពិនិត្យអ្នកទទួល រួចចុច ''다음'' (បន្ទាប់)'),
+('CERTIFICATE',    1, 'uz', 'Pastdagi ''증명서'' (Maʼlumotnomalar) tugmasini bosing'),
+('CERTIFICATE',    1, 'ne', 'तलको ''증명서'' (प्रमाणपत्र) थिच्नुहोस्'),
+('CERTIFICATE',    1, 'km', 'សូមចុច ''증명서'' (លិខិតបញ្ជាក់) នៅខាងក្រោម'),
+('CERTIFICATE',    2, 'uz', '''예금잔액증명서'' (Omonat qoldigʻi maʼlumotnomasi) tugmasini bosing'),
+('CERTIFICATE',    2, 'ne', '''예금잔액증명서'' (निक्षेप मौज्दात प्रमाणपत्र) थिच्नुहोस्'),
+('CERTIFICATE',    2, 'km', 'សូមចុច ''예금잔액증명서'' (លិខិតបញ្ជាក់សមតុល្យគណនីសន្សំ)'),
+('CERTIFICATE',    3, 'uz', 'Maʼlumotlarni tekshiring, soʻng ''발급하기'' (Olish) tugmasini bosing'),
+('CERTIFICATE',    3, 'ne', 'विवरण जाँच गर्नुहोस्, त्यसपछि ''발급하기'' (जारी गर्नुहोस्) थिच्नुहोस्'),
+('CERTIFICATE',    3, 'km', 'សូមពិនិត្យព័ត៌មាន រួចចុច ''발급하기'' (ចេញលិខិត)');
+
+INSERT INTO ui_text (text_key, lang, content) VALUES
+('OFF_PATH',      'uz', 'Bu boshqa ekran. Yuqori chapdagi orqaga (‹) tugmasini bosing.'),
+('OFF_PATH',      'ne', 'यो अर्को स्क्रिन हो। माथि बायाँको फर्कने बटन (‹) थिच्नुहोस्।'),
+('OFF_PATH',      'km', 'នេះជាអេក្រង់ផ្សេង។ សូមចុចប៊ូតុងថយក្រោយ (‹) នៅជ្រុងខាងលើខាងឆ្វេង។'),
+('DONE',          'uz', '{name} boʻyicha yoʻriqnoma yakunlandi.'),
+('DONE',          'ne', '{name} को मार्गदर्शन पूरा भयो।'),
+('DONE',          'km', 'ការណែនាំអំពី {name} ត្រូវបានបញ្ចប់។'),
+('UNKNOWN',       'uz', 'Qaysi xizmat kerakligini aniq bilmadim. Masalan: omonatni yopish, pul oʻtkazish, maʼlumotnoma olish'),
+('UNKNOWN',       'ne', 'मैले कुन सेवा चाहिएको हो भनेर राम्ररी बुझिनँ। जस्तै: निक्षेप बन्द गर्ने, पैसा ट्रान्सफर गर्ने, प्रमाणपत्र लिने'),
+('UNKNOWN',       'km', 'ខ្ញុំមិនច្បាស់ថាអ្នកត្រូវការសេវាអ្វីទេ។ ឧទាហរណ៍៖ បិទគណនីសន្សំ ផ្ទេរប្រាក់ ទទួលលិខិតបញ្ជាក់'),
+('CLARIFY',       'uz', 'Qaysi birini nazarda tutyapsiz?'),
+('CLARIFY',       'ne', 'तपाईंले कुन भन्न खोज्नुभएको हो?'),
+('CLARIFY',       'km', 'តើអ្នកចង់មានន័យថាមួយណា?'),
+('OFFER_ADVICE',  'uz', 'Buni xodim sizning holatingizga qarab tushuntirib bera oladi. Hozir ulab qoʻyaymi?'),
+('OFFER_ADVICE',  'ne', 'यो कुरा कर्मचारीले तपाईंको अवस्था हेरेर बुझाउन सक्छन्। अहिले जोडिदिऊँ?'),
+('OFFER_ADVICE',  'km', 'បុគ្គលិកអាចពន្យល់ដោយផ្អែកលើស្ថានភាពរបស់អ្នក។ តើចង់ឲ្យខ្ញុំភ្ជាប់ឥឡូវនេះទេ?'),
+('OFFER_STUCK',   'uz', 'Qiyinchilik boʻlyaptimi? Sizni xodim bilan ulab qoʻyaymi?'),
+('OFFER_STUCK',   'ne', 'अप्ठ्यारो परिरहेको छ? कर्मचारीसँग जोडिदिऊँ?'),
+('OFFER_STUCK',   'km', 'មានបញ្ហាមែនទេ? តើចង់ឲ្យខ្ញុំភ្ជាប់ទៅបុគ្គលិកទេ?'),
+('FRAUD_WARNING', 'uz', 'Iltimos, toʻxtang. Hisobingizni boshqaga berish yoki kimningdir soʻrovi bilan pul oʻtkazish sizni jinoyatga aralashtirishi mumkin. Hozir sizni firibgarlikka qarshi boʻlim xodimi bilan ulayman.'),
+('FRAUD_WARNING', 'ne', 'कृपया रोकिनुहोस्। आफ्नो खाता अरूलाई दिनु वा अरूको अनुरोधमा पैसा सार्नुले तपाईंलाई अपराधमा फसाउन सक्छ। अहिले तपाईंलाई ठगी रोकथाम टोलीसँग जोड्दैछु।'),
+('FRAUD_WARNING', 'km', 'សូមរង់ចាំបន្តិច។ ការឲ្យអ្នកដទៃខ្ចីគណនី ឬផ្ទេរប្រាក់តាមសំណើរបស់អ្នកដទៃ អាចធ្វើឲ្យអ្នកពាក់ព័ន្ធនឹងឧក្រិដ្ឋកម្ម។ ខ្ញុំកំពុងភ្ជាប់អ្នកទៅក្រុមប្រឆាំងការបោកប្រាស់ឥឡូវនេះ។'),
+('HANDOFF_DONE',  'uz', 'Sizni xodim bilan ulayapman. Suhbatimizni uzatdim, qaytadan tushuntirishingiz shart emas.'),
+('HANDOFF_DONE',  'ne', 'तपाईंलाई कर्मचारीसँग जोड्दैछु। हाम्रो कुराकानी पठाइसकेको छु, फेरि सबै बुझाउनु पर्दैन।'),
+('HANDOFF_DONE',  'km', 'កំពុងភ្ជាប់អ្នកទៅបុគ្គលិក។ ខ្ញុំបានបញ្ជូនការសន្ទនារបស់យើងរួចហើយ អ្នកមិនចាំបាច់ពន្យល់ម្ដងទៀតទេ។');

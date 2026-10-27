@@ -6,7 +6,7 @@ server:
 spring:
   # 기본: H2 메모리 DB (설치 없이 바로 실행, 서버를 끄면 데이터가 사라짐)
   datasource:
-    url: jdbc:h2:mem:guide;MODE=MySQL
+    url: jdbc:h2:mem:guide;MODE=MySQL;DB_CLOSE_DELAY=-1   # 마지막 연결이 닫혀도 서버가 켜져 있는 동안 DB를 유지
     username: sa
     password:
   h2:
@@ -24,6 +24,8 @@ spring:
 
   # 3단계: LLM 의도 분류
   ai:
+    model:
+      chat: openai   # 두 LLM이 함께 들어 있어서 하나만 켠다. ollama 프로필(application-ollama.yml)에서 ollama로 바뀐다
     openai:
       # IntelliJ Run Configuration → Environment variables에 OPENAI_API_KEY=sk-... 입력
       # 키가 없거나 호출이 실패하면 서버는 키워드 분류로 대신 동작한다

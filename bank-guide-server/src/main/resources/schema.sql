@@ -83,6 +83,7 @@ CREATE TABLE chat_message (
     sender          VARCHAR(10)   NOT NULL,   -- CUSTOMER, AI, AGENT
     lang            VARCHAR(5),
     content         VARCHAR(1000) NOT NULL,
+    translated      VARCHAR(1000),            -- 상담원 답장을 고객 언어로 번역한 문장
     created_at      TIMESTAMP     NOT NULL
 );
 

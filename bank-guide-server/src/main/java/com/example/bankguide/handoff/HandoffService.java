@@ -1,11 +1,14 @@
 package com.example.bankguide.handoff;
 
+import com.example.bankguide.api.ApiDtos.AgentMessageView;
+import com.example.bankguide.api.ApiDtos.AgentPoll;
 import com.example.bankguide.api.ApiDtos.EventView;
 import com.example.bankguide.api.ApiDtos.HandoffRequest;
 import com.example.bankguide.api.ApiDtos.HandoffResponse;
 import com.example.bankguide.api.ApiDtos.MessageView;
 import com.example.bankguide.api.ApiDtos.TicketView;
 import com.example.bankguide.common.PageNames;
+import com.example.bankguide.domain.ChatMessage;
 import com.example.bankguide.domain.GuideTaskRepository;
 import com.example.bankguide.domain.HandoffTicket;
 import com.example.bankguide.domain.HandoffTicketRepository;
@@ -38,6 +41,7 @@ public class HandoffService {
     private static final Logger log = LoggerFactory.getLogger(HandoffService.class);
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
     private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final List<String> STATUSES = List.of("WAITING", "IN_PROGRESS", "CLOSED");
 
     private final GuideService guideService;
     private final ConversationService conversationService;
@@ -45,13 +49,16 @@ public class HandoffService {
     private final GuideTaskRepository taskRepository;
     private final HandoffTicketRepository ticketRepository;
     private final HandoffSummarizer summarizer;
+    private final AgentTranslator translator;
 
     public HandoffService(GuideService guideService,
                           ConversationService conversationService,
                           TextService textService,
                           GuideTaskRepository taskRepository,
                           HandoffTicketRepository ticketRepository,
-                          HandoffSummarizer summarizer) {
+                          HandoffSummarizer summarizer,
+                          AgentTranslator translator) {
+        this.translator = translator;
         this.guideService = guideService;
         this.conversationService = conversationService;
         this.textService = textService;
@@ -118,6 +125,112 @@ public class HandoffService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ticket not found: " + ticketNo));
     }
 
+    /** 상담원 화면: 티켓 상태 변경 (WAITING → IN_PROGRESS → CLOSED) */
+    public TicketView changeStatus(String ticketNo, String status) {
+        if (!STATUSES.contains(status)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "status must be one of " + STATUSES);
+        }
+        HandoffTicket t = find(ticketNo);
+        t.setStatus(status);
+        ticketRepository.save(t);
+        return view(t);
+    }
+
+    /**
+     * 상담원 답장: 한국어 원문을 저장하고 고객 언어로 번역해 함께 저장한다.
+     * 번역이 실패하면 한국어 그대로 보낸다 (고객이 답을 못 받는 것보다 낫다).
+     * 처음 답장하면 대기 중 티켓을 상담 중으로 바꾼다.
+     */
+    public TicketView reply(String ticketNo, String text) {
+        if (text == null || text.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "text is required");
+        }
+        HandoffTicket t = find(ticketNo);
+        if ("CLOSED".equals(t.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ticket is already closed: " + ticketNo);
+        }
+        String original = text.trim();
+        String translated;
+        if ("ko".equals(t.getLang())) {
+            translated = original;
+        } else {
+            try {
+                translated = translator.translate(original, t.getLang());
+                if (translated == null || translated.isBlank()) {
+                    throw new IllegalStateException("번역 결과가 비어 있음");
+                }
+            } catch (Exception e) {
+                log.warn("[번역 LLM 실패 → 한국어 원문 전달] {}", e.getMessage());
+                translated = original;
+            }
+        }
+        conversationService.agent(t.getConversationId(), original, translated);
+        if ("WAITING".equals(t.getStatus())) {
+            t.setStatus("IN_PROGRESS");
+            ticketRepository.save(t);
+        }
+        return view(t);
+    }
+
+    /**
+     * 고객이 직접 상담을 끝낸다: 티켓을 CLOSED로 바꾸고 상담원 화면 대화에 안내를 남긴다.
+     * 이미 종료된 티켓이면 아무것도 하지 않는다 (상담원이 먼저 끝낸 경우에도 고객 화면이 오류 없이 마무리되도록).
+     */
+    public TicketView customerClose(String ticketNo) {
+        HandoffTicket t = find(ticketNo);
+        if (!"CLOSED".equals(t.getStatus())) {
+            t.setStatus("CLOSED");
+            ticketRepository.save(t);
+            conversationService.system(t.getConversationId(), "고객이 상담을 종료했습니다.");
+            log.info("[상담 종료] {} (고객이 종료)", ticketNo);
+        }
+        return view(t);
+    }
+
+    /**
+     * 상담 중 고객이 상담원에게 보낸 말: 원문을 저장하고 한국어로 번역해 함께 저장한다.
+     * 번역이 실패하면 번역 없이 원문만 저장한다 (상담원 화면에 원문이 그대로 보인다).
+     */
+    public MessageView customerMessage(String ticketNo, String text) {
+        if (text == null || text.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "text is required");
+        }
+        HandoffTicket t = find(ticketNo);
+        if ("CLOSED".equals(t.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ticket is already closed: " + ticketNo);
+        }
+        String original = text.trim();
+        String korean = null;
+        if (!"ko".equals(t.getLang())) {
+            try {
+                korean = translator.toKorean(original, t.getLang());
+                if (korean == null || korean.isBlank()) {
+                    korean = null;
+                }
+            } catch (Exception e) {
+                log.warn("[번역 LLM 실패 → 원문만 전달] {}", e.getMessage());
+            }
+        }
+        ChatMessage saved = conversationService.customerToAgent(t.getConversationId(), t.getLang(), original, korean);
+        return new MessageView(saved.getCreatedAt().format(TIME), saved.getSender(), saved.getLang(),
+                saved.getContent(), saved.getTranslated());
+    }
+
+    /** 고객 화면: 티켓 상태 + afterId 이후의 상담원 답장(번역본) */
+    public AgentPoll poll(String ticketNo, long afterId) {
+        HandoffTicket t = find(ticketNo);
+        List<AgentMessageView> messages = conversationService.agentMessagesAfter(t.getConversationId(), afterId).stream()
+                .map(m -> new AgentMessageView(m.getId(), m.getCreatedAt().format(TIME),
+                        m.getTranslated() != null ? m.getTranslated() : m.getContent()))
+                .toList();
+        return new AgentPoll(t.getStatus(), messages);
+    }
+
+    private HandoffTicket find(String ticketNo) {
+        return ticketRepository.findByTicketNo(ticketNo)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ticket not found: " + ticketNo));
+    }
+
     private TicketView view(HandoffTicket t) {
         String intentName = t.getIntent() != null && taskRepository.existsById(t.getIntent())
                 ? textService.task(t.getIntent(), "ko").getName() : "미확인 업무";
@@ -129,7 +242,8 @@ public class HandoffService {
 
     private List<MessageView> messages(String conversationId) {
         return conversationService.history(conversationId).stream()
-                .map(m -> new MessageView(m.getCreatedAt().format(TIME), m.getSender(), m.getLang(), m.getContent()))
+                .map(m -> new MessageView(m.getCreatedAt().format(TIME), m.getSender(), m.getLang(), m.getContent(),
+                        "CUSTOMER".equals(m.getSender()) ? m.getTranslated() : null))
                 .toList();
     }
 

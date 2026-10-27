@@ -46,8 +46,10 @@ export default function App() {
   // 이 화면을 연 고객의 대화 전체를 묶는 id (4단계: 서버가 채팅 원문을 이 id로 저장). 고객을 바꾸면 새로 만든다.
   const [conversationId, setConversationId] = useState(newId);
 
-  // 고객 언어. 처음엔 서버가 메뉴를 고객 선호 언어로 보내고, 고객이 말하면 서버(LLM)가 알려준다.
+  // 고객 언어. 기본은 한국어. 고객이 🌐 버튼으로 고르거나, 다른 언어로 말하면 서버(LLM)가 알려준다.
   const [lang, setLang] = useState('ko');
+  // 고객이 채팅창 위 버튼으로 언어를 직접 골랐는지. 골랐으면 서버가 입력한 언어와 상관없이 그 언어로 답한다.
+  const [langChosen, setLangChosen] = useState(false);
 
   // 안내 상태. 몇 번째 단계인지는 서버가 기억하고, 화면은 sessionId만 들고 있다.
   const [sessionId, setSessionId] = useState(null);
@@ -57,25 +59,109 @@ export default function App() {
   // 채팅
   const [chatOpen, setChatOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [messages, setMessages] = useState([]); // 첫 메시지는 챗봇을 열 때 서버 메뉴로 채운다
+  // 첫 인사. 그 아래 메뉴 버튼은 챗봇을 열 때 서버(/api/chat/menu)에서 받아온다.
+  const [messages, setMessages] = useState([{ from: 'ai', text: t('ko', 'welcome') }]);
   const [pendingIntent, setPendingIntent] = useState(null); // 네/아니요를 기다리는 업무
   const [options, setOptions] = useState([]); // 애매할 때 보여줄 선택지, 또는 첫 메뉴 버튼
   const [offer, setOffer] = useState(null); // 상담원 연결 제안 { reason, intent }
   const [ticketNo, setTicketNo] = useState(null); // 상담원에게 넘어간 티켓
   const [restartOffered, setRestartOffered] = useState(false); // "다른 업무도 도와드릴까요?" 뒤의 [처음으로] 버튼
+  const [ticketClosed, setTicketClosed] = useState(false); // 상담원이 상담을 끝냈는지
+  const [agentJoined, setAgentJoined] = useState(false); // 상담원이 상담을 시작했는지 (대기 → 연결됨)
+  const [aiSuggestions, setAiSuggestions] = useState([]); // 대화 맥락으로 AI가 만든 추천 문장 (없으면 고정 예시)
+  const talkingToAgent = Boolean(ticketNo) && !ticketClosed; // true면 입력창이 상담원에게 바로 간다
   const say = (...msgs) => setMessages((m) => [...m, ...msgs]);
-
-  // 안내가 끝났거나 혼자 계속하기로 했을 때: 다른 업무로 넘어갈 수 있게 [처음으로]를 한 번 더 보여준다
-  const offerRestart = () => {
-    say({ from: 'ai', text: t(lang, 'anotherTask') });
-    setRestartOffered(true);
-  };
 
   // 가입 자격 판단 (데모용 가상 규칙)
   const [verifyCategory, setVerifyCategory] = useState(null); // 고객 정보 확인 [네]/[아니요]를 기다리는 메뉴 (CARD, JOIN)
   const [eligibility, setEligibility] = useState(null); // 서버가 판단한 상품별 결과
   const [joinDraft, setJoinDraft] = useState({ kind: null, months: null }); // 앱 화면에서 고른 예금·적금과 기간
   const menuRequested = useRef(null); // 이 대화에서 메뉴를 이미 불렀는지 (conversationId)
+
+  // 채팅을 닫았다가 다시 열면 구분선을 넣어, 그 위 대화가 '이전 대화'로 보이게 한다.
+  // 인사는 고객이 직접 열 때만 하고, 상담원 답장·연결 제안처럼 저절로 열릴 때는 구분선만 넣는다.
+  const closedBefore = useRef(false);
+  const closeChat = () => {
+    closedBefore.current = true;
+    setChatOpen(false);
+  };
+  const beginNewSession = (greet) => {
+    if (!closedBefore.current) return;
+    closedBefore.current = false;
+    const hello = talkingToAgent
+      ? t(lang, 'greetingAgent')
+      : messages.some((m) => m.from === 'user')
+        ? t(lang, 'greeting')
+        : t(lang, 'welcome');
+    setMessages((m) => [...m, { divider: true }, ...(greet ? [{ from: 'ai', text: hello }] : [])]);
+  };
+  // 안내가 끝났거나 혼자 계속하기로 했을 때: 다른 업무로 넘어갈 수 있게 [처음으로]를 한 번 더 보여준다
+  const offerRestart = () => {
+    beginNewSession(false);
+    say({ from: 'ai', text: t(lang, 'anotherTask') });
+    setRestartOffered(true);
+  };
+
+  // 언어 버튼. 아직 대화가 없으면 첫 인사를 그 언어로 바꾸고, 대화가 있으면 그 언어로 인사를 덧붙인다.
+  // 그 아래 메뉴 버튼도 그 언어로 다시 받아온다 (기다리던 버튼은 정리).
+  // 안내 중이거나 상담원과 연결된 뒤에는 언어가 이미 정해져 있어서 바꿀 수 없다.
+  const langLocked = talkingToAgent || Boolean(sessionId);
+  const changeLang = (code) => {
+    if (langLocked || (langChosen && code === lang)) return;
+    setLang(code);
+    setLangChosen(true);
+    setMessages((m) =>
+      m.length === 1 && m[0].from === 'ai'
+        ? [{ from: 'ai', text: t(code, 'welcome') }]
+        : [...m, { from: 'ai', text: t(code, 'greeting') }],
+    );
+    clearPending();
+    loadMenu(code);
+  };
+
+  const openChat = () => {
+    beginNewSession(true);
+    setChatOpen(true);
+  };
+
+  // ---------- 5단계: 상담원 답장 받기 ----------
+  // 티켓이 생기면 3초마다 새 답장(고객 언어로 번역된 것)과 티켓 상태를 가져온다.
+  const lastAgentId = useRef(0);
+  const closedNotified = useRef(false); // 종료 안내를 한 번만 보여주기 위한 표시
+  useEffect(() => {
+    if (!ticketNo) return undefined;
+    let alive = true;
+    const timer = setInterval(async () => {
+      try {
+        const res = await api.fetchAgentMessages(ticketNo, lastAgentId.current);
+        if (!alive) return;
+        if (res.status === 'IN_PROGRESS') setAgentJoined(true);
+        if (res.messages.length > 0) {
+          lastAgentId.current = res.messages.at(-1).id;
+          beginNewSession(false);
+          say(...res.messages.map((m) => ({ from: 'agent', text: m.text })));
+          setChatOpen(true);
+          // 상담원의 새 말에 이어 보낼 만한 문장을 AI에게 받는다 (실패하면 고정 예시가 그대로 보인다)
+          api.fetchSuggestions(ticketNo, 'customer').then((r) => alive && setAiSuggestions(r.suggestions));
+        }
+        if (res.status === 'CLOSED') {
+          clearInterval(timer);
+          setTicketClosed(true);
+          if (!closedNotified.current) {
+            closedNotified.current = true;
+            say({ from: 'ai', text: t(lang, 'closed') });
+          }
+        }
+      } catch {
+        // 서버가 잠깐 안 될 수 있으니 조용히 다음 주기에 다시 시도한다
+      }
+    }, 3000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticketNo]);
 
   // 서버와 주고받은 내용 (오른쪽 패널)
   const [traffic, setTraffic] = useState([]);
@@ -86,6 +172,7 @@ export default function App() {
   const fail = (error, l = lang) => {
     const text = error instanceof api.ServerDownError ? t(l, 'serverDown') : error.message;
     log('err', 'ERROR', text);
+    beginNewSession(false);
     say({ from: 'ai', text });
     setChatOpen(true);
   };
@@ -99,6 +186,7 @@ export default function App() {
     setEligibility(null);
     setRestartOffered(false);
     setOffer({ reason, intent });
+    beginNewSession(false);
     say({ from: 'ai', text });
     setChatOpen(true);
   };
@@ -132,20 +220,39 @@ export default function App() {
     api.fetchCustomers().then(setCustomers).catch(() => {});
   }, []);
 
-  // 챗봇을 처음 열면 "도움이 필요하세요?" + 메뉴 버튼을 서버에서 받아온다. 대화마다 한 번만.
-  useEffect(() => {
-    if (!chatOpen || menuRequested.current === conversationId) return;
-    menuRequested.current = conversationId;
-    (async () => {
-      try {
-        log('out', 'POST /api/chat/menu', { customerId });
-        const res = await api.menu(conversationId, customerId);
-        log('in', 'menu', res);
+  // 메뉴 버튼(카드 발급 / 상품 해지 / 상품 가입)을 서버에서 l 언어로 받아온다.
+  // announce=false면 버튼만 바꾸고(첫 인사가 이미 있으므로), true면 "도움이 필요하세요?"도 말한다.
+  const loadMenu = async (l, announce = false) => {
+    try {
+      log('out', 'POST /api/chat/menu', { customerId, lang: l });
+      const res = await api.menu(conversationId, customerId, l);
+      log('in', 'menu', res);
+      if (announce) {
         showChatResult(res);
-      } catch (e) {
-        fail(e);
+      } else {
+        setLang(res.lang);
+        setOptions(res.options);
       }
-    })();
+    } catch (e) {
+      fail(e);
+    }
+  };
+
+  // 기다리던 네/아니요·선택지·연결 제안·상품 목록 버튼을 정리한다
+  const clearPending = () => {
+    setPendingIntent(null);
+    setOptions([]);
+    setOffer(null);
+    setVerifyCategory(null);
+    setEligibility(null);
+    setRestartOffered(false);
+  };
+
+  // 챗봇을 처음 열면 첫 인사 아래에 메뉴 버튼을 띄운다. 대화마다 한 번만.
+  useEffect(() => {
+    if (!chatOpen || talkingToAgent || menuRequested.current === conversationId) return;
+    menuRequested.current = conversationId;
+    loadMenu(lang);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatOpen, conversationId]);
 
@@ -215,6 +322,19 @@ export default function App() {
 
   // 채팅 질문 → 서버(LLM)가 업무·언어·이관 필요 여부를 판단
   const onAsk = async (text) => {
+    // 상담원과 연결된 동안에는 AI 분류를 거치지 않고 상담원에게 바로 보낸다
+    if (talkingToAgent) {
+      setAiSuggestions([]);
+      say({ from: 'user', text });
+      try {
+        log('out', `POST /api/tickets/${ticketNo}/customer-message`, { text });
+        const res = await api.sendCustomerMessage(ticketNo, text);
+        log('in', 'customer-message', res);
+      } catch (e) {
+        fail(e);
+      }
+      return;
+    }
     say({ from: 'user', text });
     setOptions([]);
     setPendingIntent(null);
@@ -224,8 +344,9 @@ export default function App() {
     setRestartOffered(false);
     setBusy(true);
     try {
-      log('out', 'POST /api/chat', { text, customerId });
-      const res = await api.chat(conversationId, text, customerId);
+      const hint = langChosen ? lang : undefined; // 직접 고른 언어가 있으면 서버에 알린다
+      log('out', 'POST /api/chat', { text, customerId, lang: hint });
+      const res = await api.chat(conversationId, text, customerId, hint);
       log('in', `chat (${res.source})`, res);
       showChatResult(res);
     } catch (e) {
@@ -315,7 +436,7 @@ export default function App() {
       setGuide(res.guide);
       setDbEvents(null);
       say({ from: 'ai', text: t(lang, 'intro') });
-      setChatOpen(false);
+      closeChat();
     } catch (e) {
       fail(e);
     }
@@ -334,6 +455,10 @@ export default function App() {
       setSessionId(null);
       setGuide(null);
       setTicketNo(res.ticketNo);
+      setTicketClosed(false);
+      setAgentJoined(false);
+      lastAgentId.current = 0;
+      closedNotified.current = false;
       say({ from: 'ai', text: res.message });
       setChatOpen(true);
     } catch (e) {
@@ -343,6 +468,23 @@ export default function App() {
     }
   }
 
+  // 고객이 직접 상담을 끝낸다 → 서버 티켓이 CLOSED가 되고 상담원 화면에도 종료로 보인다
+  const endChat = async () => {
+    if (!window.confirm(t(lang, 'endConfirm'))) return;
+    try {
+      log('out', `POST /api/tickets/${ticketNo}/customer-close`, {});
+      const res = await api.closeTicketByCustomer(ticketNo);
+      log('in', 'customer-close', { status: res.status });
+      setTicketClosed(true);
+      if (!closedNotified.current) {
+        closedNotified.current = true;
+        say({ from: 'ai', text: t(lang, 'closed') });
+      }
+    } catch (e) {
+      fail(e);
+    }
+  };
+
   const acceptOffer = () => {
     say({ from: 'user', text: t(lang, 'connect') });
     doHandoff(offer.reason, lang, offer.intent);
@@ -351,7 +493,7 @@ export default function App() {
     say({ from: 'user', text: t(lang, 'continueSelf') });
     setOffer(null);
     offerRestart();
-    if (sessionId) setChatOpen(false);
+    if (sessionId) closeChat();
   };
 
   const stopGuide = async () => {
@@ -366,23 +508,11 @@ export default function App() {
 
   // 챗봇 [↺ 처음으로]: 안내를 멈추고 기다리던 버튼을 정리한 뒤 메뉴를 다시 띄운다.
   // 지난 대화와 conversationId는 그대로 둔다 (상담원 요약 재료). 은행 앱 화면도 그대로.
-  const restartChat = async () => {
+  const restartChat = () => {
     if (sessionId) stopGuide();
     setGuide(null);
-    setPendingIntent(null);
-    setOptions([]);
-    setOffer(null);
-    setVerifyCategory(null);
-    setEligibility(null);
-    setRestartOffered(false);
-    try {
-      log('out', 'POST /api/chat/menu', { customerId, lang });
-      const res = await api.menu(conversationId, customerId, lang);
-      log('in', 'menu', res);
-      showChatResult(res);
-    } catch (e) {
-      fail(e);
-    }
+    clearPending();
+    loadMenu(lang, true);
   };
 
   // 시연 고객 바꾸기: 다른 사람이 앱을 연 것처럼 대화와 안내를 처음부터 다시 시작한다
@@ -392,22 +522,25 @@ export default function App() {
     url.searchParams.set('customer', id);
     window.history.replaceState(null, '', url);
 
+    const l = customers.find((c) => c.customerId === id)?.lang ?? 'ko';
     setCustomerId(id);
     setConversationId(newId());
-    setLang(customers.find((c) => c.customerId === id)?.lang ?? 'ko');
+    setLang(l);
+    setLangChosen(false);
     setHistory(['home']);
     setSessionId(null);
     setGuide(null);
     setCurrentIntent(null);
     setChatOpen(false);
-    setMessages([]);
-    setPendingIntent(null);
-    setOptions([]);
-    setOffer(null);
+    closedBefore.current = false;
+    setMessages([{ from: 'ai', text: t(l, 'welcome') }]);
+    clearPending();
     setTicketNo(null);
-    setRestartOffered(false);
-    setVerifyCategory(null);
-    setEligibility(null);
+    setTicketClosed(false);
+    setAgentJoined(false);
+    setAiSuggestions([]);
+    lastAgentId.current = 0;
+    closedNotified.current = false;
     setTraffic([]);
     setDbEvents(null);
     setLastSessionId(null);
@@ -445,7 +578,7 @@ export default function App() {
         <GuideOverlay guide={guide} page={page} />
         {guide && guide.type !== 'DONE' && (
           <div className="guide-actions">
-            <button className="guide-stop" onClick={() => setChatOpen(true)}>
+            <button className="guide-stop" onClick={openChat}>
               {t(lang, 'ask')}
             </button>
             <button className="guide-stop" onClick={stopGuide}>
@@ -455,20 +588,25 @@ export default function App() {
         )}
 
         {!chatOpen && !guide && (
-          <button className="ask-fab" onClick={() => setChatOpen(true)}>
+          <button className="ask-fab" onClick={openChat}>
             {ticketNo ? t(lang, 'waiting') : FAB_LABEL}
           </button>
         )}
         <ChatPanel
           open={chatOpen}
-          onClose={() => setChatOpen(false)}
+          onClose={closeChat}
           lang={lang}
           busy={busy}
           messages={messages}
           pendingIntent={pendingIntent}
           options={options}
           offer={offer}
-          waiting={Boolean(ticketNo)}
+          waiting={talkingToAgent}
+          agentJoined={agentJoined}
+          langLocked={langLocked}
+          onChangeLang={changeLang}
+          suggestions={talkingToAgent ? aiSuggestions : []}
+          onEndChat={endChat}
           verifying={Boolean(verifyCategory)}
           eligibility={eligibility}
           restartOffered={restartOffered}

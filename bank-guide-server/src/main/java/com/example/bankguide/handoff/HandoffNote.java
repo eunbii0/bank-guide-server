@@ -28,7 +28,8 @@ public final class HandoffNote {
             "CUSTOMER_REQUEST", "고객이 직접 요청");
 
     private static final Map<String, String> LANGS = Map.of(
-            "ko", "한국어", "en", "영어", "vi", "베트남어", "zh", "중국어");
+            "ko", "한국어", "en", "영어", "vi", "베트남어", "zh", "중국어",
+            "uz", "우즈베크어", "ne", "네팔어", "km", "크메르어(캄보디아어)");
 
     private HandoffNote() {}
 
