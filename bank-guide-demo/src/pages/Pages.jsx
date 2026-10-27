@@ -2,6 +2,7 @@
 // (메뉴 지도의 target 값과 같은 id여야 하이라이트가 걸린다)
 // 모든 문구는 시작 화면에서 고른 언어(lang)로 보여준다.
 import { tp, months } from '../i18n';
+import { Icon, QuickIcon, Sun, Bee, PromoArt, Donut } from '../components/HomeArt';
 
 function Header({ title, onBack, backLabel, right }) {
   return (
@@ -40,52 +41,212 @@ export function LanguagePage({ languages, onPick, title }) {
   );
 }
 
-export function HomePage({ lang, go, onChangeLang }) {
+// 최근 거래내역 (데모용 가상 데이터). 이름·종류는 고른 언어 문구를 쓴다.
+const RECENT = [
+  { name: 'txShop', kind: 'txCard', time: '10. 26. 18:32', amount: -4500, color: '#0b7a55', mark: 'star' },
+  { name: 'txBill', kind: 'txCard', time: '10. 26. 14:01', amount: -53000, color: '#ffc20e', mark: 'card' },
+  { name: 'txPerson', kind: 'txTransfer', time: '10. 26. 11:20', amount: -20000, color: '#2f86f0', mark: 'people' },
+  { name: 'txSalaryName', kind: 'txSalary', time: '10. 25. 09:00', amount: 2500000, color: '#3cc0ff', mark: 'won' },
+];
+const fmt = (n) => Math.abs(n).toLocaleString('en-US');
+
+export function HomePage({ lang, go, onChangeLang, onAsk, userName }) {
   const p = (k, v) => tp(lang, k, v);
+  const quick = [
+    { id: 'btn-transfer', to: 'transfer', icon: 'transfer', label: p('transfer') },
+    { id: 'btn-card', to: 'card', icon: 'card', label: p('cards') },
+    { id: 'btn-product', to: 'product', icon: 'bag', label: p('products') },
+    { id: 'btn-join', to: 'join', icon: 'chart', label: p('join') },
+    { id: 'btn-certificate', to: 'certificate', icon: 'doc', label: p('certificates') },
+  ];
   return (
-    <>
-      <Header
-        title={p('appTitle')}
-        right={
-          onChangeLang ? (
-            <button className="back-btn" onClick={onChangeLang} aria-label={p('changeLang')} title={p('changeLang')}>
-              🌐
-            </button>
-          ) : undefined
-        }
-      />
-      <section className="account-card">
-        <p className="account-name">{p('checking')}</p>
-        <p className="account-no">123-456-789012</p>
-        <p className="balance">1,250,000{p('won')}</p>
-        <div className="account-actions">
-          <button id="btn-transfer" className="pill-btn" onClick={() => go('transfer')}>
-            {p('transfer')}
+    <div className="home">
+      <div className="status-bar" aria-hidden="true">
+        <span className="status-time">9:41</span>
+        <span className="status-icons">
+          <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor">
+            <rect x="0" y="8" width="3" height="4" rx="0.9" />
+            <rect x="5" y="5.5" width="3" height="6.5" rx="0.9" />
+            <rect x="10" y="3" width="3" height="9" rx="0.9" />
+            <rect x="15" y="0" width="3" height="12" rx="0.9" />
+          </svg>
+          <svg width="17" height="12" viewBox="0 0 17 12" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round">
+            <path d="M1.4 4.1a10.2 10.2 0 0 1 14.2 0" />
+            <path d="M3.9 6.8a6.6 6.6 0 0 1 9.2 0" />
+            <path d="M6.4 9.4a3.1 3.1 0 0 1 4.2 0" />
+            <circle cx="8.5" cy="11" r="0.6" fill="currentColor" />
+          </svg>
+          <svg width="27" height="12" viewBox="0 0 27 12" fill="currentColor">
+            <rect x="0.5" y="0.5" width="22" height="11" rx="3.4" fill="none" stroke="currentColor" opacity="0.4" />
+            <rect x="2" y="2" width="19" height="8" rx="2.2" />
+            <path d="M24.2 4v4a2 2 0 0 0 0-4z" opacity="0.5" />
+          </svg>
+        </span>
+      </div>
+
+      <header className="home-top">
+        <div className="greet">
+          {userName && <p className="greet-name">{p('hello', { name: userName })}</p>}
+          <p className="greet-line">
+            <span>{p('greetNeutral')}</span>
+            <Sun />
+          </p>
+          <p className="greet-sub">{p('greetSub')}</p>
+        </div>
+        <div className="home-top-actions">
+          <button className="icon-btn" aria-label={p('search')} title={p('search')}>
+            <Icon name="search" size={24} />
           </button>
-          <button className="pill-btn ghost">{p('inquiry')}</button>
+          <button className="icon-btn bell" aria-label={p('notifications')} title={p('notifications')}>
+            <Icon name="bell" size={24} />
+            <i className="bell-dot" />
+          </button>
+          <button
+            className="icon-btn"
+            onClick={onChangeLang}
+            disabled={!onChangeLang}
+            aria-label={onChangeLang ? p('changeLang') : p('menu')}
+            title={onChangeLang ? p('changeLang') : p('menu')}
+          >
+            <Icon name="menu" size={24} />
+          </button>
+        </div>
+      </header>
+
+      <button className="ai-banner" onClick={onAsk}>
+        <span className="ai-banner-copy">
+          <span className="ai-chip">{p('aiBadge')}</span>
+          <strong>{p('aiTitle')}</strong>
+          <span className="ai-desc">{p('aiDesc')}</span>
+        </span>
+        <span className="ai-bot">
+          <Bee />
+        </span>
+        <span className="ai-input">
+          <span>{p('aiPlaceholder')}</span>
+          <Icon name="chevron" size={18} />
+        </span>
+      </button>
+
+      <section className="asset-card">
+        <svg className="asset-wave" viewBox="0 0 340 150" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 70C70 30 120 100 200 70S300 20 340 50V150H0z" fill="rgba(255,255,255,0.10)" />
+          <path d="M0 105C80 70 150 130 230 100S310 70 340 90V150H0z" fill="rgba(255,255,255,0.08)" />
+        </svg>
+        <div className="asset-top">
+          <span className="asset-label">
+            {p('totalBalance')}
+            <span className="eye">
+              <Icon name="eye" size={14} />
+            </span>
+          </span>
+          <span className="asset-pill">
+            <Icon name="chart" size={13} />
+            {p('viewAssets')}
+          </span>
+        </div>
+        <p className="asset-amount">
+          1,250,000{p('won')}
+          <Icon name="chevron" size={18} />
+        </p>
+        <div className="quick-row">
+          {quick.map((q) => (
+            <button key={q.id} id={q.id} className="quick-btn" onClick={() => go(q.to)}>
+              <span className="quick-icon">
+                <QuickIcon name={q.icon} size={30} />
+              </span>
+              <span className="quick-label">{q.label}</span>
+            </button>
+          ))}
         </div>
       </section>
-      <section className="menu-grid">
-        <button id="btn-product" className="menu-tile" onClick={() => go('product')}>
-          <span className="tile-icon">▤</span>{p('products')}
-        </button>
-        <button className="menu-tile">
-          <span className="tile-icon">⇄</span>{p('history')}
-        </button>
-        <button id="btn-card" className="menu-tile" onClick={() => go('card')}>
-          <span className="tile-icon">▭</span>{p('cards')}
-        </button>
-        <button id="btn-join" className="menu-tile" onClick={() => go('join')}>
-          <span className="tile-icon">＋</span>{p('join')}
-        </button>
-        <button id="btn-certificate" className="menu-tile" onClick={() => go('certificate')}>
-          <span className="tile-icon">✎</span>{p('certificates')}
-        </button>
-        <button className="menu-tile">
-          <span className="tile-icon">⚙</span>{p('settings')}
-        </button>
+
+      <button className="promo-card" onClick={() => go('join')}>
+        <span className="promo-copy">
+          <small>{p('promoTag')}</small>
+          <strong>
+            {p('promoTitle')}
+            <Icon name="chevron" size={15} />
+          </strong>
+        </span>
+        <PromoArt />
+      </button>
+
+      <section className="recent-card">
+        <div className="recent-head">
+          <h2>{p('history')}</h2>
+          <span>
+            {p('viewAll')}
+            <Icon name="chevron" size={13} />
+          </span>
+        </div>
+        <ul>
+          {RECENT.map((r) => (
+            <li key={r.name}>
+              <span className="recent-logo" style={{ background: r.color }}>
+                <Icon name={r.mark} size={20} filled={r.mark === 'star'} />
+              </span>
+              <span className="recent-info">
+                <strong>{p(r.name)}</strong>
+                <small>
+                  {r.time} <i>|</i> {p(r.kind)}
+                </small>
+              </span>
+              <span className={`recent-amount${r.amount > 0 ? ' plus' : ''}`}>
+                {r.amount > 0 ? '+' : '−'}
+                {fmt(r.amount)}
+                {p('won')}
+              </span>
+            </li>
+          ))}
+        </ul>
       </section>
-    </>
+
+      <div className="stat-row">
+        <section className="stat-card">
+          <div>
+            <p className="stat-label">{p('spendMonth')}</p>
+            <p className="stat-value">1,234,000{p('won')}</p>
+            <span className="stat-badge">▾ -12%</span>
+          </div>
+          <span className="stat-bars" aria-hidden="true">
+            <i style={{ height: 14 }} />
+            <i style={{ height: 24 }} />
+            <i style={{ height: 36 }} />
+          </span>
+        </section>
+        <section className="stat-card">
+          <div>
+            <p className="stat-label">{p('budgetLeft')}</p>
+            <p className="stat-value">566,000{p('won')}</p>
+          </div>
+          <Donut percent={68} size={60} />
+        </section>
+      </div>
+    </div>
+  );
+}
+
+// 하단 탭바. 홈 화면에서만 보인다.
+export function TabBar({ lang, go }) {
+  const p = (k, v) => tp(lang, k, v);
+  const tabs = [
+    { icon: 'home', label: p('tabHome'), active: true },
+    { icon: 'pie', label: p('tabAssets') },
+    { icon: 'transfer', label: p('transfer'), to: 'transfer' },
+    { icon: 'bag', label: p('tabProducts'), to: 'product' },
+    { icon: 'menu', label: p('tabAll') },
+  ];
+  return (
+    <nav className="tab-bar">
+      {tabs.map((t) => (
+        <button key={t.icon} className={`tab${t.active ? ' on' : ''}`} onClick={t.to ? () => go(t.to) : undefined}>
+          <Icon name={t.icon} size={25} filled={t.active} />
+          <span>{t.label}</span>
+        </button>
+      ))}
+      <i className="home-indicator" />
+    </nav>
   );
 }
 
@@ -392,11 +553,11 @@ export function JoinConfirmPage({ lang, draft, go, back }) {
   );
 }
 
-export function DonePage({ lang, text, home }) {
+export function DonePage({ lang, text, home, back }) {
   const p = (k, v) => tp(lang, k, v);
   return (
     <>
-      <Header title={p('doneTitle')} />
+      <Header title={p('doneTitle')} onBack={back} backLabel={p('back')} />
       <p className="done-text">{text}</p>
       <button className="primary-btn" onClick={home}>
         {p('goHome')}
