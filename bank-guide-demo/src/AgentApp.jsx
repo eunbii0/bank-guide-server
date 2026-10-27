@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import './AgentApp.css';
 import * as api from './api/guideApi';
+import CustomerInfoBox from './components/CustomerInfoBox';
 
 const QUEUES = [
   { code: 'ALL', name: '전체' },
@@ -207,6 +208,15 @@ export default function AgentApp() {
                 </ul>
               </div>
             </div>
+
+            <CustomerInfoBox
+              ticket={detail}
+              onChanged={async (t) => {
+                setDetail(t);
+                setTickets(await api.fetchTickets());
+              }}
+              onError={(e) => setError(message(e))}
+            />
 
             <h3>대화</h3>
             <div className="thread" ref={threadRef}>

@@ -1,4 +1,5 @@
 -- 데모용: 서버를 켤 때마다 테이블을 새로 만든다 (MySQL 프로필에서도 동일)
+DROP TABLE IF EXISTS customer_info_access;
 DROP TABLE IF EXISTS eligibility_check;
 DROP TABLE IF EXISTS product_rule;
 DROP TABLE IF EXISTS product;
@@ -106,6 +107,9 @@ CREATE TABLE handoff_ticket (
     risk_flag       VARCHAR(20)   NOT NULL,   -- NONE, FRAUD_SUSPECTED
     summary_source  VARCHAR(10)   NOT NULL,   -- LLM, RULE
     status          VARCHAR(20)   NOT NULL,   -- WAITING, IN_PROGRESS, CLOSED
+    customer_id     VARCHAR(10),              -- customer_profile.customer_id (모르면 NULL → 정보 요청 불가)
+    -- 고객 정보 공유 동의: 상담원이 상담 중에 요청하고, 고객이 허용해야 고객 정보·자격 판단 결과가 상담원 창에 보인다
+    info_consent    VARCHAR(20)   NOT NULL,   -- NONE, REQUESTED, GRANTED, DENIED
     created_at      TIMESTAMP     NOT NULL
 );
 
@@ -156,4 +160,14 @@ CREATE TABLE eligibility_check (
     result_ko       VARCHAR(1000),            -- 줄바꿈으로 구분한 한국어 결과 (상담원이 그대로 읽을 수 있게)
     result_json     VARCHAR(2000),            -- 상품별 결과 (JSON 배열, 프로그램이 읽을 때)
     created_at      TIMESTAMP     NOT NULL
+);
+
+-- 상담원이 고객 정보를 조회한 기록 (은행의 개인정보 접속기록에 해당). 조회할 때마다 한 줄씩 쌓고 고치거나 지우지 않는다
+CREATE TABLE customer_info_access (
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ticket_no   VARCHAR(30)  NOT NULL,
+    customer_id VARCHAR(10)  NOT NULL,
+    agent_id    VARCHAR(30)  NOT NULL,       -- 데모는 로그인이 없어서 화면이 보내는 값 (기본 demo-agent)
+    items       VARCHAR(100) NOT NULL,       -- 조회한 항목: PROFILE, ELIGIBILITY
+    accessed_at TIMESTAMP    NOT NULL
 );

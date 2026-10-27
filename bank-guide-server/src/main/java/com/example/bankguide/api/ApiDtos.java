@@ -118,16 +118,20 @@ public final class ApiDtos {
      * reason: ADVICE(판단 질문), STUCK(멈춤), OFF_PATH(이탈 반복), FRAUD(사기 의심), CUSTOMER_REQUEST
      */
     public record HandoffRequest(String conversationId, String sessionId, String reason,
-                                 String page, String lang, String intent) {}
+                                 String page, String lang, String intent, String customerId) {}
 
     /** {"ticketNo":"T-20261026-0001","queue":"FOREIGN","message":"상담원에게 연결하고 있어요..."} */
     public record HandoffResponse(String ticketNo, String queue, String message) {}
 
-    /** 상담원 화면에 보일 티켓 (5단계에서 상담원 페이지가 이걸 그대로 쓴다) */
+    /**
+     * 상담원 화면에 보일 티켓 (5단계에서 상담원 페이지가 이걸 그대로 쓴다).
+     * infoConsent: 고객 정보 공유 동의 (NONE, REQUESTED, GRANTED, DENIED). hasCustomer=false면 정보 요청을 할 수 없다
+     */
     public record TicketView(String ticketNo, String queue, String status, String reason,
                              String lang, String intentName, String currentPage,
                              List<String> summary, List<String> checkpoints, String riskFlag,
-                             String summarySource, List<MessageView> messages, String createdAt) {}
+                             String summarySource, List<MessageView> messages, String createdAt,
+                             boolean hasCustomer, String infoConsent) {}
 
     /** 원문 대화 한 줄 */
     public record MessageView(String time, String sender, String lang, String content, String translated) {
@@ -151,6 +155,25 @@ public final class ApiDtos {
     /** 고객 화면이 가져가는 상담원 답장. text는 고객 언어로 번역된 문장 */
     public record AgentMessageView(long id, String time, String text) {}
 
-    /** GET /api/tickets/{ticketNo}/agent-messages?after=0 : 티켓 상태 + after 이후의 상담원 답장 */
-    public record AgentPoll(String status, List<AgentMessageView> messages) {}
+    /**
+     * GET /api/tickets/{ticketNo}/agent-messages?after=0 : 티켓 상태 + after 이후의 상담원 답장.
+     * infoConsent가 REQUESTED면 고객 화면이 정보 공유 [허용]/[거절] 카드를 띄운다
+     */
+    public record AgentPoll(String status, List<AgentMessageView> messages, String infoConsent) {}
+
+    // ---------- 고객 정보 공유 (상담 중 동의) ----------
+
+    /** POST /api/tickets/{ticketNo}/info-consent  {"granted":true}  고객이 상담원의 정보 확인 요청에 답한다 */
+    public record InfoConsentRequest(boolean granted) {}
+
+    /** GET /api/tickets/{ticketNo}/customer-info?agent=demo-agent : 고객이 허용했을 때만 응답하고, 조회할 때마다 기록을 남긴다 */
+    public record CustomerInfoView(String customerId, String name, String nationalityKo, String visaType,
+                                   String stayExpiry, boolean hasArc, boolean hasAccount, boolean incomeVerified,
+                                   List<EligibilityRecordView> eligibility, List<InfoAccessView> accessLog) {}
+
+    /** 이 대화에서 한 가입 자격 판단 한 건 (한국어 결과 줄) */
+    public record EligibilityRecordView(String time, String category, boolean confirmed, List<String> result) {}
+
+    /** 고객 정보 조회 기록 한 줄 */
+    public record InfoAccessView(String time, String agentId, String items) {}
 }

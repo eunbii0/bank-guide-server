@@ -204,6 +204,93 @@
   padding-left: 20px;
   line-height: 1.6;
 }
+/* 고객 정보 (상담 중 동의) */
+.info-box {
+  display: grid;
+  gap: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+.info-box-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.info-box h3 {
+  font-size: 14px;
+  margin: 0;
+}
+.info-box h4 {
+  font-size: 13px;
+  margin: 8px 0 4px;
+}
+.info-box button {
+  justify-self: start;
+  border: 1px solid var(--brand);
+  background: var(--brand);
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.info-box button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.info-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.info-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.info-detail .meta {
+  margin: 4px 0;
+}
+.info-check {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--brand-soft);
+  margin-bottom: 6px;
+}
+.info-check-head {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.info-check ul,
+.info-log {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.consent {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f2f4f7;
+  color: var(--muted);
+}
+.consent.requested {
+  background: #fef0c7;
+  color: #93370d;
+}
+.consent.granted {
+  background: #dcfae6;
+  color: #067647;
+}
+.consent.denied {
+  background: #fee4e2;
+  color: #b42318;
+}
 .agent-detail > h3 {
   font-size: 14px;
   margin-bottom: 8px;

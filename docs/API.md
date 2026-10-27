@@ -84,7 +84,7 @@
 | `AMBIGUOUS` | 애매함 | `message` + `options` 버튼 |
 | `UNKNOWN` | 모름 | `message`만 표시 |
 | `ADVICE` | 손익·상품 판단 질문 (`escalation: ADVICE`) | 상담원 연결 제안 |
-| `FRAUD` | 금융사기 의심 (`escalation: FRAUD`) | 경고 후 바로 상담원 연결 |
+| `FRAUD` | 금융사기 의심 (`escalation: FRAUD`) | 사기 우려 경고 + 전달 내용 안내 후 [상담원 연결] / [혼자 계속] 묻기 |
 | 🆕 `MENU` | 챗봇 첫 메뉴 | `message` + `options` 버튼 (2부 2) |
 | 🆕 `VERIFY` | 가입 자격 확인이 필요한 업무 | `message`(고객 정보 확인 질문) + [네]/[아니요] (2부 3) |
 
@@ -178,9 +178,13 @@
   "reason": "STUCK",
   "page": "deposit-cancel",
   "lang": "vi",
-  "intent": "DEPOSIT_CANCEL"
+  "intent": "DEPOSIT_CANCEL",
+  "customerId": "A"
 }
 ```
+
+`customerId`(선택): 티켓에 고객을 연결만 합니다. 고객 정보는 티켓에 복사하지 않고,
+상담 중 고객이 허용해야 상담원이 볼 수 있습니다 (9-1).
 
 응답
 
@@ -209,11 +213,40 @@
   "riskFlag": "NONE",
   "summarySource": "LLM",
   "messages": [ { "time": "14:04:00", "sender": "CUSTOMER", "lang": "vi", "content": "Sao tiền lãi ít vậy?" } ],
-  "createdAt": "14:05:00"
+  "createdAt": "14:05:00",
+  "hasCustomer": true,
+  "infoConsent": "NONE"
 }
 ```
 
 `status`: `WAITING`, `IN_PROGRESS`, `CLOSED`
+
+## 9-1. 고객 정보 공유 (상담 중 동의)
+
+고객 정보(체류자격·만료일 등)와 가입 자격 판단 결과는 **상담 중 고객이 허용했을 때만** 상담원 창에 보입니다.
+
+```
+상담원 POST /api/tickets/{ticketNo}/info-request       → infoConsent: REQUESTED
+고객   GET  /api/tickets/{ticketNo}/agent-messages      → { ..., "infoConsent": "REQUESTED" } → [허용]/[거절] 카드
+고객   POST /api/tickets/{ticketNo}/info-consent {"granted": true}   → GRANTED (false면 DENIED, 상담원은 다시 요청 가능)
+상담원 GET  /api/tickets/{ticketNo}/customer-info?agent=demo-agent   → 고객 정보 + 자격 판단 결과 + 조회 기록
+```
+
+- `customer-info`는 `GRANTED`이고 상담이 끝나지 않았을 때만 응답합니다. 그 밖에는 `403`.
+- 조회할 때마다 `customer_info_access`에 한 줄씩 남습니다 (누가, 언제, 어떤 항목). 응답의 `accessLog`로도 보입니다.
+- 고객 정보는 채팅 기록(`chat_message`)에 넣지 않습니다. 채팅 기록은 LLM 요약·답변 추천의 재료라서입니다.
+  요청·허용·거절은 `시스템` 메시지로만 남습니다.
+
+`customer-info` 응답
+
+```json
+{
+  "customerId": "A", "name": "Nguyen", "nationalityKo": "베트남", "visaType": "E-9",
+  "stayExpiry": "2027-05-31", "hasArc": true, "hasAccount": true, "incomeVerified": true,
+  "eligibility": [ { "time": "22:11:18", "category": "CARD", "confirmed": true, "result": ["[카드 발급] 고객 정보 확인: 맞음 ...", "신용카드 발급: 불가 - ..."] } ],
+  "accessLog": [ { "time": "22:12:29", "agentId": "demo-agent", "items": "PROFILE,ELIGIBILITY" } ]
+}
+```
 
 ---
 

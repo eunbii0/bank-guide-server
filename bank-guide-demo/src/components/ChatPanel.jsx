@@ -13,6 +13,7 @@ export default function ChatPanel({
   open, onClose, lang, busy, messages, pendingIntent, options, offer, waiting, agentJoined, suggestions,
   onEndChat, onAsk, onConfirm, onChoose, onAcceptOffer, onDeclineOffer,
   verifying, eligibility, restartOffered, onVerify, onPickProduct, onProductHandoff, onRestart,
+  infoRequest, onAnswerInfo,
 }) {
   const [text, setText] = useState('');
   const bodyRef = useRef(null);
@@ -21,7 +22,7 @@ export default function ChatPanel({
   useEffect(() => {
     const el = bodyRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [open, messages, busy, pendingIntent, options, offer, verifying, eligibility, restartOffered]);
+  }, [open, messages, busy, pendingIntent, options, offer, verifying, eligibility, restartOffered, infoRequest]);
 
   if (!open) return null;
 
@@ -121,6 +122,20 @@ export default function ChatPanel({
               {t(lang, 'continueSelf')}
             </button>
             <p className="handoff-notice">{t(lang, 'handoffNotice')}</p>
+          </div>
+        )}
+        {infoRequest && (
+          <div className="info-request" role="group" aria-label={t(lang, 'infoRequestTitle')}>
+            <strong>{t(lang, 'infoRequestTitle')}</strong>
+            <p>{t(lang, 'infoRequest')}</p>
+            <div className="confirm-row">
+              <button className="pill-btn" onClick={() => onAnswerInfo(true)}>
+                {t(lang, 'infoAllow')}
+              </button>
+              <button className="pill-btn ghost" onClick={() => onAnswerInfo(false)}>
+                {t(lang, 'infoDeny')}
+              </button>
+            </div>
           </div>
         )}
       </div>
