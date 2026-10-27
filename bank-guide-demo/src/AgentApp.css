@@ -204,6 +204,43 @@
   padding-left: 20px;
   line-height: 1.6;
 }
+/* 상담원 답장 번역 실패 → 다시 번역 / 그대로 보내기 */
+.translate-failed {
+  display: grid;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  border: 1px solid #fec84b;
+  border-radius: 10px;
+  background: #fffaeb;
+  color: #93370d;
+  font-size: 13px;
+}
+.translate-failed p {
+  margin: 0;
+  line-height: 1.5;
+}
+.translate-failed-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.translate-failed-actions button {
+  border: 1px solid var(--brand);
+  background: var(--brand);
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.translate-failed-actions button.ghost {
+  background: #fff;
+  color: var(--brand);
+}
+.translate-failed-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
 /* 고객 정보 (상담 중 동의) */
 .info-box {
   display: grid;

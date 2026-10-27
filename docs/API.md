@@ -221,6 +221,15 @@
 
 `status`: `WAITING`, `IN_PROGRESS`, `CLOSED`
 
+### 상담원 답장 번역 실패
+
+`POST /api/tickets/{ticketNo}/reply  {"text": "...", "sendOriginal": false}`
+
+- 번역이 실패하면 **보내지 않고** `422` + `message: "TRANSLATION_FAILED"`로 알립니다.
+  상담원 화면이 [다시 번역] / [입력한 그대로 보내기] / [취소]를 띄웁니다 (쉬운 영어로 고쳐 쓴 뒤 보내도 됨).
+- `sendOriginal: true`면 번역 없이 입력한 그대로 보냅니다. 상담원 화면 대화에 `시스템` 안내가 남고,
+  고객 화면의 `agent-messages` 응답에서 그 답장은 `"untranslated": true`가 되어 고객 언어로 안내가 붙습니다.
+
 ## 9-1. 고객 정보 공유 (상담 중 동의)
 
 고객 정보(체류자격·만료일 등)와 가입 자격 판단 결과는 **상담 중 고객이 허용했을 때만** 상담원 창에 보입니다.

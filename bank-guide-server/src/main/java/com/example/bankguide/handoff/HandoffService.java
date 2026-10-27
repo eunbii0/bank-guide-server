@@ -43,6 +43,8 @@ public class HandoffService {
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
     private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("yyyyMMdd");
     private static final List<String> STATUSES = List.of("WAITING", "IN_PROGRESS", "CLOSED");
+    /** 상담원 답장 번역 실패 (422). 상담원 화면이 이 값을 보고 [다시 번역]/[그대로 보내기]를 띄운다 */
+    public static final String TRANSLATION_FAILED = "TRANSLATION_FAILED";
 
     private final GuideService guideService;
     private final ConversationService conversationService;
@@ -149,10 +151,12 @@ public class HandoffService {
 
     /**
      * 상담원 답장: 한국어 원문을 저장하고 고객 언어로 번역해 함께 저장한다.
-     * 번역이 실패하면 한국어 그대로 보낸다 (고객이 답을 못 받는 것보다 낫다).
+     * 번역이 실패하면 보내지 않고 422 TRANSLATION_FAILED로 알린다. 상담원이 모르는 채 고객에게
+     * 읽을 수 없는 한국어가 가지 않게, 다시 번역할지 입력한 그대로(쉬운 영어 등) 보낼지 상담원이 고른다.
+     * sendOriginal=true면 번역하지 않고 그대로 보내고, 고객 화면에는 번역이 안 됐다는 안내가 붙는다.
      * 처음 답장하면 대기 중 티켓을 상담 중으로 바꾼다.
      */
-    public TicketView reply(String ticketNo, String text) {
+    public TicketView reply(String ticketNo, String text, boolean sendOriginal) {
         if (text == null || text.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "text is required");
         }
@@ -161,9 +165,12 @@ public class HandoffService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Ticket is already closed: " + ticketNo);
         }
         String original = text.trim();
-        String translated;
+        String translated; // null이면 번역 없이 보낸 것
         if ("ko".equals(t.getLang())) {
             translated = original;
+        } else if (sendOriginal) {
+            translated = null;
+            log.info("[번역 없이 전달] {}", ticketNo);
         } else {
             try {
                 translated = translator.translate(original, t.getLang());
@@ -171,11 +178,14 @@ public class HandoffService {
                     throw new IllegalStateException("번역 결과가 비어 있음");
                 }
             } catch (Exception e) {
-                log.warn("[번역 LLM 실패 → 한국어 원문 전달] {}", e.getMessage());
-                translated = original;
+                log.warn("[번역 LLM 실패 → 상담원에게 알림] {}", e.getMessage());
+                throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, TRANSLATION_FAILED);
             }
         }
         conversationService.agent(t.getConversationId(), original, translated);
+        if (translated == null) {
+            conversationService.system(t.getConversationId(), "위 답장은 번역 없이 입력한 그대로 보냈습니다.");
+        }
         if ("WAITING".equals(t.getStatus())) {
             t.setStatus("IN_PROGRESS");
             ticketRepository.save(t);
@@ -232,7 +242,8 @@ public class HandoffService {
         HandoffTicket t = find(ticketNo);
         List<AgentMessageView> messages = conversationService.agentMessagesAfter(t.getConversationId(), afterId).stream()
                 .map(m -> new AgentMessageView(m.getId(), m.getCreatedAt().format(TIME),
-                        m.getTranslated() != null ? m.getTranslated() : m.getContent()))
+                        m.getTranslated() != null ? m.getTranslated() : m.getContent(),
+                        m.getTranslated() == null && !"ko".equals(t.getLang())))
                 .toList();
         return new AgentPoll(t.getStatus(), messages, t.getInfoConsent());
     }

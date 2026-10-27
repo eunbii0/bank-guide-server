@@ -338,6 +338,19 @@
 .bubble.agent::before {
   content: '👤 ';
 }
+/* 말풍선 + 아래 안내 한 줄. 감싸는 div는 배치에 끼어들지 않는다 */
+.bubble-wrap {
+  display: contents;
+}
+/* 번역 없이 온 상담원 답장 아래 안내 */
+.bubble-note {
+  align-self: flex-start;
+  max-width: 80%;
+  margin: -4px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--warn);
+}
 .confirm-row {
   display: flex;
   gap: 8px;
