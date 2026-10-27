@@ -17,12 +17,12 @@ import java.util.stream.Stream;
 
 /**
  * 언어별 문구 조회. 요청한 언어에 문구가 없으면 영어 → 한국어 순으로 대신 쓴다.
- * 예) 네팔어로 질문한 고객에게는 영어 안내가 나간다.
+ * 예) 지원하지 않는 언어(예: 태국어)로 질문한 고객에게는 영어 안내가 나간다.
  */
 @Service
 public class TextService {
 
-    public static final List<String> SUPPORTED = List.of("ko", "en", "vi", "zh");
+    public static final List<String> SUPPORTED = List.of("ko", "en", "vi", "zh", "uz", "ne", "km");
     private static final List<String> FALLBACK = List.of("en", "ko");
 
     private final GuideTaskTextRepository taskTextRepository;
@@ -37,7 +37,12 @@ public class TextService {
         this.uiTextRepository = uiTextRepository;
     }
 
-    /** LLM이 알려준 언어 코드를 지원 언어로 맞춘다. "vi-VN" → "vi", "ne" → "en" */
+    /** 화면에서 고객이 직접 고른 언어 코드가 지원 언어인지 */
+    public boolean isSupported(String lang) {
+        return lang != null && SUPPORTED.contains(lang.trim().toLowerCase());
+    }
+
+    /** LLM이 알려준 언어 코드를 지원 언어로 맞춘다. "vi-VN" → "vi", "th" → "en" */
     public String normalize(String lang) {
         if (lang == null || lang.isBlank()) {
             return "en";

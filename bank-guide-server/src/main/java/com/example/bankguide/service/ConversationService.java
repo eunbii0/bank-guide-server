@@ -24,6 +24,30 @@ public class ConversationService {
         save(conversationId, "AI", lang, text);
     }
 
+    /** 시스템 안내(예: 고객이 상담을 종료함). 상담원 화면 대화에 한국어로 남긴다 */
+    public void system(String conversationId, String text) {
+        save(conversationId, "SYSTEM", "ko", text);
+    }
+
+    /** 상담 중 고객이 상담원에게 쓴 말: 원문과 한국어 번역(없으면 null)을 함께 저장한다 */
+    public ChatMessage customerToAgent(String conversationId, String lang, String original, String koreanText) {
+        String content = original.length() > 1000 ? original.substring(0, 1000) : original;
+        String trans = koreanText == null || koreanText.length() <= 1000 ? koreanText : koreanText.substring(0, 1000);
+        return repository.save(new ChatMessage(conversationId, "CUSTOMER", lang, content, trans));
+    }
+
+    /** 상담원 답장: 원문(한국어)과 고객 언어 번역을 함께 저장한다 */
+    public ChatMessage agent(String conversationId, String original, String translated) {
+        String content = original.length() > 1000 ? original.substring(0, 1000) : original;
+        String trans = translated == null || translated.length() <= 1000 ? translated : translated.substring(0, 1000);
+        return repository.save(new ChatMessage(conversationId, "AGENT", "ko", content, trans));
+    }
+
+    /** afterId 이후에 쌓인 상담원 답장 (고객 화면이 주기적으로 가져간다) */
+    public List<ChatMessage> agentMessagesAfter(String conversationId, long afterId) {
+        return repository.findByConversationIdAndSenderAndIdGreaterThanOrderByIdAsc(conversationId, "AGENT", afterId);
+    }
+
     public List<ChatMessage> history(String conversationId) {
         return conversationId == null ? List.of() : repository.findByConversationIdOrderByIdAsc(conversationId);
     }

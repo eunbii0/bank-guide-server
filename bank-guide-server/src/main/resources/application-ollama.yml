@@ -1,0 +1,12 @@
+# 키 없이 로컬 LLM(Ollama)으로 실행: Run Configuration의 Active profiles에 ollama 입력
+# 먼저 `ollama pull qwen3:4b-instruct` 로 모델을 받아 두고, Ollama가 켜져 있어야 한다 (기본 11434)
+spring:
+  ai:
+    model:
+      chat: ollama
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        options:
+          model: qwen3:4b-instruct
+          temperature: 0.2

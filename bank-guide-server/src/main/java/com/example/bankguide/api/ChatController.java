@@ -22,7 +22,7 @@ public class ChatController {
     /** 고객 문장(어느 언어든) → 업무 코드 + 고객 언어 응답 (사기 의심·판단 질문이면 상담원 연결 제안) */
     @PostMapping
     public ChatResponse chat(@RequestBody ChatRequest request) {
-        return intentService.classify(request.conversationId(), request.text());
+        return intentService.classify(request.conversationId(), request.text(), request.lang());
     }
 
     /** 애매해서 되물었을 때 고객이 선택지 버튼을 누름 */

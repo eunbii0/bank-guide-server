@@ -20,15 +20,21 @@ public class ChatMessage {
     private String sender;   // CUSTOMER, AI, AGENT
     private String lang;
     private String content;
+    private String translated;   // 상담원 답장을 고객 언어로 번역한 문장 (그 외에는 null)
     private LocalDateTime createdAt;
 
     protected ChatMessage() {}
 
     public ChatMessage(String conversationId, String sender, String lang, String content) {
+        this(conversationId, sender, lang, content, null);
+    }
+
+    public ChatMessage(String conversationId, String sender, String lang, String content, String translated) {
         this.conversationId = conversationId;
         this.sender = sender;
         this.lang = lang;
         this.content = content;
+        this.translated = translated;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -37,5 +43,6 @@ public class ChatMessage {
     public String getSender() { return sender; }
     public String getLang() { return lang; }
     public String getContent() { return content; }
+    public String getTranslated() { return translated; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 }

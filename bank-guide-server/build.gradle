@@ -29,6 +29,9 @@ dependencies {
     // 3단계: LLM 의도 분류 (OpenAI). 다른 LLM을 쓰려면 이 줄과 application.yml만 바꾸면 된다.
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 
+    // 키 없이 로컬에서 시험하는 Ollama. 기본은 OpenAI이고, `ollama` 프로필로 실행하면 이쪽을 쓴다.
+    implementation 'org.springframework.ai:spring-ai-starter-model-ollama'
+
     // 기본은 H2(설치 필요 없는 메모리 DB), mysql 프로필로 실행하면 MySQL 사용
     runtimeOnly 'com.h2database:h2'
     runtimeOnly 'com.mysql:mysql-connector-j'
