@@ -29,13 +29,15 @@ public class HandoffTicket {
     private String riskFlag;
     private String summarySource;
     private String status;
+    private String customerId;
+    private String infoConsent; // NONE, REQUESTED, GRANTED, DENIED
     private LocalDateTime createdAt;
 
     protected HandoffTicket() {}
 
     public HandoffTicket(String ticketNo, String conversationId, String sessionId, String queue, String reason,
                          String lang, String intent, String currentPage, String summaryKo, String checkpoints,
-                         String riskFlag, String summarySource) {
+                         String riskFlag, String summarySource, String customerId) {
         this.ticketNo = ticketNo;
         this.conversationId = conversationId;
         this.sessionId = sessionId;
@@ -49,6 +51,8 @@ public class HandoffTicket {
         this.riskFlag = riskFlag;
         this.summarySource = summarySource;
         this.status = "WAITING";
+        this.customerId = customerId;
+        this.infoConsent = "NONE";
         this.createdAt = LocalDateTime.now();
     }
 
@@ -66,7 +70,10 @@ public class HandoffTicket {
     public String getRiskFlag() { return riskFlag; }
     public String getSummarySource() { return summarySource; }
     public String getStatus() { return status; }
+    public String getCustomerId() { return customerId; }
+    public String getInfoConsent() { return infoConsent; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 
     public void setStatus(String status) { this.status = status; }
+    public void setInfoConsent(String infoConsent) { this.infoConsent = infoConsent; }
 }

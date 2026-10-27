@@ -771,6 +771,30 @@
   font-size: 12px;
   color: var(--muted);
 }
+/* 상담 중 상담원의 고객 정보 확인 요청 → [허용]/[거절] */
+.info-request {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--brand-soft);
+}
+.info-request strong {
+  font-size: 14px;
+}
+.info-request p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+/* 상담원 연결 버튼 아래: 상담원에게 무엇이 전달되는지 */
+.handoff-notice {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
 .customer-box {
   display: grid;
   gap: 18px;

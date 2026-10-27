@@ -16,6 +16,7 @@ public class GuideEvent {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String conversationId;
     private String sessionId;
     private String eventType;
     private String page;
@@ -24,7 +25,8 @@ public class GuideEvent {
 
     protected GuideEvent() {}
 
-    public GuideEvent(String sessionId, String eventType, String page, String detail) {
+    public GuideEvent(String conversationId, String sessionId, String eventType, String page, String detail) {
+        this.conversationId = conversationId;
         this.sessionId = sessionId;
         this.eventType = eventType;
         this.page = page;
@@ -33,6 +35,7 @@ public class GuideEvent {
     }
 
     public Long getId() { return id; }
+    public String getConversationId() { return conversationId; }
     public String getSessionId() { return sessionId; }
     public String getEventType() { return eventType; }
     public String getPage() { return page; }

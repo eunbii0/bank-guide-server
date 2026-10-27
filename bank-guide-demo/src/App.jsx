@@ -72,6 +72,7 @@ export default function App() {
   const [ticketClosed, setTicketClosed] = useState(false); // 상담원이 상담을 끝냈는지
   const [agentJoined, setAgentJoined] = useState(false); // 상담원이 상담을 시작했는지 (대기 → 연결됨)
   const [aiSuggestions, setAiSuggestions] = useState([]); // 대화 맥락으로 AI가 만든 추천 문장 (없으면 고정 예시)
+  const [infoRequest, setInfoRequest] = useState(false); // 상담원이 고객 정보 확인을 요청해서 [허용]/[거절]을 기다리는지
   const talkingToAgent = Boolean(ticketNo) && !ticketClosed; // true면 입력창이 상담원에게 바로 간다
   const say = (...msgs) => setMessages((m) => [...m, ...msgs]);
 
@@ -132,6 +133,8 @@ export default function App() {
   // 티켓이 생기면 3초마다 새 답장(고객 언어로 번역된 것)과 티켓 상태를 가져온다.
   const lastAgentId = useRef(0);
   const closedNotified = useRef(false); // 종료 안내를 한 번만 보여주기 위한 표시
+  const infoAnswered = useRef(false); // 방금 답했는데 답하기 전에 보낸 조회가 REQUESTED로 돌아와 카드가 다시 뜨지 않게
+  const infoShown = useRef(false); // 이번 요청의 카드를 이미 띄웠는지
   useEffect(() => {
     if (!ticketNo) return undefined;
     let alive = true;
@@ -140,6 +143,16 @@ export default function App() {
         const res = await api.fetchAgentMessages(ticketNo, lastAgentId.current);
         if (!alive) return;
         if (res.status === 'IN_PROGRESS') setAgentJoined(true);
+        // 상담원이 고객 정보 확인을 요청하면 [허용]/[거절] 카드를 띄운다
+        if (res.infoConsent !== 'REQUESTED') {
+          infoAnswered.current = false;
+          infoShown.current = false;
+        }
+        if (res.infoConsent === 'REQUESTED' && res.status !== 'CLOSED' && !infoAnswered.current && !infoShown.current) {
+          infoShown.current = true; // 요청 한 번에 한 번만 채팅창을 연다 (고객이 닫으면 다시 열지 않는다)
+          setInfoRequest(true);
+          setChatOpen(true);
+        }
         if (res.messages.length > 0) {
           lastAgentId.current = res.messages.at(-1).id;
           beginNewSession(false);
@@ -151,6 +164,7 @@ export default function App() {
         if (res.status === 'CLOSED') {
           clearInterval(timer);
           setTicketClosed(true);
+          setInfoRequest(false);
           if (!closedNotified.current) {
             closedNotified.current = true;
             say({ from: 'ai', text: t(lang, 'closed') });
@@ -184,7 +198,8 @@ export default function App() {
 
   // 상담원 연결 제안을 띄운다 (판단 질문·멈춤·이탈 반복·고객 정보 불일치)
   // intent는 연결할 때 /api/handoff에 함께 보낼 업무 (기본은 안내 중인 업무)
-  const showOffer = (text, reason, intent = currentIntent) => {
+  // warn: 사기 의심 경고처럼 눈에 띄게 보여줄 문구
+  const showOffer = (text, reason, intent = currentIntent, warn = false) => {
     setPendingIntent(null);
     setOptions([]);
     setVerifyCategory(null);
@@ -192,7 +207,7 @@ export default function App() {
     setRestartOffered(false);
     setOffer({ reason, intent });
     beginNewSession(false);
-    say({ from: 'ai', text });
+    say({ from: 'ai', text, warn });
     setChatOpen(true);
   };
 
@@ -263,9 +278,8 @@ export default function App() {
   // 서버의 분류 결과를 채팅창에 반영한다
   const showChatResult = (res) => {
     if (res.escalation === 'FRAUD') {
-      // 사기 의심: 경고를 보여주고 묻지 않고 바로 연결한다
-      say({ from: 'ai', text: res.message, warn: true });
-      doHandoff('FRAUD');
+      // 사기 의심: 경고를 보여주고, 무엇이 전달되는지 알린 뒤 연결할지 묻는다
+      showOffer(res.message, 'FRAUD', currentIntent, true);
     } else if (res.escalation === 'ADVICE') {
       showOffer(res.message, 'ADVICE');
     } else if (res.intent === 'AMBIGUOUS' || res.intent === 'MENU') {
@@ -430,8 +444,8 @@ export default function App() {
 
   const beginGuide = async (intent, term = null) => {
     try {
-      log('out', 'POST /api/guide/start', { intent, page, lang, term });
-      const res = await api.startGuide(intent, page, lang, term);
+      log('out', 'POST /api/guide/start', { conversationId, intent, page, lang, term });
+      const res = await api.startGuide(conversationId, intent, page, lang, term);
       log('in', 'start', res);
       setSessionId(res.sessionId);
       setLastSessionId(res.sessionId);
@@ -451,7 +465,8 @@ export default function App() {
     setOffer(null);
     setBusy(true);
     try {
-      const body = { conversationId, sessionId, reason, page, lang: l, intent };
+      // customerId는 티켓에 고객을 연결만 한다. 정보는 상담 중 고객이 허용해야 상담원에게 보인다
+      const body = { conversationId, sessionId, reason, page, lang: l, intent, customerId };
       log('out', 'POST /api/handoff', body);
       const res = await api.handoff(body);
       log('in', 'handoff', res);
@@ -460,6 +475,7 @@ export default function App() {
       setTicketNo(res.ticketNo);
       setTicketClosed(false);
       setAgentJoined(false);
+      setInfoRequest(false);
       lastAgentId.current = 0;
       closedNotified.current = false;
       say({ from: 'ai', text: res.message });
@@ -483,6 +499,21 @@ export default function App() {
         closedNotified.current = true;
         say({ from: 'ai', text: t(lang, 'closed') });
       }
+    } catch (e) {
+      fail(e);
+    }
+  };
+
+  // 상담원의 고객 정보 확인 요청에 답한다
+  const answerInfo = async (granted) => {
+    setInfoRequest(false);
+    infoAnswered.current = true;
+    say({ from: 'user', text: t(lang, granted ? 'infoAllow' : 'infoDeny') });
+    try {
+      log('out', `POST /api/tickets/${ticketNo}/info-consent`, { granted });
+      const res = await api.answerInfoRequest(ticketNo, granted);
+      log('in', 'info-consent', { infoConsent: res.infoConsent });
+      say({ from: 'ai', text: t(lang, granted ? 'infoAllowed' : 'infoDenied') });
     } catch (e) {
       fail(e);
     }
@@ -625,6 +656,8 @@ export default function App() {
           onChoose={onChoose}
           onAcceptOffer={acceptOffer}
           onDeclineOffer={declineOffer}
+          infoRequest={infoRequest}
+          onAnswerInfo={answerInfo}
           onVerify={onVerify}
           onPickProduct={onPickProduct}
           onProductHandoff={onProductHandoff}

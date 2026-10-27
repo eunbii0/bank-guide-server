@@ -9,6 +9,7 @@ import com.example.bankguide.api.ApiDtos.MessageView;
 import com.example.bankguide.api.ApiDtos.TicketView;
 import com.example.bankguide.common.PageNames;
 import com.example.bankguide.domain.ChatMessage;
+import com.example.bankguide.domain.CustomerProfileRepository;
 import com.example.bankguide.domain.GuideTaskRepository;
 import com.example.bankguide.domain.HandoffTicket;
 import com.example.bankguide.domain.HandoffTicketRepository;
@@ -48,6 +49,7 @@ public class HandoffService {
     private final TextService textService;
     private final GuideTaskRepository taskRepository;
     private final HandoffTicketRepository ticketRepository;
+    private final CustomerProfileRepository customerRepository;
     private final HandoffSummarizer summarizer;
     private final AgentTranslator translator;
 
@@ -56,8 +58,10 @@ public class HandoffService {
                           TextService textService,
                           GuideTaskRepository taskRepository,
                           HandoffTicketRepository ticketRepository,
+                          CustomerProfileRepository customerRepository,
                           HandoffSummarizer summarizer,
                           AgentTranslator translator) {
+        this.customerRepository = customerRepository;
         this.translator = translator;
         this.guideService = guideService;
         this.conversationService = conversationService;
@@ -82,6 +86,8 @@ public class HandoffService {
 
         guideService.endForHandoff(req.sessionId(), reason);
 
+        // 개인정보 최소화: 상담원에게는 지금 진행 중인 안내의 기록만 넘긴다.
+        // 같은 대화에서 그만둔 다른 안내 기록은 서비스 개선용으로 저장만 하고 요약에 넣지 않는다
         List<EventView> events = req.sessionId() == null ? List.of() : guideService.events(req.sessionId());
         List<MessageView> messages = messages(req.conversationId());
         HandoffNote.Input input = new HandoffNote.Input(lang, intentNameKo, reason, req.page(), events, messages);
@@ -105,9 +111,12 @@ public class HandoffService {
                 : "FOREIGN";
         String ticketNo = "T-" + LocalDate.now().format(DAY) + "-" + String.format("%04d", ticketRepository.count() + 1);
 
+        // 고객 정보는 티켓에 복사하지 않고 고객 id만 둔다. 상담원은 상담 중 고객이 허용했을 때만 정보를 본다
+        String customerId = req.customerId() != null && customerRepository.existsById(req.customerId())
+                ? req.customerId() : null;
         ticketRepository.save(new HandoffTicket(ticketNo, req.conversationId(), req.sessionId(), queue, reason,
                 lang, intent, req.page(), String.join("\n", summary.summary()),
-                String.join("\n", summary.checkpoints()), summary.riskFlag(), source));
+                String.join("\n", summary.checkpoints()), summary.riskFlag(), source, customerId));
         log.info("[상담원 연결] {} queue={} reason={} lang={} summary={}", ticketNo, queue, reason, lang, source);
 
         String message = textService.ui("HANDOFF_DONE", lang);
@@ -223,21 +232,22 @@ public class HandoffService {
                 .map(m -> new AgentMessageView(m.getId(), m.getCreatedAt().format(TIME),
                         m.getTranslated() != null ? m.getTranslated() : m.getContent()))
                 .toList();
-        return new AgentPoll(t.getStatus(), messages);
+        return new AgentPoll(t.getStatus(), messages, t.getInfoConsent());
     }
 
-    private HandoffTicket find(String ticketNo) {
+    HandoffTicket find(String ticketNo) {
         return ticketRepository.findByTicketNo(ticketNo)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ticket not found: " + ticketNo));
     }
 
-    private TicketView view(HandoffTicket t) {
+    TicketView view(HandoffTicket t) {
         String intentName = t.getIntent() != null && taskRepository.existsById(t.getIntent())
                 ? textService.task(t.getIntent(), "ko").getName() : "미확인 업무";
         return new TicketView(t.getTicketNo(), t.getQueue(), t.getStatus(), HandoffNote.reasonKo(t.getReason()),
                 HandoffNote.langKo(t.getLang()), intentName, PageNames.of(t.getCurrentPage()),
                 lines(t.getSummaryKo()), lines(t.getCheckpoints()), t.getRiskFlag(), t.getSummarySource(),
-                messages(t.getConversationId()), t.getCreatedAt().format(TIME));
+                messages(t.getConversationId()), t.getCreatedAt().format(TIME),
+                t.getCustomerId() != null, t.getInfoConsent());
     }
 
     private List<MessageView> messages(String conversationId) {

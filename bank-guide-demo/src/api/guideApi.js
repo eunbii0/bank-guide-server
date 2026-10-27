@@ -48,8 +48,9 @@ export const checkEligibility = (body) => post('/api/eligibility', body);
 
 // ---------- 안내 ----------
 
-/** 안내 시작 → { sessionId, guide }  (term: 예금·적금 가입 기간, 개월) */
-export const startGuide = (intent, page, lang, term = null) => post('/api/guide/start', { intent, page, lang, term });
+/** 안내 시작 → { sessionId, guide }  (term: 예금·적금 가입 기간, 개월. conversationId: 채팅과 같은 값) */
+export const startGuide = (conversationId, intent, page, lang, term = null) =>
+  post('/api/guide/start', { conversationId, intent, page, lang, term });
 
 /** 화면 진입 → { guide, offer }  (offer: 경로 이탈 3회째일 때 상담원 연결 제안 문구) */
 export const sendPageEnter = (sessionId, page) => post('/api/guide/event', { sessionId, page });
@@ -100,5 +101,20 @@ export const fetchSuggestions = (ticketNo, role) =>
 /** 고객이 상담 종료 버튼을 눌렀을 때. 서버가 티켓을 CLOSED로 바꾼다 → 바뀐 티켓 */
 export const closeTicketByCustomer = (ticketNo) => post(`/api/tickets/${ticketNo}/customer-close`, {});
 
-/** 고객 화면용: 티켓 상태 + afterId 이후의 상담원 답장(번역본) → { status, messages: [{ id, time, text }] } */
+/**
+ * 고객 화면용: 티켓 상태 + afterId 이후의 상담원 답장(번역본) + 정보 확인 요청 여부
+ * → { status, messages: [{ id, time, text }], infoConsent: NONE | REQUESTED | GRANTED | DENIED }
+ */
 export const fetchAgentMessages = (ticketNo, afterId) => get(`/api/tickets/${ticketNo}/agent-messages?after=${afterId}`);
+
+// ---------- 고객 정보 공유 (상담 중 동의) ----------
+
+/** 상담원: 고객에게 정보 확인을 요청한다 → 바뀐 티켓 */
+export const requestCustomerInfo = (ticketNo) => post(`/api/tickets/${ticketNo}/info-request`, {});
+
+/** 고객: 요청을 허용(true)하거나 거절(false)한다 → 바뀐 티켓 */
+export const answerInfoRequest = (ticketNo, granted) => post(`/api/tickets/${ticketNo}/info-consent`, { granted });
+
+/** 상담원: 고객이 허용한 상담에서만 고객 정보·자격 판단 결과를 받는다. 부를 때마다 서버에 조회 기록이 남는다 */
+export const fetchCustomerInfo = (ticketNo, agent = 'demo-agent') =>
+  get(`/api/tickets/${ticketNo}/customer-info?agent=${encodeURIComponent(agent)}`);

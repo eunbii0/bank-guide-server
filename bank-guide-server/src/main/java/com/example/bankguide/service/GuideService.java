@@ -55,16 +55,19 @@ public class GuideService {
         this.textService = textService;
     }
 
-    /** term: 예금·적금 가입 기간(개월). 단계에 {term}이 있는 업무는 꼭 필요하다 */
-    public StartResponse start(String intent, String page, String lang, Integer term) {
+    /**
+     * term: 예금·적금 가입 기간(개월). 단계에 {term}이 있는 업무는 꼭 필요하다.
+     * conversationId: 이 안내를 시작한 대화. 상담원 요약이 대화 안의 모든 안내 기록을 모을 때 쓴다
+     */
+    public StartResponse start(String conversationId, String intent, String page, String lang, Integer term) {
         String l = textService.normalize(lang);
         Route route = loadRoute(intent, l, term);
-        GuideSession session = new GuideSession(UUID.randomUUID().toString(), intent, l, term);
+        GuideSession session = new GuideSession(UUID.randomUUID().toString(), conversationId, intent, l, term);
         sessions.put(session.getSessionId(), session);
 
         Guide guide = enter(session, route, page);
         String detail = intent + (term == null ? "" : " " + term + "개월") + " (" + l + ")";
-        eventRepository.save(new GuideEvent(session.getSessionId(), "GUIDE_START", page, detail));
+        record(session, "GUIDE_START", page, detail);
         return new StartResponse(session.getSessionId(), guide);
     }
 
@@ -72,7 +75,7 @@ public class GuideService {
         GuideSession session = findSession(sessionId);
         Guide guide = enter(session, loadRoute(session.getIntent(), session.getLang(), session.getTerm()), page);
 
-        eventRepository.save(new GuideEvent(sessionId, "PAGE_ENTER", page, describe(guide)));
+        record(session, "PAGE_ENTER", page, describe(guide));
         if ("DONE".equals(guide.type())) {
             sessions.remove(sessionId);
         }
@@ -81,7 +84,7 @@ public class GuideService {
         String offer = null;
         if ("OFF_PATH".equals(guide.type()) && session.getOffPathCount() == OFF_PATH_LIMIT) {
             offer = textService.ui("OFFER_STUCK", session.getLang());
-            eventRepository.save(new GuideEvent(sessionId, "OFFER", page, "OFF_PATH x" + OFF_PATH_LIMIT));
+            record(session, "OFFER", page, "OFF_PATH x" + OFF_PATH_LIMIT);
         }
         return new EventResponse(guide, offer);
     }
@@ -89,20 +92,22 @@ public class GuideService {
     /** 4단계: 화면이 "같은 화면에서 N초 동안 아무것도 안 눌렀다"고 알려옴 → 기록하고 연결 제안 문구를 준다 */
     public StuckResponse stuck(String sessionId, String page, int idleSec) {
         GuideSession session = findSession(sessionId);
-        eventRepository.save(new GuideEvent(sessionId, "STUCK", page, "idle " + idleSec + "s"));
+        record(session, "STUCK", page, "idle " + idleSec + "s");
         return new StuckResponse(textService.ui("OFFER_STUCK", session.getLang()));
     }
 
     public void stop(String sessionId) {
-        if (sessionId != null && sessions.remove(sessionId) != null) {
-            eventRepository.save(new GuideEvent(sessionId, "GUIDE_STOP", null, null));
+        GuideSession session = sessionId == null ? null : sessions.remove(sessionId);
+        if (session != null) {
+            record(session, "GUIDE_STOP", null, null);
         }
     }
 
     /** 4단계: 상담원에게 넘어가면 안내를 끝낸다 (하이라이트 중지) */
     public void endForHandoff(String sessionId, String reason) {
-        if (sessionId != null && sessions.remove(sessionId) != null) {
-            eventRepository.save(new GuideEvent(sessionId, "HANDOFF", null, reason));
+        GuideSession session = sessionId == null ? null : sessions.remove(sessionId);
+        if (session != null) {
+            record(session, "HANDOFF", null, reason);
         }
     }
 
@@ -114,6 +119,10 @@ public class GuideService {
         return eventRepository.findBySessionIdOrderByIdAsc(sessionId).stream()
                 .map(e -> new EventView(e.getCreatedAt().format(TIME), e.getEventType(), e.getPage(), e.getDetail()))
                 .toList();
+    }
+
+    private void record(GuideSession session, String type, String page, String detail) {
+        eventRepository.save(new GuideEvent(session.getConversationId(), session.getSessionId(), type, page, detail));
     }
 
     private Guide enter(GuideSession session, Route route, String page) {

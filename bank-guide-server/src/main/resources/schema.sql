@@ -1,4 +1,5 @@
 -- 데모용: 서버를 켤 때마다 테이블을 새로 만든다 (MySQL 프로필에서도 동일)
+DROP TABLE IF EXISTS customer_info_access;
 DROP TABLE IF EXISTS eligibility_check;
 DROP TABLE IF EXISTS product_rule;
 DROP TABLE IF EXISTS product;
@@ -66,14 +67,17 @@ CREATE TABLE intent_keyword (
     FOREIGN KEY (task_code) REFERENCES guide_task (code)
 );
 
--- 고객 행동 기록 (4단계 요약의 재료)
+-- 고객 행동 기록. 상담원 요약에는 지금 진행 중인 안내(session_id)의 기록만 쓰고,
+-- 대화(conversation_id) 단위 기록은 서비스 개선 분석용으로만 저장한다 (개인정보 최소화)
+-- 한 대화에서 안내를 여러 번 시작할 수 있고, 안내 한 번마다 session_id가 새로 생긴다
 CREATE TABLE guide_event (
-    id         BIGINT AUTO_INCREMENT PRIMARY KEY,
-    session_id VARCHAR(36)  NOT NULL,
-    event_type VARCHAR(30)  NOT NULL,       -- GUIDE_START, PAGE_ENTER, GUIDE_STOP
-    page       VARCHAR(60),
-    detail     VARCHAR(500),
-    created_at TIMESTAMP    NOT NULL
+    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
+    conversation_id VARCHAR(36),                -- chat_message·handoff_ticket과 같은 값 (보내지 않은 옛 화면은 NULL)
+    session_id      VARCHAR(36)  NOT NULL,
+    event_type      VARCHAR(30)  NOT NULL,       -- GUIDE_START, PAGE_ENTER, GUIDE_STOP
+    page            VARCHAR(60),
+    detail          VARCHAR(500),
+    created_at      TIMESTAMP    NOT NULL
 );
 
 -- 4단계: 채팅 기록 (고객 원문 그대로 보관). 화면을 연 순간부터 하나의 conversation_id로 묶는다.
@@ -103,6 +107,9 @@ CREATE TABLE handoff_ticket (
     risk_flag       VARCHAR(20)   NOT NULL,   -- NONE, FRAUD_SUSPECTED
     summary_source  VARCHAR(10)   NOT NULL,   -- LLM, RULE
     status          VARCHAR(20)   NOT NULL,   -- WAITING, IN_PROGRESS, CLOSED
+    customer_id     VARCHAR(10),              -- customer_profile.customer_id (모르면 NULL → 정보 요청 불가)
+    -- 고객 정보 공유 동의: 상담원이 상담 중에 요청하고, 고객이 허용해야 고객 정보·자격 판단 결과가 상담원 창에 보인다
+    info_consent    VARCHAR(20)   NOT NULL,   -- NONE, REQUESTED, GRANTED, DENIED
     created_at      TIMESTAMP     NOT NULL
 );
 
@@ -153,4 +160,14 @@ CREATE TABLE eligibility_check (
     result_ko       VARCHAR(1000),            -- 줄바꿈으로 구분한 한국어 결과 (상담원이 그대로 읽을 수 있게)
     result_json     VARCHAR(2000),            -- 상품별 결과 (JSON 배열, 프로그램이 읽을 때)
     created_at      TIMESTAMP     NOT NULL
+);
+
+-- 상담원이 고객 정보를 조회한 기록 (은행의 개인정보 접속기록에 해당). 조회할 때마다 한 줄씩 쌓고 고치거나 지우지 않는다
+CREATE TABLE customer_info_access (
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ticket_no   VARCHAR(30)  NOT NULL,
+    customer_id VARCHAR(10)  NOT NULL,
+    agent_id    VARCHAR(30)  NOT NULL,       -- 데모는 로그인이 없어서 화면이 보내는 값 (기본 demo-agent)
+    items       VARCHAR(100) NOT NULL,       -- 조회한 항목: PROFILE, ELIGIBILITY
+    accessed_at TIMESTAMP    NOT NULL
 );
