@@ -15,7 +15,12 @@ public final class ApiDtos {
      * POST /api/chat  {"conversationId":"...","text":"I want to close my deposit early"}
      * conversationId는 화면이 처음 열릴 때 만든 값. 같은 고객의 대화를 하나로 묶는다.
      */
-    public record ChatRequest(String conversationId, String text) {}
+    public record ChatRequest(String conversationId, String text, String lang) {
+        /** lang 없이 보내는 기존 요청(고객이 언어를 고르지 않음): 입력한 언어를 자동으로 알아본다 */
+        public ChatRequest(String conversationId, String text) {
+            this(conversationId, text, null);
+        }
+    }
 
     /**
      * 분류 결과.
@@ -79,5 +84,27 @@ public final class ApiDtos {
                              String summarySource, List<MessageView> messages, String createdAt) {}
 
     /** 원문 대화 한 줄 */
-    public record MessageView(String time, String sender, String lang, String content) {}
+    public record MessageView(String time, String sender, String lang, String content, String translated) {
+        /** 번역이 없는 일반 대화 */
+        public MessageView(String time, String sender, String lang, String content) {
+            this(time, sender, lang, content, null);
+        }
+    }
+
+    // ---------- 상담원 화면 (5단계) ----------
+
+    /** PATCH /api/tickets/{ticketNo}/status  {"status":"IN_PROGRESS"}  (WAITING, IN_PROGRESS, CLOSED) */
+    public record StatusRequest(String status) {}
+
+    /** POST /api/tickets/{ticketNo}/reply  {"text":"영문 이름을 여권과 똑같이 입력해 주세요"}  상담원은 한국어로 쓴다 */
+    public record ReplyRequest(String text) {}
+
+    /** POST /api/tickets/{ticketNo}/customer-message  {"text":"My name doesn't work"}  고객 언어 그대로 보낸다 */
+    public record CustomerMessageRequest(String text) {}
+
+    /** 고객 화면이 가져가는 상담원 답장. text는 고객 언어로 번역된 문장 */
+    public record AgentMessageView(long id, String time, String text) {}
+
+    /** GET /api/tickets/{ticketNo}/agent-messages?after=0 : 티켓 상태 + after 이후의 상담원 답장 */
+    public record AgentPoll(String status, List<AgentMessageView> messages) {}
 }
