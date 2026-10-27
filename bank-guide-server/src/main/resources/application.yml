@@ -1,0 +1,50 @@
+server:
+  port: 8080
+  error:
+    include-message: always   # "안내 세션이 없습니다" 같은 오류 문구를 화면에 전달
+
+spring:
+  # 기본: H2 메모리 DB (설치 없이 바로 실행, 서버를 끄면 데이터가 사라짐)
+  datasource:
+    url: jdbc:h2:mem:guide;MODE=MySQL
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true          # http://localhost:8080/h2-console 에서 테이블 확인
+  jpa:
+    hibernate:
+      ddl-auto: none         # 테이블은 schema.sql로 직접 만든다
+    open-in-view: false
+    show-sql: true
+  sql:
+    init:
+      mode: always           # 서버 시작 시 schema.sql → data.sql 실행
+      encoding: UTF-8
+
+  # 3단계: LLM 의도 분류
+  ai:
+    openai:
+      # IntelliJ Run Configuration → Environment variables에 OPENAI_API_KEY=sk-... 입력
+      # 키가 없거나 호출이 실패하면 서버는 키워드 분류로 대신 동작한다
+      api-key: ${OPENAI_API_KEY:no-key}
+      chat:
+        options:
+          model: gpt-5-mini
+          temperature: 1.0           # gpt-5 계열은 1.0만 허용
+          reasoning-effort: minimal  # 분류는 깊게 생각할 필요가 없어서 응답을 빠르게
+
+logging:
+  level:
+    com.example.bankguide: INFO      # 콘솔에서 [LLM 분류] 로그 확인
+
+---
+# MySQL로 실행: Run Configuration의 Active profiles에 mysql 입력
+spring:
+  config:
+    activate:
+      on-profile: mysql
+  datasource:
+    url: jdbc:mysql://localhost:3306/bank_guide?createDatabaseIfNotExist=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: root
+    password: ${MYSQL_PASSWORD}

@@ -1,27 +1,6 @@
-# 비밀 정보 (API 키, DB 비밀번호)
+.idea/
+.vscode/
+*.iml
+.DS_Store
 .env
 .env.*
-application-local.yml
-application-local.properties
-application-secret.yml
-
-# frontend
-node_modules/
-dist/
-build/
-.vite/
-npm-debug.log*
-
-# backend
-.gradle/
-out/
-target/
-*.class
-*.log
-
-# IDE / OS
-.idea/
-*.iml
-.vscode/
-.DS_Store
-Thumbs.db
