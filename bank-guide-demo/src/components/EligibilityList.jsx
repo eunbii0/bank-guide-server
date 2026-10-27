@@ -5,7 +5,7 @@ import { months, t } from '../i18n';
 //  - 가능: [이걸로 할게요] 또는 가입 기간 버튼 (만기일이 체류 만료일 뒤인 기간은 비활성 + 이유)
 //  - 불가: 이유 + 대안 상품 버튼 + [상담원 연결]
 export default function EligibilityList({ lang, result, onPick, onHandoff }) {
-  const { products, notice, offer } = result;
+  const { products, offer } = result;
   const byCode = Object.fromEntries(products.map((p) => [p.productCode, p]));
 
   return (
@@ -76,7 +76,6 @@ export default function EligibilityList({ lang, result, onPick, onHandoff }) {
         </section>
       ))}
       {offer && <p className="elig-offer">{offer}</p>}
-      <p className="elig-notice">{notice}</p>
     </div>
   );
 }

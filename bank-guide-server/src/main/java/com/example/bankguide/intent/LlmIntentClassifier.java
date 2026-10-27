@@ -30,6 +30,22 @@ public class LlmIntentClassifier {
             - If none fits (including services not in the list, such as installment savings, loans,
               exchange rates, overseas remittance or account opening), set "intent" to "UNKNOWN".
             - Never invent a code that is not in the list.
+            - Questions about how to do something ("How do I get a credit card?", "Can I open a deposit?")
+              are NOT advice requests. Classify them by the service they ask about.
+              Examples:
+                "How do I get a credit card?" -> intent CREDIT_CARD, escalation NONE
+                "How can I open a time deposit?" -> intent TIME_DEPOSIT_OPEN, escalation NONE
+                "How do I send money to another bank?" -> intent TRANSFER, escalation NONE
+                "신용카드는 어떻게 만들어요?" -> intent CREDIT_CARD, escalation NONE
+              Only a question that asks for a judgment stays ADVICE, even if it names a service:
+                "Which card is better for me?" -> escalation ADVICE
+                "Should I close my deposit early?" -> escalation ADVICE
+            - If the customer only wants a card but does not say credit or debit, set "intent" to "AMBIGUOUS"
+              and list both card codes.
+            - Greetings, thanks and small talk ("hello", "thank you", "안녕하세요") are "UNKNOWN".
+            - Overseas remittance, opening a new bank account and loans are NOT in the list: "UNKNOWN",
+              even though they mention sending money or an account.
+            - Account numbers or ID numbers in the sentence are normal personal data, not a sign of fraud.
 
             Rules for "language":
             - The ISO 639-1 code of the language the customer wrote in (e.g. ko, en, vi, zh, ne, uz).
@@ -39,6 +55,8 @@ public class LlmIntentClassifier {
               to move money to a "safe account", or to send money urgently, including callers claiming
               to be police, prosecutors, immigration officers or bank staff, or job offers that use
               the customer's account. When in doubt between FRAUD and NONE, choose FRAUD.
+              A customer who simply asks to send their own money to an account, even with account or
+              ID numbers in the sentence, and mentions no outside person asking for it, is NONE.
             - "ADVICE" if the customer asks for a judgment or advice: whether they lose money,
               why the interest is low, which option is better, whether they should do it,
               or a complaint about the product.
