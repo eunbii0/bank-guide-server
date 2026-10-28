@@ -2,6 +2,7 @@ package com.example.bankguide.handoff;
 
 import com.example.bankguide.api.ApiDtos.EventView;
 import com.example.bankguide.api.ApiDtos.MessageView;
+import com.example.bankguide.api.ApiDtos.TimelineView;
 import com.example.bankguide.common.Masking;
 import com.example.bankguide.common.PageNames;
 
@@ -16,9 +17,20 @@ import java.util.Map;
  */
 public final class HandoffNote {
 
-    /** 요약에 필요한 재료 한 묶음 */
+    /**
+     * 요약에 필요한 재료 한 묶음. events는 챗봇을 시작한 뒤 이 대화에서 남은 모든 안내 기록,
+     * timeline은 그 기록을 상담원 화면 '업무 진행 이력'과 같은 한국어 문장으로 바꾼 것
+     */
     public record Input(String lang, String intentNameKo, String reason, String currentPage,
-                        List<EventView> events, List<MessageView> messages) {}
+                        List<EventView> events, List<MessageView> messages, List<TimelineView> timeline) {
+
+        /** 업무 코드를 한국어로 바꾸지 않은 이력으로 만든다 (테스트용) */
+        public Input(String lang, String intentNameKo, String reason, String currentPage,
+                     List<EventView> events, List<MessageView> messages) {
+            this(lang, intentNameKo, reason, currentPage, events, messages,
+                    PathNote.timeline(null, events, code -> code));
+        }
+    }
 
     private static final Map<String, String> REASONS = Map.of(
             "ADVICE", "손익·상품 판단 질문",
@@ -41,25 +53,77 @@ public final class HandoffNote {
         return LANGS.getOrDefault(lang, lang);
     }
 
-    /** LLM에게 줄 입력. 고객 원문은 그대로 주되 긴 숫자는 가린다. */
+    /** 인계 카드 제목 한 줄. 예) "적금 가입 중 경로 이탈 반복", "업무 확인 전 금융사기 의심" */
+    public static String headline(String intentNameKo, String reason, String riskFlag) {
+        String task = intentNameKo == null ? "업무 확인 전" : intentNameKo + " 중";
+        if ("FRAUD".equals(reason) || "FRAUD_SUSPECTED".equals(riskFlag)) {
+            return task + " 금융사기 의심";
+        }
+        return task + " " + switch (reason == null ? "" : reason) {
+            case "ADVICE" -> "판단이 필요한 질문";
+            case "STUCK" -> "같은 화면에서 멈춤";
+            case "OFF_PATH" -> "경로 이탈 반복";
+            default -> "상담원 연결 요청";
+        };
+    }
+
+    /**
+     * LLM에게 줄 입력. 고객 원문은 그대로 주되 긴 숫자는 가린다.
+     * 행동 기록은 상담원 화면과 같은 한국어 문장으로 주고, 눈에 띄는 신호(이탈·멈춤·안내 변경)는 횟수로 따로 적는다
+     */
     public static String toPrompt(Input in) {
         StringBuilder sb = new StringBuilder();
+        sb.append("[기본 정보]\n");
         sb.append("고객 언어: ").append(langKo(in.lang())).append('\n');
         sb.append("업무: ").append(in.intentNameKo() == null ? "아직 정해지지 않음" : in.intentNameKo()).append('\n');
         sb.append("연결 사유: ").append(reasonKo(in.reason())).append('\n');
         sb.append("현재 화면: ").append(PageNames.of(in.currentPage())).append('\n');
-        sb.append("\n화면 이동 기록:\n");
-        for (EventView e : in.events()) {
-            sb.append("- ").append(e.time()).append(' ').append(e.type())
-                    .append(' ').append(PageNames.of(e.page()))
-                    .append(e.detail() == null ? "" : " (" + e.detail() + ")").append('\n');
+        sb.append("행동 신호: ").append(signals(in.events())).append('\n');
+
+        sb.append("\n[고객 행동 기록] 챗봇 시작부터 상담원 연결까지, 시간순\n");
+        if (in.timeline().isEmpty()) {
+            sb.append("- (화면 안내 없이 채팅으로만 상담)\n");
         }
-        sb.append("\n대화 기록 (원문):\n");
+        for (TimelineView t : in.timeline()) {
+            sb.append("- ").append(t.time()).append(' ').append(t.text())
+                    .append("warn".equals(t.tone()) ? "  ← 확인 필요" : "").append('\n');
+        }
+
+        sb.append("\n[대화 기록] 원문, 시간순\n");
+        if (in.messages().isEmpty()) {
+            sb.append("- (고객이 채팅으로 남긴 말 없음)\n");
+        }
         for (MessageView m : in.messages()) {
-            sb.append("- ").append("CUSTOMER".equals(m.sender()) ? "고객" : "AI").append(": ")
+            sb.append("- ").append(m.time()).append(' ')
+                    .append(switch (m.sender()) {
+                        case "CUSTOMER" -> "고객";
+                        case "AGENT" -> "상담원";
+                        case "SYSTEM" -> "시스템";
+                        case "ACTIVITY" -> "고객 화면 이동";
+                        default -> "챗봇";
+                    }).append(": ")
                     .append(Masking.mask(m.content())).append('\n');
         }
         return sb.toString();
+    }
+
+    /** 경로 이탈 화면 진입. HANDOFF 기록의 detail도 사유 "OFF_PATH"일 수 있어서 화면 진입만 센다 */
+    private static boolean isOffPath(EventView e) {
+        return "PAGE_ENTER".equals(e.type()) && "OFF_PATH".equals(e.detail());
+    }
+
+    /** "안내 2회 시작 ·경로 이탈 3회 · 멈춤 1회 · 안내 중단 1회" (없으면 "특이 사항 없음") */
+    static String signals(List<EventView> events) {
+        long starts = events.stream().filter(e -> "GUIDE_START".equals(e.type())).count();
+        long offPath = events.stream().filter(HandoffNote::isOffPath).count();
+        long stuck = events.stream().filter(e -> "STUCK".equals(e.type())).count();
+        long stops = events.stream().filter(e -> "GUIDE_STOP".equals(e.type())).count();
+        List<String> parts = new ArrayList<>();
+        if (starts > 1) parts.add("안내 " + starts + "회 시작 (업무를 바꾸거나 다시 시작함)");
+        if (offPath > 0) parts.add("경로 이탈 " + offPath + "회");
+        if (stuck > 0) parts.add("멈춤 " + stuck + "회");
+        if (stops > 0) parts.add("안내 중단 " + stops + "회");
+        return parts.isEmpty() ? "특이 사항 없음" : String.join(" · ", parts);
     }
 
     /** LLM 없이 규칙으로 만드는 요약. 내용은 단순하지만 사실만 담는다. */
@@ -69,7 +133,7 @@ public final class HandoffNote {
         String task = in.intentNameKo() == null ? "업무를 정하기 전에" : in.intentNameKo() + " 진행 중";
         summary.add(task + " 상담원 연결 (사유: " + reasonKo(in.reason()) + ").");
 
-        long offPath = in.events().stream().filter(e -> "OFF_PATH".equals(e.detail())).count();
+        long offPath = in.events().stream().filter(HandoffNote::isOffPath).count();
         long stuck = in.events().stream().filter(e -> "STUCK".equals(e.type())).count();
         StringBuilder where = new StringBuilder("마지막 화면: " + PageNames.of(in.currentPage()));
         if (offPath > 0) where.append(", 경로 이탈 ").append(offPath).append("회");

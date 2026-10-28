@@ -20,7 +20,7 @@ const TEXT = {
     reviewConfirm: '확인했어요',
     connect: '상담원 연결',
     // 연결 직전에 상담원에게 무엇이 전달되는지 알린다 (개인정보 최소화)
-    handoffNotice: '연결하면 이 채팅 내용과 지금 진행 중인 안내 상황(보고 있는 화면, 막힌 단계)만 상담원에게 전달돼요.',
+    handoffNotice: '연결하면 이 채팅 내용과 챗봇을 연 뒤의 안내 진행 기록(지나온 화면, 막힌 단계)이 상담원에게 전달되고, 상담 중에는 어느 화면으로 이동하는지도 상담원에게 보여요.',
     // 상담 중 상담원의 고객 정보 확인 요청
     infoRequestTitle: '고객 정보 확인 요청',
     infoRequest: '상담원이 은행에 등록된 고객님의 정보(체류자격, 체류 만료일 등)와 가입 자격 확인 결과를 보려고 해요. 허용하면 이번 상담이 끝날 때까지만 볼 수 있어요.',
@@ -30,6 +30,7 @@ const TEXT = {
     infoDenied: '정보 확인을 거절했어요. 필요한 내용은 상담원이 직접 여쭤볼 수 있어요.',
     // 번역이 안 돼서 상담원이 쓴 그대로 온 답장 아래에 붙이는 안내
     untranslated: '번역이 잠시 안 돼서 상담원이 쓴 그대로 보여드려요. 이해가 어려우면 쉬운 영어로 다시 물어봐 주세요.',
+    sharedWithAgent: '상담원에게 공유됨', // 상담 중 화면 이동이 상담원 화면에도 보인다는 표시
     continueSelf: '혼자 계속할게요',
     waiting: '상담원 연결 대기 중',
     // 챗봇 메뉴 + 가입 자격 판단
@@ -68,7 +69,7 @@ const TEXT = {
     reviewPrompt: 'This is important. Please read the highlighted details carefully.',
     reviewConfirm: "I've checked",
     connect: 'Connect to an agent',
-    handoffNotice: 'If you connect, only this chat and your current guide progress (the screen you are on and the step where you got stuck) are shared with the agent.',
+    handoffNotice: 'If you connect, this chat and your guide progress since you opened the chatbot (the screens you went through and where you got stuck) are shared with the agent. During the chat, the agent can also see which screen you move to.',
     infoRequestTitle: 'Request to view your information',
     infoRequest: 'The agent would like to see your information registered with the bank (visa type, stay expiry date, etc.) and your eligibility results. If you allow it, they can see it only until this chat ends.',
     infoAllow: 'Allow',
@@ -76,6 +77,7 @@ const TEXT = {
     infoAllowed: 'You allowed it. The agent can no longer see your information after this chat ends.',
     infoDenied: 'You declined. The agent may ask you directly for anything they need.',
     untranslated: "Translation isn't working right now, so this is shown as the agent wrote it. If it's hard to understand, please ask again in simple English.",
+    sharedWithAgent: 'Shared with your agent', // 상담 중 화면 이동이 상담원 화면에도 보인다는 표시
     continueSelf: "I'll continue myself",
     waiting: 'Waiting for an agent',
     // 챗봇 메뉴 + 가입 자격 판단
@@ -114,7 +116,7 @@ const TEXT = {
     reviewPrompt: 'Đây là thông tin quan trọng. Vui lòng đọc kỹ phần được làm nổi bật.',
     reviewConfirm: 'Tôi đã kiểm tra',
     connect: 'Kết nối nhân viên',
-    handoffNotice: 'Khi kết nối, chỉ nội dung trò chuyện này và tình trạng hướng dẫn hiện tại (màn hình bạn đang xem, bước bạn gặp khó) được chuyển cho nhân viên.',
+    handoffNotice: 'Khi kết nối, nội dung trò chuyện này và quá trình hướng dẫn từ khi bạn mở chatbot (các màn hình đã đi qua, bước bạn gặp khó) sẽ được chuyển cho nhân viên. Trong lúc tư vấn, nhân viên cũng thấy bạn chuyển sang màn hình nào.',
     infoRequestTitle: 'Yêu cầu xem thông tin của bạn',
     infoRequest: 'Nhân viên muốn xem thông tin của bạn đã đăng ký tại ngân hàng (loại thị thực, ngày hết hạn lưu trú, v.v.) và kết quả kiểm tra điều kiện. Nếu bạn cho phép, nhân viên chỉ xem được cho đến khi cuộc trò chuyện này kết thúc.',
     infoAllow: 'Cho phép',
@@ -122,6 +124,7 @@ const TEXT = {
     infoAllowed: 'Bạn đã cho phép. Sau khi cuộc trò chuyện kết thúc, nhân viên sẽ không xem được nữa.',
     infoDenied: 'Bạn đã từ chối. Nhân viên có thể hỏi trực tiếp bạn những gì cần thiết.',
     untranslated: 'Hiện chưa dịch được nên tin nhắn được hiển thị nguyên văn như nhân viên đã viết. Nếu khó hiểu, bạn hãy hỏi lại bằng tiếng Anh đơn giản.',
+    sharedWithAgent: 'Đã chia sẻ với nhân viên', // 상담 중 화면 이동이 상담원 화면에도 보인다는 표시
     continueSelf: 'Tôi sẽ tự làm tiếp',
     waiting: 'Đang chờ nhân viên tư vấn',
     // 챗봇 메뉴 + 가입 자격 판단
@@ -160,7 +163,7 @@ const TEXT = {
     reviewPrompt: '这是重要内容，请仔细确认高亮显示的部分。',
     reviewConfirm: '我已确认',
     connect: '转接客服',
-    handoffNotice: '转接后，只会把本次聊天内容和当前的引导进度（正在查看的画面、卡住的步骤）告知客服。',
+    handoffNotice: '转接后，本次聊天内容以及打开聊天机器人以来的引导记录（经过的画面、卡住的步骤）会告知客服。咨询期间，客服也能看到您切换到了哪个画面。',
     infoRequestTitle: '查看您的信息的请求',
     infoRequest: '客服想查看您在银行登记的信息（签证类型、居留到期日等）和办理资格的确认结果。允许后，客服只能在本次咨询结束前查看。',
     infoAllow: '允许',
@@ -168,6 +171,7 @@ const TEXT = {
     infoAllowed: '您已允许。咨询结束后，客服将无法再查看。',
     infoDenied: '您已拒绝。如有需要，客服会直接询问您。',
     untranslated: '翻译暂时无法使用，以下按客服原文显示。如果看不懂，请用简单的英语再问一次。',
+    sharedWithAgent: '已同步给客服', // 상담 중 화면 이동이 상담원 화면에도 보인다는 표시
     continueSelf: '我自己继续',
     waiting: '正在等待客服',
     // 챗봇 메뉴 + 가입 자격 판단
@@ -206,7 +210,7 @@ const TEXT = {
     reviewPrompt: 'Bu muhim maʼlumot. Belgilangan qismni diqqat bilan oʻqing.',
     reviewConfirm: 'Tekshirdim',
     connect: 'Xodim bilan ulanish',
-    handoffNotice: 'Ulansangiz, xodimga faqat shu suhbat va hozirgi yoʻriqnoma holati (ochiq turgan ekran, qiynalgan qadam) yuboriladi.',
+    handoffNotice: 'Ulansangiz, xodimga shu suhbat va chatbotni ochganingizdan beri yoʻriqnoma tarixi (oʻtgan ekranlar, qiynalgan qadam) yuboriladi. Suhbat davomida xodim qaysi ekranga oʻtganingizni ham koʻradi.',
     infoRequestTitle: 'Maʼlumotlaringizni koʻrish soʻrovi',
     infoRequest: 'Xodim bankda roʻyxatdan oʻtgan maʼlumotlaringizni (viza turi, yashash muddati tugash sanasi va h.k.) va muvofiqlik tekshiruvi natijalarini koʻrmoqchi. Ruxsat bersangiz, faqat shu suhbat tugaguncha koʻra oladi.',
     infoAllow: 'Ruxsat berish',
@@ -214,6 +218,7 @@ const TEXT = {
     infoAllowed: 'Ruxsat berdingiz. Suhbat tugagach, xodim boshqa koʻra olmaydi.',
     infoDenied: 'Rad etdingiz. Kerakli narsalarni xodim sizdan bevosita soʻrashi mumkin.',
     untranslated: 'Hozir tarjima ishlamayapti, shuning uchun xabar xodim yozganidek koʻrsatildi. Tushunish qiyin boʻlsa, oddiy ingliz tilida qayta soʻrang.',
+    sharedWithAgent: 'Xodimga koʻrinadi', // 상담 중 화면 이동이 상담원 화면에도 보인다는 표시
     continueSelf: 'Oʻzim davom etaman',
     waiting: 'Xodim kutilmoqda',
     closed: 'Xodim bilan suhbat tugadi. Kerak boʻlsa, yana soʻrang.',
@@ -251,7 +256,7 @@ const TEXT = {
     reviewPrompt: 'यो महत्त्वपूर्ण जानकारी हो। हाइलाइट गरिएको भाग ध्यानपूर्वक पढ्नुहोस्।',
     reviewConfirm: 'मैले जाँच गरें',
     connect: 'कर्मचारीसँग जोडिनुहोस्',
-    handoffNotice: 'जोड्नुभयो भने यो च्याट र अहिलेको मार्गदर्शनको स्थिति (तपाईंले हेरिरहनुभएको स्क्रिन, अड्किएको चरण) मात्र कर्मचारीलाई पठाइन्छ।',
+    handoffNotice: 'जोड्नुभयो भने यो च्याट र च्याटबट खोलेदेखिको मार्गदर्शन विवरण (पार गरेका स्क्रिनहरू, अड्किएको चरण) कर्मचारीलाई पठाइन्छ। कुराकानीका बेला तपाईं कुन स्क्रिनमा जानुहुन्छ भन्ने पनि कर्मचारीले देख्नुहुन्छ।',
     infoRequestTitle: 'तपाईंको जानकारी हेर्ने अनुरोध',
     infoRequest: 'कर्मचारीले बैंकमा दर्ता भएको तपाईंको जानकारी (भिसाको प्रकार, बसाइ म्याद सकिने मिति आदि) र योग्यता जाँचको नतिजा हेर्न चाहनुहुन्छ। अनुमति दिनुभयो भने यो कुराकानी सकिँदासम्म मात्र हेर्न सकिन्छ।',
     infoAllow: 'अनुमति दिनुहोस्',
@@ -259,6 +264,7 @@ const TEXT = {
     infoAllowed: 'तपाईंले अनुमति दिनुभयो। कुराकानी सकिएपछि कर्मचारीले फेरि हेर्न सक्दैनन्।',
     infoDenied: 'तपाईंले अस्वीकार गर्नुभयो। आवश्यक कुरा कर्मचारीले तपाईंसँग सोध्न सक्नुहुन्छ।',
     untranslated: 'अहिले अनुवाद भइरहेको छैन, त्यसैले कर्मचारीले लेखेजस्तै देखाइएको छ। बुझ्न गाह्रो भए सजिलो अंग्रेजीमा फेरि सोध्नुहोस्।',
+    sharedWithAgent: 'कर्मचारीसँग साझा गरियो', // 상담 중 화면 이동이 상담원 화면에도 보인다는 표시
     continueSelf: 'म आफै जारी राख्छु',
     waiting: 'कर्मचारीको प्रतीक्षा गर्दै',
     closed: 'कर्मचारीसँगको कुराकानी सकियो। केही चाहिएमा फेरि सोध्नुहोस्।',
@@ -296,7 +302,7 @@ const TEXT = {
     reviewPrompt: 'នេះជាព័ត៌មានសំខាន់។ សូមអានផ្នែកដែលបានបន្លិចដោយប្រុងប្រយ័ត្ន។',
     reviewConfirm: 'ខ្ញុំបានពិនិត្យហើយ',
     connect: 'ភ្ជាប់ទៅបុគ្គលិក',
-    handoffNotice: 'ពេលភ្ជាប់ មានតែការសន្ទនានេះ និងស្ថានភាពការណែនាំបច្ចុប្បន្ន (អេក្រង់ដែលអ្នកកំពុងមើល ជំហានដែលអ្នកជាប់គាំង) ប៉ុណ្ណោះ ដែលត្រូវបានផ្ញើទៅបុគ្គលិក។',
+    handoffNotice: 'ពេលភ្ជាប់ ការសន្ទនានេះ និងកំណត់ត្រាការណែនាំចាប់តាំងពីអ្នកបើក chatbot (អេក្រង់ដែលបានឆ្លងកាត់ ជំហានដែលជាប់គាំង) នឹងត្រូវផ្ញើទៅបុគ្គលិក។ ក្នុងពេលពិគ្រោះ បុគ្គលិកក៏អាចឃើញថាអ្នកប្ដូរទៅអេក្រង់ណាដែរ។',
     infoRequestTitle: 'សំណើមើលព័ត៌មានរបស់អ្នក',
     infoRequest: 'បុគ្គលិកចង់មើលព័ត៌មានរបស់អ្នកដែលបានចុះឈ្មោះនៅធនាគារ (ប្រភេទទិដ្ឋាការ កាលបរិច្ឆេទផុតកំណត់ស្នាក់នៅ ។ល។) និងលទ្ធផលពិនិត្យលក្ខខណ្ឌ។ បើអ្នកអនុញ្ញាត បុគ្គលិកអាចមើលបានតែរហូតដល់ការសន្ទនានេះបញ្ចប់ប៉ុណ្ណោះ។',
     infoAllow: 'អនុញ្ញាត',
@@ -304,6 +310,7 @@ const TEXT = {
     infoAllowed: 'អ្នកបានអនុញ្ញាត។ ក្រោយការសន្ទនាបញ្ចប់ បុគ្គលិកនឹងមើលមិនបានទៀតទេ។',
     infoDenied: 'អ្នកបានបដិសេធ។ បុគ្គលិកអាចសួរអ្នកដោយផ្ទាល់នូវអ្វីដែលត្រូវការ។',
     untranslated: 'ការបកប្រែមិនដំណើរការបណ្ដោះអាសន្ន ដូច្នេះសារត្រូវបានបង្ហាញដូចបុគ្គលិកបានសរសេរ។ បើពិបាកយល់ សូមសួរម្ដងទៀតជាភាសាអង់គ្លេសងាយៗ។',
+    sharedWithAgent: 'បានចែករំលែកជាមួយបុគ្គលិក', // 상담 중 화면 이동이 상담원 화면에도 보인다는 표시
     continueSelf: 'ខ្ញុំនឹងធ្វើបន្តខ្លួនឯង',
     waiting: 'កំពុងរង់ចាំបុគ្គលិក',
     closed: 'ការសន្ទនាជាមួយបុគ្គលិកបានបញ្ចប់។ សូមសួរម្ដងទៀតប្រសិនបើត្រូវការ។',

@@ -642,6 +642,21 @@
   color: var(--muted);
   font-size: 12px;
 }
+/* 상담 중 화면 이동 공유 줄 (가운데 작은 글씨) */
+.chat-activity {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 2px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.chat-activity span {
+  color: inherit;
+  font-weight: 600;
+}
 .chat-divider::before,
 .chat-divider::after {
   content: '';

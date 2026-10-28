@@ -74,6 +74,13 @@ export default function ChatPanel({
             <div key={i} className="chat-divider">
               <span>{t(lang, 'prevChat')}</span>
             </div>
+          ) : m.from === 'activity' ? (
+            // 상담 중 화면 이동: 상담원 화면 대화에도 같은 줄이 보인다
+            <div key={i} className="chat-activity">
+              <Icon name="pin" size={15} />
+              <span>{m.text}</span>
+              <small>· {t(lang, 'sharedWithAgent')}</small>
+            </div>
           ) : (
             <div key={i} className={`bubble-wrap ${m.from}`}>
               <p className={`bubble ${m.from}${m.warn ? ' warn' : ''}${i < lastDivider ? ' old' : ''}`}>{m.text}</p>

@@ -182,62 +182,306 @@
 .meta dd {
   margin: 0;
 }
-.cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-.cards > div {
-  padding: 12px 16px;
+/* 상담원 업무 인계 카드: 제목 → 핵심 정보 4칸 → 업무 진행 이력 → 요약 → 권장 다음 행동 */
+.handoff-card {
+  margin: 16px 0;
+  padding: 18px 20px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 12px;
   background: #fff;
 }
-.cards h3 {
+.hc-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.hc-kicker {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.hc-title {
+  font-size: 20px;
+}
+.hc-badge {
+  flex-shrink: 0;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.hc-badge.waiting {
+  background: #ffedd5;
+  color: var(--warn);
+}
+.hc-badge.in_progress {
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+.hc-badge.closed {
+  background: #f2f4f7;
+  color: var(--muted);
+}
+.hc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 24px;
+  margin: 16px 0 0;
+  padding: 0 4px;
+}
+.hc-grid dt {
+  color: var(--muted);
+  font-size: 13px;
+}
+.hc-grid dd {
+  margin: 2px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+/* 현재 화면이 바뀌면 잠깐 강조 (상담 중 고객이 화면을 옮겼을 때) */
+.hc-moved {
+  border-radius: 8px;
+  animation: hc-flash 2.4s ease-out;
+}
+@keyframes hc-flash {
+  0%,
+  35% {
+    background: #fff4d6;
+    box-shadow: 0 0 0 6px #fff4d6;
+  }
+  100% {
+    background: transparent;
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+.hc-moved-badge {
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #ffb020;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  animation: hc-badge 6s ease-out forwards;
+}
+@keyframes hc-badge {
+  0%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* 고객 화면 미러 + 경로 예측 */
+.hc-live {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+.mirror-frame {
+  flex-shrink: 0;
+  width: 218px;
+  height: 407px;
+  overflow: hidden;
+}
+.mirror-phone {
+  width: 375px;
+  max-width: none;
+  transform: scale(0.55);
+  transform-origin: top left;
+  pointer-events: none;
+}
+.mirror-unknown {
+  padding: 24px;
+  color: var(--muted);
+}
+.hc-note {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.route {
+  flex: 1;
+  min-width: 0;
+}
+.route-off {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #fef3f2;
+  color: #b42318;
   font-size: 14px;
-  margin-bottom: 6px;
 }
-.cards ol,
-.cards ul {
+.route-steps {
   margin: 0;
-  padding-left: 20px;
-  line-height: 1.6;
+  padding: 0;
+  list-style: none;
 }
-/* 고객 이동 경로 (기본 접힘, 기록이 없으면 안 보임) */
-.sources {
-  margin: -4px 0 16px;
+.route-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 14px;
 }
-.sources-toggle {
-  padding: 4px 10px;
+.route-step em {
+  margin-left: auto;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+.route-step.done {
+  color: var(--ink);
+}
+.route-step.done svg {
+  color: #16a34a;
+}
+.route-step.current {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-weight: 700;
+}
+.route-step.next {
+  border: 2px dashed #ffb020;
+  color: var(--ink);
+  font-weight: 700;
+}
+.route-step.next em {
+  color: #b45309;
+}
+.route-arrow {
+  padding: 1px 0 1px 18px;
+  color: #c0c6d0;
+  line-height: 1.1;
+}
+.route-arrow.next {
+  color: #ffb020;
+  font-size: 18px;
+  font-weight: 700;
+}
+.route-action {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fff8e6;
+}
+.route-action p {
+  margin: 0 0 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.hc-section {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.hc-section h4 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+.hc-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.hc-more {
+  margin-bottom: 6px;
+  padding: 2px 10px;
   border: 1px dashed #d0d5dd;
   border-radius: 999px;
   background: #fff;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
 }
-.sources-body {
-  margin-top: 8px;
-  padding: 10px 14px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: #fff;
+.hc-timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
-.sources-table {
-  width: 100%;
-  border-collapse: collapse;
+.hc-timeline li {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: 14px;
+}
+.hc-timeline .hc-icon {
+  display: flex;
+  justify-content: center;
+  color: var(--muted);
+}
+.hc-timeline li.ok .hc-icon {
+  color: #16a34a;
+}
+.hc-timeline li.warn .hc-icon {
+  color: #dc2626;
+}
+.hc-timeline li.agent .hc-icon {
+  color: var(--ink);
+}
+.hc-timeline time {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.hc-ai {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.hc-summary {
+  margin: 0;
+  line-height: 1.7;
+}
+.hc-next {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #f6f8fb;
+}
+.hc-next p {
+  margin: 0 0 4px;
+  color: var(--muted);
   font-size: 13px;
 }
-.sources-table th,
-.sources-table td {
-  padding: 4px 6px;
-  border-bottom: 1px solid var(--line);
-  text-align: left;
+.hc-next ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  line-height: 1.7;
 }
-.sources-table th {
+.hc-next li::before {
+  content: '→ ';
+  color: var(--brand);
+}
+/* 상담 중 고객 화면 이동 (대화창 가운데 작은 줄) */
+.msg.activity {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  align-self: center;
+  max-width: none;
+  padding: 2px 0;
+  background: none;
+  border: 0;
   color: var(--muted);
-  font-weight: 600;
+  font-size: 13px;
+}
+.msg.activity b {
+  color: var(--ink);
 }
 /* 상담원 답장 번역 실패 → 다시 번역 / 그대로 보내기 */
 .translate-failed {

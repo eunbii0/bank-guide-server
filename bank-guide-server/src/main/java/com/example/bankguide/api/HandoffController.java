@@ -1,9 +1,9 @@
 package com.example.bankguide.api;
 
+import com.example.bankguide.api.ApiDtos.ActivityRequest;
 import com.example.bankguide.api.ApiDtos.AgentPoll;
 import com.example.bankguide.api.ApiDtos.CustomerInfoView;
 import com.example.bankguide.api.ApiDtos.CustomerMessageRequest;
-import com.example.bankguide.api.ApiDtos.EventView;
 import com.example.bankguide.api.ApiDtos.HandoffRequest;
 import com.example.bankguide.api.ApiDtos.HandoffResponse;
 import com.example.bankguide.api.ApiDtos.InfoConsentRequest;
@@ -11,6 +11,7 @@ import com.example.bankguide.api.ApiDtos.MessageView;
 import com.example.bankguide.api.ApiDtos.ReplyRequest;
 import com.example.bankguide.api.ApiDtos.StatusRequest;
 import com.example.bankguide.api.ApiDtos.TicketView;
+import com.example.bankguide.api.ApiDtos.TimelineView;
 import com.example.bankguide.handoff.CustomerInfoService;
 import com.example.bankguide.handoff.HandoffService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -54,9 +55,9 @@ public class HandoffController {
         return handoffService.ticket(ticketNo);
     }
 
-    /** 고객 이동 경로 (상담원 화면 토글). 화면 이름은 한국어 */
+    /** 업무 진행 이력 (상담원 화면). 챗봇 시작부터 상담원 연결까지, 이모지와 한국어 문장 */
     @GetMapping("/tickets/{ticketNo}/events")
-    public List<EventView> events(@PathVariable String ticketNo) {
+    public List<TimelineView> events(@PathVariable String ticketNo) {
         return handoffService.events(ticketNo);
     }
 
@@ -76,6 +77,12 @@ public class HandoffController {
     @PostMapping("/tickets/{ticketNo}/customer-message")
     public MessageView customerMessage(@PathVariable String ticketNo, @RequestBody CustomerMessageRequest request) {
         return handoffService.customerMessage(ticketNo, request.text());
+    }
+
+    /** 상담 중 고객이 앱 화면을 옮겼을 때: 상담원 대화에 이동 기록으로 남긴다 (종료된 상담이면 409) */
+    @PostMapping("/tickets/{ticketNo}/activity")
+    public MessageView activity(@PathVariable String ticketNo, @RequestBody ActivityRequest request) {
+        return handoffService.customerActivity(ticketNo, request.page());
     }
 
     /** 고객이 상담 종료 버튼을 눌렀을 때: 티켓을 CLOSED로 바꾼다 (이미 종료됐어도 성공으로 응답) */

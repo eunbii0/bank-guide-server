@@ -29,6 +29,11 @@ public class ConversationService {
         save(conversationId, "SYSTEM", "ko", text);
     }
 
+    /** 상담 중 고객이 앱 화면을 옮긴 기록. content에는 화면 ID를 두고, 보여줄 때 화면 이름으로 바꾼다 */
+    public ChatMessage activity(String conversationId, String page) {
+        return repository.save(new ChatMessage(conversationId, "ACTIVITY", "ko", page));
+    }
+
     /** 상담 중 고객이 상담원에게 쓴 말: 원문과 한국어 번역(없으면 null)을 함께 저장한다 */
     public ChatMessage customerToAgent(String conversationId, String lang, String original, String koreanText) {
         String content = original.length() > 1000 ? original.substring(0, 1000) : original;

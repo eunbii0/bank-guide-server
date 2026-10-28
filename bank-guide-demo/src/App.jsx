@@ -37,8 +37,28 @@ const STUCK_SECONDS = Number(params.get('stuck')) || 7;
 const CUSTOMER_ID = 'C';
 
 // 화면 ↔ 서버 통신 로그는 개발용이라 평소에는 숨긴다. 주소에 ?debug=1 을 붙이면 오른쪽에 보인다.
-// (상담원 요약에 쓰이는 행동 기록은 상담원 화면의 '고객 이동 경로'에서 본다)
+// (상담원 요약에 쓰이는 행동 기록은 상담원 화면의 '업무 진행 이력'에서 본다)
 const DEBUG = params.has('debug');
+
+// 화면 ID → 고객 언어의 화면 이름 (각 화면 머리글과 같은 문구). 상담 중 화면 이동 공유 줄에 쓴다
+const PAGE_TITLES = {
+  home: 'goHome',
+  product: 'products',
+  loan: 'loan',
+  'deposit-list': 'deposit',
+  'deposit-cancel': 'earlyCancel',
+  transfer: 'transfer',
+  certificate: 'certificates',
+  'cert-issue': 'certBalance',
+  card: 'cards',
+  'card-check-apply': 'cardCheckApply',
+  'card-credit-apply': 'cardCreditApply',
+  join: 'join',
+  'savings-join': 'titleJoinSavings',
+  'deposit-join': 'titleJoinDeposit',
+  'join-confirm': 'joinConfirmTitle',
+};
+const pageTitle = (lang, page) => (page.endsWith('-done') ? tp(lang, 'doneTitle') : tp(lang, PAGE_TITLES[page] ?? page));
 
 // 카드 발급·상품 가입은 중요한 내용(상품·금액·금리·유의사항)이 있는 화면에서,
 // 다음 버튼을 안내하기 전에 그 내용을 먼저 하이라이트하고 고객이 [확인했어요]를 눌러야 넘어간다.
@@ -314,9 +334,22 @@ export default function App() {
     }
   };
 
+  // 상담원과 연결된 동안 화면을 옮기면 상담원 화면 대화에 공유하고, 고객 대화창에도 같은 줄을 남긴다
+  const shareMove = async (next) => {
+    if (!talkingToAgent || next === page) return;
+    try {
+      log('out', `POST /api/tickets/${ticketNo}/activity`, { page: next });
+      await api.shareActivity(ticketNo, next);
+      say({ from: 'activity', text: pageTitle(lang, next) });
+    } catch {
+      // 공유가 안 돼도 화면 이동은 막지 않는다 (상담이 막 끝난 경우 등)
+    }
+  };
+
   // 화면에 들어올 때마다 서버에 알린다 → 다음 안내를 받는다
   const enterPage = async (next, nextHistory) => {
     setHistory(nextHistory);
+    shareMove(next);
     if (!sessionId) return;
     setGuide((g) => g && { ...g, target: null }); // 응답이 올 때까지 이전 하이라이트를 지운다
     try {
@@ -343,6 +376,7 @@ export default function App() {
     enterPage(prev.at(-1), prev);
   };
   const home = () => {
+    shareMove('home');
     setHistory(['home']);
     setGuide(null);
     setSessionId(null);

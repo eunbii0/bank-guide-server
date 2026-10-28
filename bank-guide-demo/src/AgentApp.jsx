@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import './AgentApp.css';
 import * as api from './api/guideApi';
 import CustomerInfoBox from './components/CustomerInfoBox';
-import CustomerPath from './components/CustomerPath';
+import HandoffCard from './components/HandoffCard';
+import { Icon } from './components/HomeArt';
 
 const QUEUES = [
   { code: 'ALL', name: '전체' },
@@ -68,7 +69,7 @@ export default function AgentApp() {
 
   // 상담원 차례(마지막 말이 고객·AI)가 되면 대화 맥락으로 AI가 답변 문장을 추천한다
   const [aiSuggest, setAiSuggest] = useState({ items: [], loading: false });
-  const talk = detail ? detail.messages.filter((m) => m.sender !== 'SYSTEM') : [];
+  const talk = detail ? detail.messages.filter((m) => m.sender !== 'SYSTEM' && m.sender !== 'ACTIVITY') : [];
   const curNo = detail?.ticketNo;
   const curStatus = detail?.status;
   const lastSender = talk.at(-1)?.sender;
@@ -174,8 +175,7 @@ export default function AgentApp() {
               <div>
                 <h2>{detail.ticketNo}</h2>
                 <p>
-                  <span className={`badge ${detail.queue.toLowerCase()}`}>{QUEUE_NAMES[detail.queue] ?? detail.queue}</span>{' '}
-                  <span className={`status ${detail.status.toLowerCase()}`}>{STATUS_NAMES[detail.status] ?? detail.status}</span>
+                  <span className={`badge ${detail.queue.toLowerCase()}`}>{QUEUE_NAMES[detail.queue] ?? detail.queue}</span>
                 </p>
               </div>
               <div className="detail-actions">
@@ -190,37 +190,7 @@ export default function AgentApp() {
 
             {detail.riskFlag !== 'NONE' && <p className="risk-banner">금융사기가 의심됩니다. 제3자가 송금·계좌 대여를 요구했는지 먼저 확인하세요.</p>}
 
-            <dl className="meta">
-              <dt>고객 언어</dt>
-              <dd>{detail.lang}</dd>
-              <dt>업무</dt>
-              <dd>{detail.intentName}</dd>
-              <dt>연결 사유</dt>
-              <dd>{detail.reason}</dd>
-              <dt>현재 화면</dt>
-              <dd>{detail.currentPage}</dd>
-            </dl>
-
-            <div className="cards">
-              <div>
-                <h3>요약 ({detail.summarySource === 'LLM' ? 'AI' : '규칙 기반'})</h3>
-                <ol>
-                  {detail.summary.map((s, i) => (
-                    <li key={i}>{s}</li>
-                  ))}
-                </ol>
-              </div>
-              <div>
-                <h3>확인할 것</h3>
-                <ul>
-                  {detail.checkpoints.map((c, i) => (
-                    <li key={i}>{c}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            <CustomerPath ticketNo={detail.ticketNo} />
+            <HandoffCard ticket={detail} />
 
             <CustomerInfoBox
               ticket={detail}
@@ -233,7 +203,14 @@ export default function AgentApp() {
 
             <h3>대화</h3>
             <div className="thread" ref={threadRef}>
-              {detail.messages.map((m, i) => (
+              {detail.messages.map((m, i) =>
+                m.sender === 'ACTIVITY' ? (
+                  // 상담 중 고객이 앱 화면을 옮긴 기록 (고객 대화창에도 같은 줄이 보인다)
+                  <p key={i} className="msg activity">
+                    <Icon name="pin" size={16} />
+                    {m.time} 고객이 <b>{m.content}</b> 화면으로 이동
+                  </p>
+                ) : (
                 <p key={i} className={`msg ${m.sender.toLowerCase()}`}>
                   <span className="msg-head">
                     {m.time} {SENDER_NAMES[m.sender] ?? m.sender}
@@ -245,7 +222,8 @@ export default function AgentApp() {
                     <span className="msg-tr">번역을 확인할 수 없어 원문을 표시합니다. 내용을 재확인해 주세요.</span>
                   )}
                 </p>
-              ))}
+                ),
+              )}
             </div>
 
             {detail.status !== 'CLOSED' && (aiSuggest.loading || aiSuggest.items.length > 0) && (
