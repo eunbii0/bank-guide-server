@@ -263,6 +263,27 @@
 .guide-bar.off_path {
   border: 2px solid var(--warn);
 }
+/* 중요한 내용 확인 단계: 강조된 박스를 읽는 동안 다른 곳을 누르지 못하게 막는다 (안내 바·질문하기는 위에 있어 눌린다) */
+.guide-block {
+  position: absolute;
+  inset: 0;
+  z-index: 1500;
+}
+.guide-bar.review {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  border: 2px solid #ffb020;
+}
+.guide-confirm {
+  padding: 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--brand);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+}
 .guide-bar.done {
   border: 2px solid #16a34a;
 }
@@ -820,16 +841,6 @@
 }
 .icon-btn:disabled {
   cursor: default;
-}
-.bell-dot {
-  position: absolute;
-  top: 5px;
-  right: 6px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #ff3b5c;
-  border: 1.5px solid #f2f8ff;
 }
 
 /* AI 챗봇 배너 */
@@ -1423,54 +1434,6 @@
   line-height: 1.45;
   color: var(--muted);
 }
-/* 첫 화면: 로그인 대신 고객 고르기 */
-.login-intro {
-  padding: 28px 20px 8px;
-  text-align: center;
-}
-.login-intro h2 {
-  margin: 0 0 6px;
-  font-size: 20px;
-}
-.login-intro p,
-.login-status {
-  margin: 0;
-  color: var(--muted);
-  font-size: 14px;
-}
-.login-status {
-  padding: 12px 20px;
-  text-align: center;
-}
-.login-btn {
-  align-items: center;
-  gap: 12px;
-  text-align: left;
-}
-.list-btn .login-avatar {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--brand-soft);
-  color: var(--brand);
-  font-weight: 700;
-}
-.list-btn .login-copy {
-  display: grid;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-  color: var(--ink);
-  font-weight: 600;
-}
-.login-copy > span {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 400;
-}
 .logout-btn {
   display: grid;
   place-items: center;
@@ -1594,6 +1557,11 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
+}
+.logo-avatar {
+  display: block;
+  flex: none;
+  border-radius: 10px;
 }
 .chat-title strong {
   font-size: 18px;
@@ -1747,6 +1715,10 @@
   background: #fff;
   font-size: 14.5px;
   box-shadow: 0 2px 8px rgba(26, 95, 180, 0.08);
+}
+.chat-input input::placeholder {
+  color: #a9b4c2;
+  opacity: 1;
 }
 .chat-input input:focus {
   outline: 2px solid #8fc2fa;

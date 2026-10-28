@@ -41,40 +41,6 @@ export function LanguagePage({ languages, onPick, title }) {
   );
 }
 
-// 로그인 대신 고객을 고르는 첫 화면. 언어를 고르기 전이라 한국어·영어를 함께 쓴다.
-// 고객 정보(체류자격·만료일)는 보여주지 않고 이름·국적만 보여준다.
-export function LoginPage({ customers, failed, onPick }) {
-  return (
-    <>
-      <header className="app-header">
-        <span className="back-btn-space" />
-        <h1>ForWON</h1>
-        <span className="back-btn-space" />
-      </header>
-      <div className="login-intro">
-        <h2>로그인 · Sign in</h2>
-        <p>고객을 선택하세요 · Choose your account</p>
-      </div>
-      {failed && <p className="login-status">서버에 연결할 수 없어요 · Cannot reach the server</p>}
-      {!failed && customers.length === 0 && <p className="login-status">불러오는 중… · Loading…</p>}
-      <ul className="list login-list">
-        {customers.map((c) => (
-          <li key={c.customerId}>
-            <button className="list-btn login-btn" onClick={() => onPick(c.customerId)}>
-              <span className="login-avatar" aria-hidden="true">{c.name.charAt(0)}</span>
-              <span className="login-copy">
-                <strong>{c.name}</strong>
-                <span>{c.nationality}</span>
-              </span>
-              <span>›</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </>
-  );
-}
-
 // 최근 거래내역 (데모용 가상 데이터). 이름·종류는 고른 언어 문구를 쓴다.
 const RECENT = [
   { name: 'txShop', kind: 'txCard', time: '10. 26. 18:32', amount: -4500, color: '#0b7a55', mark: 'star' },
@@ -128,13 +94,6 @@ export function HomePage({ lang, go, onChangeLang, onAsk, userName, onLogout }) 
           <p className="greet-sub">{p('greetSub')}</p>
         </div>
         <div className="home-top-actions">
-          <button className="icon-btn" aria-label={p('search')} title={p('search')}>
-            <Icon name="search" size={24} />
-          </button>
-          <button className="icon-btn bell" aria-label={p('notifications')} title={p('notifications')}>
-            <Icon name="bell" size={24} />
-            <i className="bell-dot" />
-          </button>
           <button
             className="icon-btn"
             onClick={onChangeLang}
@@ -489,7 +448,7 @@ export function CardApplyPage({ lang, kind, go, back }) {
   return (
     <>
       <Header title={info.title} onBack={back} backLabel={p('back')} />
-      <section className="detail">
+      <section id="info-review" className="detail">
         <dl>
           <dt>{p('cardProduct')}</dt>
           <dd>{info.name}</dd>
@@ -548,7 +507,7 @@ export function JoinTermPage({ lang, kind, onPick, back }) {
   return (
     <>
       <Header title={info.title} onBack={back} backLabel={p('back')} />
-      <section className="detail">
+      <section id="info-review" className="detail">
         <dl>
           <dt>{p('product')}</dt>
           <dd>{info.name}</dd>
@@ -576,7 +535,7 @@ export function JoinConfirmPage({ lang, draft, go, back }) {
   return (
     <>
       <Header title={p('joinConfirmTitle')} onBack={back} backLabel={p('back')} />
-      <section className="detail">
+      <section id="info-review" className="detail">
         <dl>
           <dt>{p('product')}</dt>
           <dd>{info.name}</dd>

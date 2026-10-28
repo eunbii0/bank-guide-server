@@ -7,7 +7,7 @@
 const TEXT = {
   ko: {
     chatTitle: 'ForWON',
-    placeholder: '',
+    placeholder: '궁금하신 점을 직접 입력해 보세요',
     yes: '네, 맞아요',
     no: '아니요',
     retry: '다시 한 번 말씀해 주세요.',
@@ -16,6 +16,8 @@ const TEXT = {
     send: '전송',
     serverDown: '서버에 연결할 수 없어요. Spring Boot 서버(8080)가 켜져 있는지 확인해 주세요.',
     ask: '질문하기',
+    reviewPrompt: '중요한 내용이에요. 밝게 표시된 부분을 꼼꼼히 확인해 주세요.',
+    reviewConfirm: '확인했어요',
     connect: '상담원 연결',
     // 연결 직전에 상담원에게 무엇이 전달되는지 알린다 (개인정보 최소화)
     handoffNotice: '연결하면 이 채팅 내용과 지금 진행 중인 안내 상황(보고 있는 화면, 막힌 단계)만 상담원에게 전달돼요.',
@@ -54,7 +56,7 @@ const TEXT = {
   },
   en: {
     chatTitle: 'ForWON',
-    placeholder: '',
+    placeholder: 'Type your question here',
     yes: "Yes, that's right",
     no: 'No',
     retry: 'Please tell me again.',
@@ -63,6 +65,8 @@ const TEXT = {
     send: 'Send',
     serverDown: 'Cannot reach the server. Check that the Spring Boot server (8080) is running.',
     ask: 'Ask',
+    reviewPrompt: 'This is important. Please read the highlighted details carefully.',
+    reviewConfirm: "I've checked",
     connect: 'Connect to an agent',
     handoffNotice: 'If you connect, only this chat and your current guide progress (the screen you are on and the step where you got stuck) are shared with the agent.',
     infoRequestTitle: 'Request to view your information',
@@ -98,7 +102,7 @@ const TEXT = {
   },
   vi: {
     chatTitle: 'ForWON',
-    placeholder: '',
+    placeholder: 'Nhập câu hỏi của bạn tại đây',
     yes: 'Vâng, đúng rồi',
     no: 'Không',
     retry: 'Bạn vui lòng nói lại nhé.',
@@ -107,6 +111,8 @@ const TEXT = {
     send: 'Gửi',
     serverDown: 'Không kết nối được máy chủ. Hãy kiểm tra máy chủ Spring Boot (8080).',
     ask: 'Hỏi',
+    reviewPrompt: 'Đây là thông tin quan trọng. Vui lòng đọc kỹ phần được làm nổi bật.',
+    reviewConfirm: 'Tôi đã kiểm tra',
     connect: 'Kết nối nhân viên',
     handoffNotice: 'Khi kết nối, chỉ nội dung trò chuyện này và tình trạng hướng dẫn hiện tại (màn hình bạn đang xem, bước bạn gặp khó) được chuyển cho nhân viên.',
     infoRequestTitle: 'Yêu cầu xem thông tin của bạn',
@@ -142,7 +148,7 @@ const TEXT = {
   },
   zh: {
     chatTitle: 'ForWON',
-    placeholder: '',
+    placeholder: '请在此输入您的问题',
     yes: '是的，没错',
     no: '不是',
     retry: '请再说一次。',
@@ -151,6 +157,8 @@ const TEXT = {
     send: '发送',
     serverDown: '无法连接服务器。请确认 Spring Boot 服务器（8080）已启动。',
     ask: '提问',
+    reviewPrompt: '这是重要内容，请仔细确认高亮显示的部分。',
+    reviewConfirm: '我已确认',
     connect: '转接客服',
     handoffNotice: '转接后，只会把本次聊天内容和当前的引导进度（正在查看的画面、卡住的步骤）告知客服。',
     infoRequestTitle: '查看您的信息的请求',
@@ -186,7 +194,7 @@ const TEXT = {
   },
   uz: {
     chatTitle: 'ForWON',
-    placeholder: '',
+    placeholder: 'Savolingizni shu yerga yozing',
     yes: 'Ha, toʻgʻri',
     no: 'Yoʻq',
     retry: 'Iltimos, yana bir bor ayting.',
@@ -195,6 +203,8 @@ const TEXT = {
     send: 'Yuborish',
     serverDown: 'Serverga ulanib boʻlmadi. Spring Boot serveri (8080) ishlayotganini tekshiring.',
     ask: 'Savol berish',
+    reviewPrompt: 'Bu muhim maʼlumot. Belgilangan qismni diqqat bilan oʻqing.',
+    reviewConfirm: 'Tekshirdim',
     connect: 'Xodim bilan ulanish',
     handoffNotice: 'Ulansangiz, xodimga faqat shu suhbat va hozirgi yoʻriqnoma holati (ochiq turgan ekran, qiynalgan qadam) yuboriladi.',
     infoRequestTitle: 'Maʼlumotlaringizni koʻrish soʻrovi',
@@ -229,7 +239,7 @@ const TEXT = {
   },
   ne: {
     chatTitle: 'ForWON',
-    placeholder: '',
+    placeholder: 'आफ्नो प्रश्न यहाँ लेख्नुहोस्',
     yes: 'हो, ठिक हो',
     no: 'होइन',
     retry: 'कृपया फेरि भन्नुहोस्।',
@@ -238,6 +248,8 @@ const TEXT = {
     send: 'पठाउनुहोस्',
     serverDown: 'सर्भरसँग जोडिन सकिएन। Spring Boot सर्भर (8080) चलिरहेको छ कि जाँच गर्नुहोस्।',
     ask: 'प्रश्न सोध्नुहोस्',
+    reviewPrompt: 'यो महत्त्वपूर्ण जानकारी हो। हाइलाइट गरिएको भाग ध्यानपूर्वक पढ्नुहोस्।',
+    reviewConfirm: 'मैले जाँच गरें',
     connect: 'कर्मचारीसँग जोडिनुहोस्',
     handoffNotice: 'जोड्नुभयो भने यो च्याट र अहिलेको मार्गदर्शनको स्थिति (तपाईंले हेरिरहनुभएको स्क्रिन, अड्किएको चरण) मात्र कर्मचारीलाई पठाइन्छ।',
     infoRequestTitle: 'तपाईंको जानकारी हेर्ने अनुरोध',
@@ -272,7 +284,7 @@ const TEXT = {
   },
   km: {
     chatTitle: 'ForWON',
-    placeholder: '',
+    placeholder: 'សូមវាយសំណួររបស់អ្នកនៅទីនេះ',
     yes: 'បាទ/ចាស ត្រឹមត្រូវ',
     no: 'ទេ',
     retry: 'សូមនិយាយម្ដងទៀត។',
@@ -281,6 +293,8 @@ const TEXT = {
     send: 'ផ្ញើ',
     serverDown: 'មិនអាចភ្ជាប់ទៅម៉ាស៊ីនមេបានទេ។ សូមពិនិត្យថា Spring Boot (8080) កំពុងដំណើរការ។',
     ask: 'សួរសំណួរ',
+    reviewPrompt: 'នេះជាព័ត៌មានសំខាន់។ សូមអានផ្នែកដែលបានបន្លិចដោយប្រុងប្រយ័ត្ន។',
+    reviewConfirm: 'ខ្ញុំបានពិនិត្យហើយ',
     connect: 'ភ្ជាប់ទៅបុគ្គលិក',
     handoffNotice: 'ពេលភ្ជាប់ មានតែការសន្ទនានេះ និងស្ថានភាពការណែនាំបច្ចុប្បន្ន (អេក្រង់ដែលអ្នកកំពុងមើល ជំហានដែលអ្នកជាប់គាំង) ប៉ុណ្ណោះ ដែលត្រូវបានផ្ញើទៅបុគ្គលិក។',
     infoRequestTitle: 'សំណើមើលព័ត៌មានរបស់អ្នក',
@@ -356,7 +370,7 @@ const PAGE = {
     txBill: '카드 대금', txPerson: '김하나', txSalaryName: '급여',
     spendMonth: '이번 달 지출', budgetLeft: '이번 달 남은 예산', tabHome: '홈',
     tabAssets: '자산', tabProducts: '상품', tabAll: '전체',
-    search: '검색', notifications: '알림', menu: '메뉴',
+    menu: '메뉴',
   },
   en: {
     fab: 'Need help?', appTitle: 'ForWON', checking: 'Checking account', won: ' KRW',
@@ -395,7 +409,7 @@ const PAGE = {
     txBill: 'Card bill', txPerson: 'Kim Hana', txSalaryName: 'Salary',
     spendMonth: 'Spent this month', budgetLeft: 'Budget left', tabHome: 'Home',
     tabAssets: 'Assets', tabProducts: 'Products', tabAll: 'All',
-    search: 'Search', notifications: 'Notifications', menu: 'Menu',
+    menu: 'Menu',
   },
   vi: {
     fab: 'Cần giúp đỡ?', appTitle: 'ForWON', checking: 'Tài khoản thanh toán', won: ' KRW',
@@ -434,7 +448,7 @@ const PAGE = {
     txBill: 'Thanh toán thẻ', txPerson: 'Kim Hana', txSalaryName: 'Lương',
     spendMonth: 'Chi tiêu tháng này', budgetLeft: 'Ngân sách còn lại', tabHome: 'Trang chủ',
     tabAssets: 'Tài sản', tabProducts: 'Sản phẩm', tabAll: 'Tất cả',
-    search: 'Tìm kiếm', notifications: 'Thông báo', menu: 'Menu',
+    menu: 'Menu',
   },
   zh: {
     fab: '需要帮助吗？', appTitle: 'ForWON', checking: '活期账户', won: ' KRW',
@@ -473,7 +487,7 @@ const PAGE = {
     txBill: '信用卡还款', txPerson: '金哈娜', txSalaryName: '工资',
     spendMonth: '本月支出', budgetLeft: '本月剩余预算', tabHome: '首页',
     tabAssets: '资产', tabProducts: '产品', tabAll: '全部',
-    search: '搜索', notifications: '通知', menu: '菜单',
+    menu: '菜单',
   },
   uz: {
     fab: 'Yordam kerakmi?', appTitle: 'ForWON', checking: 'Joriy hisob', won: ' KRW',
@@ -512,7 +526,7 @@ const PAGE = {
     txBill: 'Karta toʻlovi', txPerson: 'Kim Hana', txSalaryName: 'Oylik',
     spendMonth: 'Shu oydagi xarajat', budgetLeft: 'Qolgan byudjet', tabHome: 'Bosh sahifa',
     tabAssets: 'Aktivlar', tabProducts: 'Mahsulotlar', tabAll: 'Barchasi',
-    search: 'Qidirish', notifications: 'Bildirishnomalar', menu: 'Menyu',
+    menu: 'Menyu',
   },
   ne: {
     fab: 'मद्दत चाहियो?', appTitle: 'ForWON', checking: 'चल्ती खाता', won: ' KRW',
@@ -551,7 +565,7 @@ const PAGE = {
     txBill: 'कार्ड भुक्तानी', txPerson: 'Kim Hana', txSalaryName: 'तलब',
     spendMonth: 'यस महिनाको खर्च', budgetLeft: 'बाँकी बजेट', tabHome: 'गृह',
     tabAssets: 'सम्पत्ति', tabProducts: 'उत्पादन', tabAll: 'सबै',
-    search: 'खोज', notifications: 'सूचना', menu: 'मेनु',
+    menu: 'मेनु',
   },
   km: {
     fab: 'ត្រូវការជំនួយទេ?', appTitle: 'ForWON', checking: 'គណនីចរន្ត', won: ' KRW',
@@ -590,7 +604,7 @@ const PAGE = {
     txBill: 'ទូទាត់កាត', txPerson: 'Kim Hana', txSalaryName: 'ប្រាក់ខែ',
     spendMonth: 'ចំណាយខែនេះ', budgetLeft: 'ថវិកានៅសល់', tabHome: 'ទំព័រដើម',
     tabAssets: 'ទ្រព្យ', tabProducts: 'ផលិតផល', tabAll: 'ទាំងអស់',
-    search: 'ស្វែងរក', notifications: 'ការជូនដំណឹង', menu: 'ម៉ឺនុយ',
+    menu: 'ម៉ឺនុយ',
   },
 };
 
