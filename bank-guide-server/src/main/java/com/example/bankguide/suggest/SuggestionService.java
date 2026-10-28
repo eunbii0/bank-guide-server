@@ -16,6 +16,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 /**
  * 상담 중 다음에 보낼 만한 문장을 대화 맥락에서 만들어 추천한다.
@@ -58,11 +59,22 @@ public class SuggestionService {
             You help a foreign customer who is chatting with a Korean bank agent.
             Suggest exactly 3 different short messages the customer could send next.
 
-            - Write in the language of the given language code, in simple everyday words, first person.
+            - Write ALL 3 messages in the language of the given language code, in simple everyday words, first person.
+              The conversation may contain Korean words or Korean notes in square brackets such as "[메뉴] ...".
+              Those are internal notes: ignore them and never copy their language.
+              Never write Korean unless the language code is "ko".
             - Base them only on the conversation. React to the agent's last message (answer a question,
               ask to explain again, confirm, or say thanks).
             - Never include account numbers, passwords or other personal data.
             """;
+
+    // 고객 언어 코드 → 프롬프트에 함께 적는 언어 이름 (코드만 주면 LLM이 가끔 무시한다)
+    private static final Map<String, String> LANGUAGE_NAMES = Map.of(
+            "ko", "Korean", "en", "English", "vi", "Vietnamese", "zh", "Chinese",
+            "uz", "Uzbek", "ne", "Nepali", "km", "Khmer");
+    private static final Pattern HANGUL = Pattern.compile("[가-힣ㄱ-ㅎㅏ-ㅣ]");
+    // 고객 언어가 한국어가 아닐 때, 한글이 들어간 추천이 나오면 한 번 더 시도하는 횟수
+    private static final int CUSTOMER_ATTEMPTS = 2;
 
     private final ChatClient chatClient;
     private final HandoffTicketRepository ticketRepository;
@@ -106,12 +118,20 @@ public class SuggestionService {
         SuggestionList result;
         try {
             String user = forAgent ? agentInput(t, history) : customerInput(t, history);
-            Suggestions raw = chatClient.prompt()
-                    .system(forAgent ? AGENT_PROMPT : CUSTOMER_PROMPT)
-                    .user(user)
-                    .call()
-                    .entity(Suggestions.class);
-            List<String> cleaned = clean(raw == null ? null : raw.suggestions());
+            // 고객 언어가 한국어가 아닌데 한글이 섞여 나오면(LLM이 대화 속 한국어를 따라 쓴 경우) 버리고 한 번 더 부른다
+            int attempts = forAgent || "ko".equals(t.getLang()) ? 1 : CUSTOMER_ATTEMPTS;
+            List<String> cleaned = List.of();
+            for (int i = 0; i < attempts && cleaned.size() < 2; i++) {
+                Suggestions raw = chatClient.prompt()
+                        .system(forAgent ? AGENT_PROMPT : CUSTOMER_PROMPT)
+                        .user(user)
+                        .call()
+                        .entity(Suggestions.class);
+                cleaned = clean(raw == null ? null : raw.suggestions());
+                if (!forAgent) {
+                    cleaned = onlyInLanguage(cleaned, t.getLang());
+                }
+            }
             result = cleaned.size() >= 2 ? new SuggestionList(cleaned, "LLM") : NONE;
         } catch (Exception e) {
             log.warn("[추천 문장 LLM 실패 → 고정 예시 사용] {}", e.getMessage());
@@ -136,7 +156,8 @@ public class SuggestionService {
 
     /** 고객에게 줄 입력: 언어 코드 + 대화(상담원 말은 고객 언어 번역이 있으면 그것) */
     static String customerInput(HandoffTicket t, List<ChatMessage> history) {
-        return "language code: " + t.getLang() + "\n\n"
+        return "language code: " + t.getLang() + " (" + LANGUAGE_NAMES.getOrDefault(t.getLang(), t.getLang()) + ")\n"
+                + "Write all 3 messages in " + LANGUAGE_NAMES.getOrDefault(t.getLang(), t.getLang()) + ".\n\n"
                 + "Conversation (the customer is the one who will send the next message)\n"
                 + transcript(history, false);
     }
@@ -163,6 +184,14 @@ public class SuggestionService {
             sb.append("- ").append(who).append(": ").append(Masking.mask(text)).append('\n');
         }
         return sb.toString();
+    }
+
+    /** 고객 언어가 한국어가 아니면 한글이 들어간 추천을 뺀다 (한국어 고객에게는 그대로) */
+    static List<String> onlyInLanguage(List<String> suggestions, String lang) {
+        if ("ko".equals(lang)) {
+            return suggestions;
+        }
+        return suggestions.stream().filter(s -> !HANGUL.matcher(s).find()).toList();
     }
 
     /** 앞뒤 공백·따옴표·번호를 정리하고, 빈 것·중복·너무 긴 것을 빼서 최대 3개만 남긴다 */
