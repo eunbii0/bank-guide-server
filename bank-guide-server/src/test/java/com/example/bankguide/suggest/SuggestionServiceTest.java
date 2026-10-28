@@ -50,6 +50,33 @@ class SuggestionServiceTest {
     }
 
     @Test
+    void 한국어가_아닌_고객에게는_한글이_섞인_추천을_뺀다() {
+        List<String> mixed = List.of(
+                "Thank you. When can I visit the branch?",
+                "감사합니다. 그럼 가까운 지점에 언제 가도 되나요?",
+                "Okay, 알겠습니다.",
+                "Which documents should I bring?");
+        assertEquals(List.of("Thank you. When can I visit the branch?", "Which documents should I bring?"),
+                SuggestionService.onlyInLanguage(mixed, "en"));
+        // 자모만 섞여 있어도 뺀다
+        assertEquals(List.of(), SuggestionService.onlyInLanguage(List.of("thanks ㅋㅋ"), "en"));
+    }
+
+    @Test
+    void 베트남어_중국어_추천은_그대로_둔다() {
+        List<String> vi = List.of("Cảm ơn, khi nào tôi có thể đến chi nhánh?");
+        List<String> zh = List.of("谢谢，我什么时候可以去分行？");
+        assertEquals(vi, SuggestionService.onlyInLanguage(vi, "vi"));
+        assertEquals(zh, SuggestionService.onlyInLanguage(zh, "zh"));
+    }
+
+    @Test
+    void 한국어_고객에게는_한글_추천을_그대로_둔다() {
+        List<String> ko = List.of("감사합니다. 언제 가도 되나요?");
+        assertEquals(ko, SuggestionService.onlyInLanguage(ko, "ko"));
+    }
+
+    @Test
     void 입력이_없으면_빈_목록() {
         assertTrue(SuggestionService.clean(null).isEmpty());
     }
