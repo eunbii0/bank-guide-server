@@ -4,7 +4,7 @@
 import { tp, months } from '../i18n';
 import { Icon, QuickIcon, Sun, Bee, PromoArt, Donut } from '../components/HomeArt';
 
-function Header({ title, onBack, backLabel, right }) {
+function Header({ title, onBack, backLabel, left, right }) {
   return (
     <header className="app-header">
       {onBack ? (
@@ -12,7 +12,7 @@ function Header({ title, onBack, backLabel, right }) {
           ‹
         </button>
       ) : (
-        <span className="back-btn-space" />
+        left ?? <span className="back-btn-space" />
       )}
       <h1>{title}</h1>
       {right ?? <span className="back-btn-space" />}
@@ -50,7 +50,7 @@ const RECENT = [
 ];
 const fmt = (n) => Math.abs(n).toLocaleString('en-US');
 
-export function HomePage({ lang, go, onChangeLang, onAsk, userName }) {
+export function HomePage({ lang, go, onChangeLang, onAsk, userName, onLogout }) {
   const p = (k, v) => tp(lang, k, v);
   const quick = [
     { id: 'btn-transfer', to: 'transfer', icon: 'transfer', label: p('transfer') },
@@ -94,13 +94,6 @@ export function HomePage({ lang, go, onChangeLang, onAsk, userName }) {
           <p className="greet-sub">{p('greetSub')}</p>
         </div>
         <div className="home-top-actions">
-          <button className="icon-btn" aria-label={p('search')} title={p('search')}>
-            <Icon name="search" size={24} />
-          </button>
-          <button className="icon-btn bell" aria-label={p('notifications')} title={p('notifications')}>
-            <Icon name="bell" size={24} />
-            <i className="bell-dot" />
-          </button>
           <button
             className="icon-btn"
             onClick={onChangeLang}
@@ -110,6 +103,17 @@ export function HomePage({ lang, go, onChangeLang, onAsk, userName }) {
           >
             <Icon name="menu" size={24} />
           </button>
+          {onLogout && (
+            <button className="icon-btn" onClick={onLogout} aria-label={p('logout')} title={p('logout')}>
+              {/* 문 밖으로 나가는 화살표 (HomeArt 아이콘과 같은 선 두께) */}
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                   strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <path d="M16 17l5-5-5-5" />
+                <path d="M21 12H9" />
+              </svg>
+            </button>
+          )}
         </div>
       </header>
 
@@ -444,7 +448,7 @@ export function CardApplyPage({ lang, kind, go, back }) {
   return (
     <>
       <Header title={info.title} onBack={back} backLabel={p('back')} />
-      <section className="detail">
+      <section id="info-review" className="detail">
         <dl>
           <dt>{p('cardProduct')}</dt>
           <dd>{info.name}</dd>
@@ -503,7 +507,7 @@ export function JoinTermPage({ lang, kind, onPick, back }) {
   return (
     <>
       <Header title={info.title} onBack={back} backLabel={p('back')} />
-      <section className="detail">
+      <section id="info-review" className="detail">
         <dl>
           <dt>{p('product')}</dt>
           <dd>{info.name}</dd>
@@ -531,7 +535,7 @@ export function JoinConfirmPage({ lang, draft, go, back }) {
   return (
     <>
       <Header title={p('joinConfirmTitle')} onBack={back} backLabel={p('back')} />
-      <section className="detail">
+      <section id="info-review" className="detail">
         <dl>
           <dt>{p('product')}</dt>
           <dd>{info.name}</dd>

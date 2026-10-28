@@ -30,11 +30,19 @@ const newId = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${
 const params = new URLSearchParams(window.location.search);
 
 // 같은 화면에서 이 시간(초) 동안 아무것도 안 누르면 '멈춤'으로 본다.
-// 시연할 때는 주소 뒤에 ?stuck=5 를 붙이면 5초로 줄어든다.
-const STUCK_SECONDS = Number(params.get('stuck')) || 30;
+// 주소 뒤에 ?stuck=5 를 붙이면 그 시간(초)으로 바뀐다.
+const STUCK_SECONDS = Number(params.get('stuck')) || 7;
 
-// 데모용 가상 고객 (A: Nguyen, B: Li Wei, C: Aziz). 주소에 ?customer=B 를 붙이거나 오른쪽 패널에서 바꾼다.
-const INITIAL_CUSTOMER = (params.get('customer') || 'A').toUpperCase();
+// 데모용 가상 고객 (C: Emily Carter). 로그인 화면 없이 항상 이 고객으로 들어간다.
+const CUSTOMER_ID = 'C';
+
+// 화면 ↔ 서버 통신 로그는 개발용이라 평소에는 숨긴다. 주소에 ?debug=1 을 붙이면 오른쪽에 보인다.
+// (상담원 요약에 쓰이는 행동 기록은 상담원 화면의 '고객 이동 경로'에서 본다)
+const DEBUG = params.has('debug');
+
+// 카드 발급·상품 가입은 중요한 내용(상품·금액·금리·유의사항)이 있는 화면에서,
+// 다음 버튼을 안내하기 전에 그 내용을 먼저 하이라이트하고 고객이 [확인했어요]를 눌러야 넘어간다.
+const REVIEW_PAGES = new Set(['deposit-join', 'savings-join', 'join-confirm', 'card-check-apply', 'card-credit-apply']);
 
 export default function App() {
   // 화면 이동: history 배열의 마지막이 현재 화면
@@ -42,12 +50,11 @@ export default function App() {
   const page = history.at(-1);
 
   // 시연 고객. 고객 정보(체류자격·만료일)는 서버에만 있고, 화면은 id만 들고 있다.
-  const [customerId, setCustomerId] = useState(INITIAL_CUSTOMER);
+  const customerId = CUSTOMER_ID;
   const [customers, setCustomers] = useState([]);
-  const [customerOpen, setCustomerOpen] = useState(false);
 
-  // 이 화면을 연 고객의 대화 전체를 묶는 id (4단계: 서버가 채팅 원문을 이 id로 저장). 고객을 바꾸면 새로 만든다.
-  const [conversationId, setConversationId] = useState(newId);
+  // 이 화면을 연 고객의 대화 전체를 묶는 id (4단계: 서버가 채팅 원문을 이 id로 저장).
+  const [conversationId] = useState(newId);
 
   // 고객 언어. 앱을 켜면 맨 먼저 언어 선택 화면이 나오고(null = 아직 안 고름),
   // 고른 언어가 은행 앱 화면·챗봇·서버 안내 문구 전체에 똑같이 적용된다.
@@ -59,6 +66,9 @@ export default function App() {
   const [sessionId, setSessionId] = useState(null);
   const [guide, setGuide] = useState(null);
   const [currentIntent, setCurrentIntent] = useState(null);
+  // 내용 확인을 마친 화면 ("세션:화면"). 안내 세션이 새로 시작되면 다시 확인한다.
+  const [reviewedKey, setReviewedKey] = useState(null);
+  const reviewPending = guide?.type === 'STEP' && REVIEW_PAGES.has(page) && reviewedKey !== `${sessionId}:${page}`;
 
   // 채팅
   const [chatOpen, setChatOpen] = useState(false);
@@ -70,10 +80,10 @@ export default function App() {
   const [options, setOptions] = useState([]); // 애매할 때 보여줄 선택지, 또는 첫 메뉴 버튼
   const [offer, setOffer] = useState(null); // 상담원 연결 제안 { reason, intent }
   const [ticketNo, setTicketNo] = useState(null); // 상담원에게 넘어간 티켓
-  const [restartOffered, setRestartOffered] = useState(false); // "다른 업무도 도와드릴까요?" 뒤의 [처음으로] 버튼
   const [ticketClosed, setTicketClosed] = useState(false); // 상담원이 상담을 끝냈는지
   const [agentJoined, setAgentJoined] = useState(false); // 상담원이 상담을 시작했는지 (대기 → 연결됨)
   const [aiSuggestions, setAiSuggestions] = useState([]); // 대화 맥락으로 AI가 만든 추천 문장 (없으면 고정 예시)
+  const [infoRequest, setInfoRequest] = useState(false); // 상담원이 고객 정보 확인을 요청해서 [허용]/[거절]을 기다리는지
   const talkingToAgent = Boolean(ticketNo) && !ticketClosed; // true면 입력창이 상담원에게 바로 간다
   const say = (...msgs) => setMessages((m) => [...m, ...msgs]);
 
@@ -100,11 +110,10 @@ export default function App() {
         : t(lang, 'welcome');
     setMessages((m) => [...m, { divider: true }, ...(greet ? [{ from: 'ai', text: hello }] : [])]);
   };
-  // 안내가 끝났거나 혼자 계속하기로 했을 때: 다른 업무로 넘어갈 수 있게 [처음으로]를 한 번 더 보여준다
+  // 안내가 끝났거나 혼자 계속하기로 했을 때: 다른 업무도 도와드릴지 묻는다 (아래 예시 문장이나 제목줄 ↺로 이어간다)
   const offerRestart = () => {
     beginNewSession(false);
     say({ from: 'ai', text: t(lang, 'anotherTask') });
-    setRestartOffered(true);
   };
 
   // 언어 선택. 아직 대화가 없으면 첫 인사를 그 언어로 바꾸고, 대화가 있으면 그 언어로 인사를 덧붙인다.
@@ -141,6 +150,8 @@ export default function App() {
   // 티켓이 생기면 3초마다 새 답장(고객 언어로 번역된 것)과 티켓 상태를 가져온다.
   const lastAgentId = useRef(0);
   const closedNotified = useRef(false); // 종료 안내를 한 번만 보여주기 위한 표시
+  const infoAnswered = useRef(false); // 방금 답했는데 답하기 전에 보낸 조회가 REQUESTED로 돌아와 카드가 다시 뜨지 않게
+  const infoShown = useRef(false); // 이번 요청의 카드를 이미 띄웠는지
   useEffect(() => {
     if (!ticketNo) return undefined;
     let alive = true;
@@ -149,10 +160,21 @@ export default function App() {
         const res = await api.fetchAgentMessages(ticketNo, lastAgentId.current);
         if (!alive) return;
         if (res.status === 'IN_PROGRESS') setAgentJoined(true);
+        // 상담원이 고객 정보 확인을 요청하면 [허용]/[거절] 카드를 띄운다
+        if (res.infoConsent !== 'REQUESTED') {
+          infoAnswered.current = false;
+          infoShown.current = false;
+        }
+        if (res.infoConsent === 'REQUESTED' && res.status !== 'CLOSED' && !infoAnswered.current && !infoShown.current) {
+          infoShown.current = true; // 요청 한 번에 한 번만 채팅창을 연다 (고객이 닫으면 다시 열지 않는다)
+          setInfoRequest(true);
+          setChatOpen(true);
+        }
         if (res.messages.length > 0) {
           lastAgentId.current = res.messages.at(-1).id;
           beginNewSession(false);
-          say(...res.messages.map((m) => ({ from: 'agent', text: m.text })));
+          // 번역이 안 돼서 상담원이 쓴 그대로 온 말에는 고객 언어로 안내를 붙인다
+          say(...res.messages.map((m) => ({ from: 'agent', text: m.text, note: m.untranslated ? t(lang, 'untranslated') : null })));
           setChatOpen(true);
           // 상담원의 새 말에 이어 보낼 만한 문장을 AI에게 받는다 (실패하면 고정 예시가 그대로 보인다)
           api.fetchSuggestions(ticketNo, 'customer').then((r) => alive && setAiSuggestions(r.suggestions));
@@ -160,6 +182,7 @@ export default function App() {
         if (res.status === 'CLOSED') {
           clearInterval(timer);
           setTicketClosed(true);
+          setInfoRequest(false);
           if (!closedNotified.current) {
             closedNotified.current = true;
             say({ from: 'ai', text: t(lang, 'closed') });
@@ -176,7 +199,7 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketNo]);
 
-  // 서버와 주고받은 내용 (오른쪽 패널)
+  // 서버와 주고받은 내용 (?debug=1일 때 오른쪽 패널)
   const [traffic, setTraffic] = useState([]);
   const [logsOpen, setLogsOpen] = useState(false);
   const [dbEvents, setDbEvents] = useState(null);
@@ -193,15 +216,15 @@ export default function App() {
 
   // 상담원 연결 제안을 띄운다 (판단 질문·멈춤·이탈 반복·고객 정보 불일치)
   // intent는 연결할 때 /api/handoff에 함께 보낼 업무 (기본은 안내 중인 업무)
-  const showOffer = (text, reason, intent = currentIntent) => {
+  // warn: 사기 의심 경고처럼 눈에 띄게 보여줄 문구
+  const showOffer = (text, reason, intent = currentIntent, warn = false) => {
     setPendingIntent(null);
     setOptions([]);
     setVerifyCategory(null);
     setEligibility(null);
-    setRestartOffered(false);
     setOffer({ reason, intent });
     beginNewSession(false);
-    say({ from: 'ai', text });
+    say({ from: 'ai', text, warn });
     setChatOpen(true);
   };
 
@@ -209,7 +232,8 @@ export default function App() {
   // 안내 중인 화면에서 STUCK_SECONDS 동안 다음 화면으로 안 넘어가면 서버에 알린다. 화면마다 한 번만.
   const stuckReported = useRef(new Set());
   useEffect(() => {
-    if (!sessionId || guide?.type !== 'STEP' || offer || chatOpen) return undefined;
+    // 중요한 내용을 읽고 확인하는 동안은 멈춤으로 보지 않는다 (확인을 누른 뒤부터 센다)
+    if (!sessionId || guide?.type !== 'STEP' || offer || chatOpen || reviewPending) return undefined;
     const key = `${sessionId}:${page}`;
     if (stuckReported.current.has(key)) return undefined;
 
@@ -226,15 +250,15 @@ export default function App() {
     }, STUCK_SECONDS * 1000);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, guide, page, offer, chatOpen]);
+  }, [sessionId, guide, page, offer, chatOpen, reviewPending]);
 
   // ---------- 챗봇 메뉴 + 가입 자격 판단 ----------
-  // 시연 고객 목록 (오른쪽 패널)
+  // 시연 고객 목록 (홈 화면에 이름을 보여주려고 받아온다)
   useEffect(() => {
     api.fetchCustomers().then(setCustomers).catch(() => {});
   }, []);
 
-  // 메뉴 버튼(카드 발급 / 상품 해지 / 상품 가입)을 서버에서 l 언어로 받아온다.
+  // 메뉴 버튼(카드 발급 / 상품 해지 / 상품 가입 / 기타 문의)을 서버에서 l 언어로 받아온다.
   // announce=false면 버튼만 바꾸고(첫 인사가 이미 있으므로), true면 "도움이 필요하세요?"도 말한다.
   const loadMenu = async (l, announce = false) => {
     try {
@@ -258,7 +282,6 @@ export default function App() {
     setOffer(null);
     setVerifyCategory(null);
     setEligibility(null);
-    setRestartOffered(false);
   };
 
   // 챗봇을 처음 열면 첫 인사 아래에 메뉴 버튼을 띄운다. 대화마다 한 번만.
@@ -272,9 +295,8 @@ export default function App() {
   // 서버의 분류 결과를 채팅창에 반영한다
   const showChatResult = (res) => {
     if (res.escalation === 'FRAUD') {
-      // 사기 의심: 경고를 보여주고 묻지 않고 바로 연결한다
-      say({ from: 'ai', text: res.message, warn: true });
-      doHandoff('FRAUD');
+      // 사기 의심: 경고를 보여주고, 무엇이 전달되는지 알린 뒤 연결할지 묻는다
+      showOffer(res.message, 'FRAUD', currentIntent, true);
     } else if (res.escalation === 'ADVICE') {
       showOffer(res.message, 'ADVICE');
     } else if (res.intent === 'AMBIGUOUS' || res.intent === 'MENU') {
@@ -353,7 +375,6 @@ export default function App() {
     setOffer(null);
     setVerifyCategory(null);
     setEligibility(null);
-    setRestartOffered(false);
     setBusy(true);
     try {
       const hint = langChosen ? lang : undefined; // 직접 고른 언어가 있으면 서버에 알린다
@@ -373,13 +394,14 @@ export default function App() {
     const chosen = options.find((o) => o.intent === intent);
     setOptions([]);
     setEligibility(null);
-    setRestartOffered(false);
     say({ from: 'user', text: chosen?.name ?? intent });
     try {
       log('out', 'POST /api/chat/choose', { intent, lang, customerId });
       const res = await api.choose(conversationId, intent, lang, customerId);
       log('in', 'choose', res);
       showChatResult(res);
+      // [기타 문의]는 직접 쓰라는 안내가 나가므로 입력창에 바로 커서를 둔다
+      if (intent === 'MENU_OTHER') document.getElementById('chat-text')?.focus();
     } catch (e) {
       fail(e);
     }
@@ -439,8 +461,8 @@ export default function App() {
 
   const beginGuide = async (intent, term = null) => {
     try {
-      log('out', 'POST /api/guide/start', { intent, page, lang, term });
-      const res = await api.startGuide(intent, page, lang, term);
+      log('out', 'POST /api/guide/start', { conversationId, intent, page, lang, term });
+      const res = await api.startGuide(conversationId, intent, page, lang, term);
       log('in', 'start', res);
       setSessionId(res.sessionId);
       setLastSessionId(res.sessionId);
@@ -460,7 +482,8 @@ export default function App() {
     setOffer(null);
     setBusy(true);
     try {
-      const body = { conversationId, sessionId, reason, page, lang: l, intent };
+      // customerId는 티켓에 고객을 연결만 한다. 정보는 상담 중 고객이 허용해야 상담원에게 보인다
+      const body = { conversationId, sessionId, reason, page, lang: l, intent, customerId };
       log('out', 'POST /api/handoff', body);
       const res = await api.handoff(body);
       log('in', 'handoff', res);
@@ -469,6 +492,7 @@ export default function App() {
       setTicketNo(res.ticketNo);
       setTicketClosed(false);
       setAgentJoined(false);
+      setInfoRequest(false);
       lastAgentId.current = 0;
       closedNotified.current = false;
       say({ from: 'ai', text: res.message });
@@ -493,6 +517,21 @@ export default function App() {
         closedNotified.current = true;
         say({ from: 'ai', text: t(lang, 'closed') });
       }
+    } catch (e) {
+      fail(e);
+    }
+  };
+
+  // 상담원의 고객 정보 확인 요청에 답한다
+  const answerInfo = async (granted) => {
+    setInfoRequest(false);
+    infoAnswered.current = true;
+    say({ from: 'user', text: t(lang, granted ? 'infoAllow' : 'infoDeny') });
+    try {
+      log('out', `POST /api/tickets/${ticketNo}/info-consent`, { granted });
+      const res = await api.answerInfoRequest(ticketNo, granted);
+      log('in', 'info-consent', { infoConsent: res.infoConsent });
+      say({ from: 'ai', text: t(lang, granted ? 'infoAllowed' : 'infoDenied') });
     } catch (e) {
       fail(e);
     }
@@ -528,43 +567,21 @@ export default function App() {
     loadMenu(lang, true);
   };
 
-  // 시연 고객 바꾸기: 다른 사람이 앱을 연 것처럼 대화와 안내를 처음부터 다시 시작한다.
-  // 언어도 다시 고르게 언어 선택 화면으로 돌아간다.
-  const switchCustomer = (id) => {
-    if (sessionId) api.stopGuide(sessionId).catch(() => {});
-    const url = new URL(window.location.href);
-    url.searchParams.set('customer', id);
-    window.history.replaceState(null, '', url);
-
-    setCustomerId(id);
-    setConversationId(newId());
-    setLang(null);
-    setPickingLang(false);
-    setHistory(['home']);
-    setSessionId(null);
-    setGuide(null);
-    setCurrentIntent(null);
-    setChatOpen(false);
-    closedBefore.current = false;
-    setMessages([{ from: 'ai', text: t('ko', 'welcome') }]);
-    clearPending();
-    setTicketNo(null);
-    setTicketClosed(false);
-    setAgentJoined(false);
-    setAiSuggestions([]);
-    lastAgentId.current = 0;
-    closedNotified.current = false;
-    setTraffic([]);
-    setDbEvents(null);
-    setLastSessionId(null);
-  };
   const customer = customers.find((c) => c.customerId === customerId);
 
   // 언어를 고르기 전(또는 다시 고르는 중)에는 메인 화면 대신 언어 선택 화면만 보여준다
   const selectingLang = !langChosen || pickingLang;
 
   const pages = {
-    home: <HomePage lang={lang} go={go} onAsk={openChat} userName={customer?.name} onChangeLang={langLocked ? undefined : () => setPickingLang(true)} />,
+    home: (
+      <HomePage
+        lang={lang}
+        go={go}
+        onAsk={openChat}
+        userName={customer?.name}
+        onChangeLang={langLocked ? undefined : () => setPickingLang(true)}
+      />
+    ),
     product: <ProductPage lang={lang} go={go} back={back} />,
     loan: <LoanPage lang={lang} back={back} />,
     'deposit-list': <DepositListPage lang={lang} go={go} back={back} />,
@@ -597,7 +614,13 @@ export default function App() {
           <>
         <div className="screen">{pages[page]}</div>
 
-        <GuideOverlay guide={guide} page={page} />
+        <GuideOverlay
+          guide={guide}
+          page={page}
+          lang={lang}
+          review={reviewPending}
+          onReviewDone={() => setReviewedKey(`${sessionId}:${page}`)}
+        />
         {guide && guide.type !== 'DONE' && (
           <div className="guide-actions">
             <button className="guide-stop" onClick={openChat}>
@@ -631,12 +654,13 @@ export default function App() {
           onEndChat={endChat}
           verifying={Boolean(verifyCategory)}
           eligibility={eligibility}
-          restartOffered={restartOffered}
           onAsk={onAsk}
           onConfirm={onConfirm}
           onChoose={onChoose}
           onAcceptOffer={acceptOffer}
           onDeclineOffer={declineOffer}
+          infoRequest={infoRequest}
+          onAnswerInfo={answerInfo}
           onVerify={onVerify}
           onPickProduct={onPickProduct}
           onProductHandoff={onProductHandoff}
@@ -661,63 +685,8 @@ export default function App() {
         )}
       </div>
 
-      <aside className="dev-panel" aria-label="시연 설정">
-        <section className="customer-box" aria-labelledby="customer-heading">
-          <h2 id="customer-heading" className="customer-toggle-heading">
-            <button
-              type="button"
-              className="customer-toggle"
-              aria-expanded={customerOpen}
-              aria-controls="customer-details"
-              onClick={() => setCustomerOpen((open) => !open)}
-            >
-              <span className="customer-toggle-summary">
-                <span>시연 고객</span>
-                <span className="customer-current">{customer?.name ?? `고객 ${customerId}`}</span>
-              </span>
-              <span className="customer-toggle-action">{customerOpen ? '접기 −' : '펼치기 +'}</span>
-            </button>
-          </h2>
-          <div id="customer-details" className="customer-details" hidden={!customerOpen}>
-          {customer ? (
-            <div className="customer-profile">
-              <span className="profile-caption">선택한 고객 정보</span>
-              <h3>{customer.name}</h3>
-              <dl className="customer-facts">
-                <div><dt>국적</dt><dd>{customer.nationality}</dd></div>
-                <div><dt>체류자격</dt><dd>{customer.visaType}</dd></div>
-                <div><dt>체류 만료일</dt><dd>{customer.stayExpiry ?? '만료 없음'}</dd></div>
-                <div><dt>선호 언어</dt><dd>{LANGUAGES.find((l) => l.code === customer.lang)?.label ?? customer.lang}</dd></div>
-              </dl>
-            </div>
-          ) : (
-            <p className="customer-empty" role="status">고객 {customerId} · 고객 정보를 불러오지 못했습니다. 서버 연결을 확인해 주세요.</p>
-          )}
-          <p className="customer-intro">고객을 선택하고 앱에서 시연을 시작하세요.</p>
-          <div className="customer-options" role="group" aria-label="시연 고객 선택">
-            {customers.map((c) => (
-              <button
-                key={c.customerId}
-                type="button"
-                className={`customer-option${c.customerId === customerId ? ' selected' : ''}`}
-                aria-pressed={c.customerId === customerId}
-                onClick={() => c.customerId !== customerId && switchCustomer(c.customerId)}
-              >
-                <span className="customer-avatar" aria-hidden="true">{c.customerId}</span>
-                <span className="customer-option-copy">
-                  <strong>{c.name}</strong>
-                  <span>{c.nationality} · {c.visaType}</span>
-                </span>
-                <span className="customer-selection">{c.customerId === customerId ? '선택됨' : '선택'}</span>
-              </button>
-            ))}
-          </div>
-          <p className="customer-note">
-            고객을 변경하면 대화와 앱 화면이 처음부터 시작됩니다.
-          </p>
-          </div>
-        </section>
-
+      {DEBUG && (
+      <aside className="dev-panel" aria-label="개발용 통신 로그">
         <button
           type="button"
           className="log-toggle"
@@ -787,6 +756,7 @@ export default function App() {
 
         {ticketNo && <TicketPreview ticketNo={ticketNo} />}
       </aside>
+      )}
     </main>
   );
 }

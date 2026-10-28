@@ -9,6 +9,7 @@ import com.example.bankguide.api.ApiDtos.MessageView;
 import com.example.bankguide.api.ApiDtos.TicketView;
 import com.example.bankguide.common.PageNames;
 import com.example.bankguide.domain.ChatMessage;
+import com.example.bankguide.domain.CustomerProfileRepository;
 import com.example.bankguide.domain.GuideTaskRepository;
 import com.example.bankguide.domain.HandoffTicket;
 import com.example.bankguide.domain.HandoffTicketRepository;
@@ -42,12 +43,15 @@ public class HandoffService {
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
     private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("yyyyMMdd");
     private static final List<String> STATUSES = List.of("WAITING", "IN_PROGRESS", "CLOSED");
+    /** 상담원 답장 번역 실패 (422). 상담원 화면이 이 값을 보고 [다시 번역]/[그대로 보내기]를 띄운다 */
+    public static final String TRANSLATION_FAILED = "TRANSLATION_FAILED";
 
     private final GuideService guideService;
     private final ConversationService conversationService;
     private final TextService textService;
     private final GuideTaskRepository taskRepository;
     private final HandoffTicketRepository ticketRepository;
+    private final CustomerProfileRepository customerRepository;
     private final HandoffSummarizer summarizer;
     private final AgentTranslator translator;
 
@@ -56,8 +60,10 @@ public class HandoffService {
                           TextService textService,
                           GuideTaskRepository taskRepository,
                           HandoffTicketRepository ticketRepository,
+                          CustomerProfileRepository customerRepository,
                           HandoffSummarizer summarizer,
                           AgentTranslator translator) {
+        this.customerRepository = customerRepository;
         this.translator = translator;
         this.guideService = guideService;
         this.conversationService = conversationService;
@@ -82,6 +88,8 @@ public class HandoffService {
 
         guideService.endForHandoff(req.sessionId(), reason);
 
+        // 개인정보 최소화: 상담원에게는 지금 진행 중인 안내의 기록만 넘긴다.
+        // 같은 대화에서 그만둔 다른 안내 기록은 서비스 개선용으로 저장만 하고 요약에 넣지 않는다
         List<EventView> events = req.sessionId() == null ? List.of() : guideService.events(req.sessionId());
         List<MessageView> messages = messages(req.conversationId());
         HandoffNote.Input input = new HandoffNote.Input(lang, intentNameKo, reason, req.page(), events, messages);
@@ -103,11 +111,16 @@ public class HandoffService {
         String queue = "FRAUD".equals(reason) || "FRAUD_SUSPECTED".equals(summary.riskFlag()) ? "FRAUD"
                 : "ko".equals(lang) ? "GENERAL"
                 : "FOREIGN";
-        String ticketNo = "T-" + LocalDate.now().format(DAY) + "-" + String.format("%04d", ticketRepository.count() + 1);
+        // 재시작해도 티켓이 남으므로 전체 개수가 아니라 오늘 만든 개수로 번호를 매긴다
+        String prefix = "T-" + LocalDate.now().format(DAY) + "-";
+        String ticketNo = prefix + String.format("%04d", ticketRepository.countByTicketNoStartingWith(prefix) + 1);
 
+        // 고객 정보는 티켓에 복사하지 않고 고객 id만 둔다. 상담원은 상담 중 고객이 허용했을 때만 정보를 본다
+        String customerId = req.customerId() != null && customerRepository.existsById(req.customerId())
+                ? req.customerId() : null;
         ticketRepository.save(new HandoffTicket(ticketNo, req.conversationId(), req.sessionId(), queue, reason,
                 lang, intent, req.page(), String.join("\n", summary.summary()),
-                String.join("\n", summary.checkpoints()), summary.riskFlag(), source));
+                String.join("\n", summary.checkpoints()), summary.riskFlag(), source, customerId));
         log.info("[상담원 연결] {} queue={} reason={} lang={} summary={}", ticketNo, queue, reason, lang, source);
 
         String message = textService.ui("HANDOFF_DONE", lang);
@@ -138,10 +151,12 @@ public class HandoffService {
 
     /**
      * 상담원 답장: 한국어 원문을 저장하고 고객 언어로 번역해 함께 저장한다.
-     * 번역이 실패하면 한국어 그대로 보낸다 (고객이 답을 못 받는 것보다 낫다).
+     * 번역이 실패하면 보내지 않고 422 TRANSLATION_FAILED로 알린다. 상담원이 모르는 채 고객에게
+     * 읽을 수 없는 한국어가 가지 않게, 다시 번역할지 입력한 그대로(쉬운 영어 등) 보낼지 상담원이 고른다.
+     * sendOriginal=true면 번역하지 않고 그대로 보내고, 고객 화면에는 번역이 안 됐다는 안내가 붙는다.
      * 처음 답장하면 대기 중 티켓을 상담 중으로 바꾼다.
      */
-    public TicketView reply(String ticketNo, String text) {
+    public TicketView reply(String ticketNo, String text, boolean sendOriginal) {
         if (text == null || text.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "text is required");
         }
@@ -150,9 +165,12 @@ public class HandoffService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Ticket is already closed: " + ticketNo);
         }
         String original = text.trim();
-        String translated;
+        String translated; // null이면 번역 없이 보낸 것
         if ("ko".equals(t.getLang())) {
             translated = original;
+        } else if (sendOriginal) {
+            translated = null;
+            log.info("[번역 없이 전달] {}", ticketNo);
         } else {
             try {
                 translated = translator.translate(original, t.getLang());
@@ -160,11 +178,14 @@ public class HandoffService {
                     throw new IllegalStateException("번역 결과가 비어 있음");
                 }
             } catch (Exception e) {
-                log.warn("[번역 LLM 실패 → 한국어 원문 전달] {}", e.getMessage());
-                translated = original;
+                log.warn("[번역 LLM 실패 → 상담원에게 알림] {}", e.getMessage());
+                throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, TRANSLATION_FAILED);
             }
         }
         conversationService.agent(t.getConversationId(), original, translated);
+        if (translated == null) {
+            conversationService.system(t.getConversationId(), "위 답장은 번역 없이 입력한 그대로 보냈습니다.");
+        }
         if ("WAITING".equals(t.getStatus())) {
             t.setStatus("IN_PROGRESS");
             ticketRepository.save(t);
@@ -221,23 +242,44 @@ public class HandoffService {
         HandoffTicket t = find(ticketNo);
         List<AgentMessageView> messages = conversationService.agentMessagesAfter(t.getConversationId(), afterId).stream()
                 .map(m -> new AgentMessageView(m.getId(), m.getCreatedAt().format(TIME),
-                        m.getTranslated() != null ? m.getTranslated() : m.getContent()))
+                        m.getTranslated() != null ? m.getTranslated() : m.getContent(),
+                        m.getTranslated() == null && !"ko".equals(t.getLang())))
                 .toList();
-        return new AgentPoll(t.getStatus(), messages);
+        return new AgentPoll(t.getStatus(), messages, t.getInfoConsent());
     }
 
-    private HandoffTicket find(String ticketNo) {
+    /**
+     * 상담원 화면 '고객 이동 경로': 연결 당시 진행 중이던 안내의 guide_event (요약의 재료이기도 하다).
+     * 화면 이름과 내용은 상담원이 알아볼 수 있게 한국어로 바꾼다. 안내 없이 채팅으로만 연결된 티켓이면 빈 목록
+     */
+    public List<EventView> events(String ticketNo) {
+        HandoffTicket t = find(ticketNo);
+        if (t.getSessionId() == null) {
+            return List.of();
+        }
+        return guideService.events(t.getSessionId()).stream()
+                .map(e -> new EventView(e.time(), e.type(), PageNames.of(e.page()),
+                        PathNote.detailKo(e.type(), e.detail(), this::taskNameKo)))
+                .toList();
+    }
+
+    private String taskNameKo(String code) {
+        return taskRepository.existsById(code) ? textService.task(code, "ko").getName() : code;
+    }
+
+    HandoffTicket find(String ticketNo) {
         return ticketRepository.findByTicketNo(ticketNo)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ticket not found: " + ticketNo));
     }
 
-    private TicketView view(HandoffTicket t) {
+    TicketView view(HandoffTicket t) {
         String intentName = t.getIntent() != null && taskRepository.existsById(t.getIntent())
                 ? textService.task(t.getIntent(), "ko").getName() : "미확인 업무";
         return new TicketView(t.getTicketNo(), t.getQueue(), t.getStatus(), HandoffNote.reasonKo(t.getReason()),
                 HandoffNote.langKo(t.getLang()), intentName, PageNames.of(t.getCurrentPage()),
                 lines(t.getSummaryKo()), lines(t.getCheckpoints()), t.getRiskFlag(), t.getSummarySource(),
-                messages(t.getConversationId()), t.getCreatedAt().format(TIME));
+                messages(t.getConversationId()), t.getCreatedAt().format(TIME),
+                t.getCustomerId() != null, t.getInfoConsent());
     }
 
     private List<MessageView> messages(String conversationId) {

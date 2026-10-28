@@ -25,10 +25,10 @@ Claude API를 쓰려면 `build.gradle`의 `spring-ai-starter-model-openai`를 `s
 
 | 해볼 것 | 기대 결과 |
 | --- | --- |
-| 안내 중 같은 화면에서 30초 가만히 있기 (화면 주소에 `?stuck=5`를 붙이면 5초) | "어려운 부분이 있으신가요?" + [상담원 연결] [혼자 계속] |
+| 안내 중 같은 화면에서 7초 가만히 있기 (화면 주소에 `?stuck=5`를 붙이면 5초) | "어려운 부분이 있으신가요?" + [상담원 연결] [혼자 계속] |
 | 안내 중 '대출' 화면에 3번 잘못 들어가기 | 3번째에 같은 연결 제안 |
 | 안내 중 [질문하기] → "Sao tiền lãi ít vậy? Tôi có bị mất tiền không?" | 손익 판단 질문 → 연결 제안 |
-| "Someone will pay me if I lend my account" | 사기 경고 후 자동으로 금융사기 대기열에 연결 |
+| "Someone will pay me if I lend my account" | 사기 우려 경고 후 연결을 물어보고, [상담원 연결]을 누르면 금융사기 대기열에 연결 |
 | 연결 후 화면 오른쪽 "상담 티켓" | 한국어 요약 3줄, 확인할 것, 원문 대화 |
 
 콘솔 로그: `[LLM 분류]`, `[상담원 연결] T-... queue=FOREIGN reason=ADVICE lang=vi summary=LLM`

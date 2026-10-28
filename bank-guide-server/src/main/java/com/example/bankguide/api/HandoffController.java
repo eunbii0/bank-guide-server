@@ -1,13 +1,17 @@
 package com.example.bankguide.api;
 
 import com.example.bankguide.api.ApiDtos.AgentPoll;
+import com.example.bankguide.api.ApiDtos.CustomerInfoView;
 import com.example.bankguide.api.ApiDtos.CustomerMessageRequest;
+import com.example.bankguide.api.ApiDtos.EventView;
 import com.example.bankguide.api.ApiDtos.HandoffRequest;
 import com.example.bankguide.api.ApiDtos.HandoffResponse;
+import com.example.bankguide.api.ApiDtos.InfoConsentRequest;
 import com.example.bankguide.api.ApiDtos.MessageView;
 import com.example.bankguide.api.ApiDtos.ReplyRequest;
 import com.example.bankguide.api.ApiDtos.StatusRequest;
 import com.example.bankguide.api.ApiDtos.TicketView;
+import com.example.bankguide.handoff.CustomerInfoService;
 import com.example.bankguide.handoff.HandoffService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -25,9 +29,11 @@ import java.util.List;
 public class HandoffController {
 
     private final HandoffService handoffService;
+    private final CustomerInfoService customerInfoService;
 
-    public HandoffController(HandoffService handoffService) {
+    public HandoffController(HandoffService handoffService, CustomerInfoService customerInfoService) {
         this.handoffService = handoffService;
+        this.customerInfoService = customerInfoService;
     }
 
     /** 상담원 연결: 한국어 요약을 만들어 티켓을 대기열에 넣는다 */
@@ -48,6 +54,12 @@ public class HandoffController {
         return handoffService.ticket(ticketNo);
     }
 
+    /** 고객 이동 경로 (상담원 화면 토글). 화면 이름은 한국어 */
+    @GetMapping("/tickets/{ticketNo}/events")
+    public List<EventView> events(@PathVariable String ticketNo) {
+        return handoffService.events(ticketNo);
+    }
+
     /** 티켓 상태 변경 (WAITING, IN_PROGRESS, CLOSED) */
     @PatchMapping("/tickets/{ticketNo}/status")
     public TicketView status(@PathVariable String ticketNo, @RequestBody StatusRequest request) {
@@ -57,7 +69,7 @@ public class HandoffController {
     /** 상담원 답장 (한국어) → 고객 언어로 번역해 저장 */
     @PostMapping("/tickets/{ticketNo}/reply")
     public TicketView reply(@PathVariable String ticketNo, @RequestBody ReplyRequest request) {
-        return handoffService.reply(ticketNo, request.text());
+        return handoffService.reply(ticketNo, request.text(), request.original());
     }
 
     /** 상담 중 고객이 상담원에게 보내는 말 (고객 언어 그대로). 서버가 한국어로 번역해 저장한다 */
@@ -72,9 +84,27 @@ public class HandoffController {
         return handoffService.customerClose(ticketNo);
     }
 
-    /** 고객 화면이 주기적으로 호출: 티켓 상태 + 새 상담원 답장(고객 언어) */
+    /** 고객 화면이 주기적으로 호출: 티켓 상태 + 새 상담원 답장(고객 언어) + 정보 확인 요청 여부 */
     @GetMapping("/tickets/{ticketNo}/agent-messages")
     public AgentPoll agentMessages(@PathVariable String ticketNo, @RequestParam(defaultValue = "0") long after) {
         return handoffService.poll(ticketNo, after);
+    }
+
+    /** 상담원: 상담 중 고객에게 고객 정보 확인을 요청한다 */
+    @PostMapping("/tickets/{ticketNo}/info-request")
+    public TicketView infoRequest(@PathVariable String ticketNo) {
+        return customerInfoService.request(ticketNo);
+    }
+
+    /** 고객: 정보 확인 요청을 허용하거나 거절한다 */
+    @PostMapping("/tickets/{ticketNo}/info-consent")
+    public TicketView infoConsent(@PathVariable String ticketNo, @RequestBody InfoConsentRequest request) {
+        return customerInfoService.answer(ticketNo, request.granted());
+    }
+
+    /** 상담원: 고객이 허용한 진행 중 상담에서만 고객 정보·자격 판단 결과를 본다 (조회할 때마다 기록) */
+    @GetMapping("/tickets/{ticketNo}/customer-info")
+    public CustomerInfoView customerInfo(@PathVariable String ticketNo, @RequestParam(required = false) String agent) {
+        return customerInfoService.info(ticketNo, agent);
     }
 }

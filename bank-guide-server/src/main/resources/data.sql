@@ -1,3 +1,17 @@
+-- 기준 데이터: 서버를 켤 때마다 지우고 다시 넣는다 (문구·규칙을 고치고 재시작하면 바로 반영).
+-- 상담 기록 테이블(handoff_ticket, chat_message, guide_event, eligibility_check, customer_info_access)은
+-- 건드리지 않는다. 기록 테이블은 기준 데이터 테이블을 FK로 참조하지 않아서 따로 지울 수 있다.
+-- FK 순서: 참조하는 쪽부터 지운다
+DELETE FROM product_rule;
+DELETE FROM product;
+DELETE FROM customer_profile;
+DELETE FROM intent_keyword;
+DELETE FROM ui_text;
+DELETE FROM guide_step_text;
+DELETE FROM guide_step;
+DELETE FROM guide_task_text;
+DELETE FROM guide_task;
+
 -- 지원 언어: ko(한국어), en(영어), vi(베트남어), zh(중국어)
 -- 앱 화면은 고객이 고른 언어로 보이므로, 안내 문구의 버튼 이름은 프론트 i18n.js(PAGE)의 화면 표기와 똑같이 맞춘다.
 
@@ -190,10 +204,10 @@ INSERT INTO ui_text (text_key, lang, content) VALUES
 ('OFFER_STUCK',  'en', 'Having trouble? Shall I connect you to an agent?'),
 ('OFFER_STUCK',  'vi', 'Bạn đang gặp khó khăn? Bạn có muốn kết nối với nhân viên tư vấn không?'),
 ('OFFER_STUCK',  'zh', '遇到困难了吗？需要为您转接客服人员吗？'),
-('FRAUD_WARNING', 'ko', '잠시만요. 통장을 빌려주거나 다른 사람의 요청으로 돈을 옮기면 범죄에 연루될 수 있어요. 금융사기 담당 상담원에게 바로 연결할게요.'),
-('FRAUD_WARNING', 'en', 'Please wait. Lending your account or moving money because someone asked you can involve you in a crime. I''m connecting you to our fraud team now.'),
-('FRAUD_WARNING', 'vi', 'Xin hãy dừng lại. Cho người khác mượn tài khoản hoặc chuyển tiền theo yêu cầu của người khác có thể khiến bạn liên quan đến tội phạm. Tôi sẽ kết nối bạn với bộ phận phòng chống lừa đảo ngay.'),
-('FRAUD_WARNING', 'zh', '请稍等。把账户借给别人，或按别人的要求转移资金，可能会使您卷入犯罪。现在为您转接反诈骗专员。'),
+('FRAUD_WARNING', 'ko', '잠시만요. 금융사기가 우려돼요. 통장을 빌려주거나 다른 사람의 요청으로 돈을 옮기면 범죄에 연루될 수 있어요. 금융사기 담당 상담원과 바로 이야기해 보시겠어요?'),
+('FRAUD_WARNING', 'en', 'Please wait. This may be financial fraud. Lending your account or moving money because someone asked you can involve you in a crime. Would you like to talk to our fraud team now?'),
+('FRAUD_WARNING', 'vi', 'Xin hãy dừng lại. Đây có thể là lừa đảo tài chính. Cho người khác mượn tài khoản hoặc chuyển tiền theo yêu cầu của người khác có thể khiến bạn liên quan đến tội phạm. Bạn có muốn nói chuyện ngay với bộ phận phòng chống lừa đảo không?'),
+('FRAUD_WARNING', 'zh', '请稍等。这可能是金融诈骗。把账户借给别人，或按别人的要求转移资金，可能会使您卷入犯罪。要现在和反诈骗专员通话吗？'),
 ('HANDOFF_DONE', 'ko', '상담원에게 연결하고 있어요. 지금까지의 대화를 전달했으니 처음부터 다시 설명하지 않으셔도 돼요.'),
 ('HANDOFF_DONE', 'en', 'Connecting you to an agent. I''ve shared our conversation, so you don''t need to explain again.'),
 ('HANDOFF_DONE', 'vi', 'Đang kết nối với nhân viên tư vấn. Tôi đã chuyển nội dung trò chuyện, bạn không cần giải thích lại.'),
@@ -238,6 +252,21 @@ INSERT INTO ui_text (text_key, lang, content) VALUES
 ('MENU_GREETING', 'en', 'Need help? Choose below or type your question.'),
 ('MENU_GREETING', 'vi', 'Bạn cần giúp đỡ không? Hãy chọn bên dưới hoặc nhập câu hỏi.'),
 ('MENU_GREETING', 'zh', '需要帮助吗？请在下方选择，或直接输入您的问题。'),
+-- 인사말("안녕하세요", "hi")에 대한 답
+('GREETING_REPLY', 'ko', '안녕하세요! 어떤 업무를 도와드릴까요? 아래에서 고르시거나 직접 써 주세요.'),
+('GREETING_REPLY', 'en', 'Hello! What can I help you with today? Choose below or type your question.'),
+('GREETING_REPLY', 'vi', 'Xin chào! Tôi có thể giúp gì cho bạn? Hãy chọn bên dưới hoặc nhập câu hỏi.'),
+('GREETING_REPLY', 'zh', '您好！请问需要办理什么业务？请在下方选择，或直接输入您的问题。'),
+-- 감사 인사("고마워요", "thanks")에 대한 답
+('THANKS_REPLY', 'ko', '도움이 되셨다니 다행이에요. 궁금한 점이 더 있으신가요?'),
+('THANKS_REPLY', 'en', 'Glad I could help! Is there anything else you would like to know?'),
+('THANKS_REPLY', 'vi', 'Rất vui vì đã giúp được bạn! Bạn còn thắc mắc nào khác không?'),
+('THANKS_REPLY', 'zh', '很高兴能帮到您！还有其他问题吗？'),
+-- 더 필요 없다거나 작별 인사("no that's all", "bye")에 대한 답
+('GOODBYE_REPLY', 'ko', '이용해 주셔서 감사합니다. 필요하실 때 언제든 불러 주세요!'),
+('GOODBYE_REPLY', 'en', 'Thank you for using our service. Feel free to ask anytime you need help!'),
+('GOODBYE_REPLY', 'vi', 'Cảm ơn bạn đã sử dụng dịch vụ. Cần giúp gì cứ hỏi tôi bất cứ lúc nào nhé!'),
+('GOODBYE_REPLY', 'zh', '感谢您的使用。需要帮助时，随时都可以问我！'),
 ('MENU_CARD',     'ko', '카드 발급'),
 ('MENU_CARD',     'en', 'Get a card'),
 ('MENU_CARD',     'vi', 'Làm thẻ'),
@@ -250,6 +279,15 @@ INSERT INTO ui_text (text_key, lang, content) VALUES
 ('MENU_JOIN',     'en', 'Open a product'),
 ('MENU_JOIN',     'vi', 'Đăng ký sản phẩm'),
 ('MENU_JOIN',     'zh', '办理新产品'),
+('MENU_OTHER',    'ko', '기타 문의'),
+('MENU_OTHER',    'en', 'Something else'),
+('MENU_OTHER',    'vi', 'Câu hỏi khác'),
+('MENU_OTHER',    'zh', '其他咨询'),
+-- [기타 문의]를 눌렀을 때: 위 세 가지 밖의 일은 직접 쓰도록 안내한다
+('MENU_OTHER_ASK', 'ko', '어떤 일이 필요하세요? 아래 입력창에 궁금한 점을 직접 적어 주세요.'),
+('MENU_OTHER_ASK', 'en', 'What do you need help with? Please type your question in the box below.'),
+('MENU_OTHER_ASK', 'vi', 'Bạn cần giúp việc gì? Hãy nhập câu hỏi vào ô bên dưới.'),
+('MENU_OTHER_ASK', 'zh', '您需要办理什么？请在下方输入框中直接输入您的问题。'),
 -- 고객 정보 확인 질문. {name} {visa} {expiry}는 서버가 채운다 (이 문구는 채팅 기록에 저장하지 않는다)
 ('VERIFY_PROFILE', 'ko', '{name}님, {visa} 비자, 체류기간 {expiry}까지로 확인돼요. 맞으세요?'),
 ('VERIFY_PROFILE', 'en', '{name}, our records show your visa type as {visa}, with your stay valid until {expiry}. Is that correct?'),
@@ -322,11 +360,11 @@ INSERT INTO ui_text (text_key, lang, content) VALUES
 -- 데모용 가상 고객 3명 (기준일 2026-10-27)
 --  A: 체크카드 O, 신용카드 X(E-9), 예금·적금은 6개월만
 --  B: 모든 상품 가능
---  C: 은행 기록상 만료 2026-12-15 → [아니요, 연장했어요] 시나리오
+--  C: 체류 만료 2027-12-31 (D-2). 영어 사용자 (유학생)
 INSERT INTO customer_profile (customer_id, name, nationality_ko, visa_type, stay_expiry, has_arc, has_account, income_verified, preferred_lang) VALUES
-('A', 'Nguyen', '베트남',       'E-9', DATE '2027-05-31', TRUE, TRUE, TRUE,  'ko'),
-('B', 'Li Wei', '중국',         'F-5', NULL,              TRUE, TRUE, TRUE,  'ko'),
-('C', 'Aziz',   '우즈베키스탄', 'D-2', DATE '2026-12-15', TRUE, TRUE, FALSE, 'ko');
+('A', 'Nguyen',       '베트남', 'E-9', DATE '2027-05-31', TRUE, TRUE, TRUE,  'ko'),
+('B', 'Li Wei',       '중국',   'F-5', NULL,              TRUE, TRUE, TRUE,  'ko'),
+('C', 'Emily Carter', '미국',   'D-2', DATE '2027-12-31', TRUE, TRUE, FALSE, 'en');
 
 INSERT INTO product (code, category, task_code, sort) VALUES
 ('CHECK_CARD',   'CARD', 'CHECK_CARD',        1),
@@ -412,9 +450,9 @@ INSERT INTO ui_text (text_key, lang, content) VALUES
 ('OFFER_STUCK',   'uz', 'Qiyinchilik boʻlyaptimi? Sizni xodim bilan ulab qoʻyaymi?'),
 ('OFFER_STUCK',   'ne', 'अप्ठ्यारो परिरहेको छ? कर्मचारीसँग जोडिदिऊँ?'),
 ('OFFER_STUCK',   'km', 'មានបញ្ហាមែនទេ? តើចង់ឲ្យខ្ញុំភ្ជាប់ទៅបុគ្គលិកទេ?'),
-('FRAUD_WARNING', 'uz', 'Iltimos, toʻxtang. Hisobingizni boshqaga berish yoki kimningdir soʻrovi bilan pul oʻtkazish sizni jinoyatga aralashtirishi mumkin. Hozir sizni firibgarlikka qarshi boʻlim xodimi bilan ulayman.'),
-('FRAUD_WARNING', 'ne', 'कृपया रोकिनुहोस्। आफ्नो खाता अरूलाई दिनु वा अरूको अनुरोधमा पैसा सार्नुले तपाईंलाई अपराधमा फसाउन सक्छ। अहिले तपाईंलाई ठगी रोकथाम टोलीसँग जोड्दैछु।'),
-('FRAUD_WARNING', 'km', 'សូមរង់ចាំបន្តិច។ ការឲ្យអ្នកដទៃខ្ចីគណនី ឬផ្ទេរប្រាក់តាមសំណើរបស់អ្នកដទៃ អាចធ្វើឲ្យអ្នកពាក់ព័ន្ធនឹងឧក្រិដ្ឋកម្ម។ ខ្ញុំកំពុងភ្ជាប់អ្នកទៅក្រុមប្រឆាំងការបោកប្រាស់ឥឡូវនេះ។'),
+('FRAUD_WARNING', 'uz', 'Iltimos, toʻxtang. Bu moliyaviy firibgarlik boʻlishi mumkin. Hisobingizni boshqaga berish yoki kimningdir soʻrovi bilan pul oʻtkazish sizni jinoyatga aralashtirishi mumkin. Hozir firibgarlikka qarshi boʻlim xodimi bilan gaplashasizmi?'),
+('FRAUD_WARNING', 'ne', 'कृपया रोकिनुहोस्। यो आर्थिक ठगी हुन सक्छ। आफ्नो खाता अरूलाई दिनु वा अरूको अनुरोधमा पैसा सार्नुले तपाईंलाई अपराधमा फसाउन सक्छ। अहिले नै ठगी रोकथाम टोलीसँग कुरा गर्नुहुन्छ?'),
+('FRAUD_WARNING', 'km', 'សូមរង់ចាំបន្តិច។ នេះអាចជាការបោកប្រាស់ហិរញ្ញវត្ថុ។ ការឲ្យអ្នកដទៃខ្ចីគណនី ឬផ្ទេរប្រាក់តាមសំណើរបស់អ្នកដទៃ អាចធ្វើឲ្យអ្នកពាក់ព័ន្ធនឹងឧក្រិដ្ឋកម្ម។ តើអ្នកចង់និយាយជាមួយក្រុមប្រឆាំងការបោកប្រាស់ឥឡូវនេះទេ?'),
 ('HANDOFF_DONE',  'uz', 'Sizni xodim bilan ulayapman. Suhbatimizni uzatdim, qaytadan tushuntirishingiz shart emas.'),
 ('HANDOFF_DONE',  'ne', 'तपाईंलाई कर्मचारीसँग जोड्दैछु। हाम्रो कुराकानी पठाइसकेको छु, फेरि सबै बुझाउनु पर्दैन।'),
 ('HANDOFF_DONE',  'km', 'កំពុងភ្ជាប់អ្នកទៅបុគ្គលិក។ ខ្ញុំបានបញ្ជូនការសន្ទនារបស់យើងរួចហើយ អ្នកមិនចាំបាច់ពន្យល់ម្ដងទៀតទេ។');

@@ -84,7 +84,7 @@
 | `AMBIGUOUS` | 애매함 | `message` + `options` 버튼 |
 | `UNKNOWN` | 모름 | `message`만 표시 |
 | `ADVICE` | 손익·상품 판단 질문 (`escalation: ADVICE`) | 상담원 연결 제안 |
-| `FRAUD` | 금융사기 의심 (`escalation: FRAUD`) | 경고 후 바로 상담원 연결 |
+| `FRAUD` | 금융사기 의심 (`escalation: FRAUD`) | 사기 우려 경고 + 전달 내용 안내 후 [상담원 연결] / [혼자 계속] 묻기 |
 | 🆕 `MENU` | 챗봇 첫 메뉴 | `message` + `options` 버튼 (2부 2) |
 | 🆕 `VERIFY` | 가입 자격 확인이 필요한 업무 | `message`(고객 정보 확인 질문) + [네]/[아니요] (2부 3) |
 
@@ -106,8 +106,15 @@
 `POST /api/guide/start`
 
 ```json
-{ "intent": "DEPOSIT_CANCEL", "page": "home", "lang": "en", "term": null }
+{ "conversationId": "c1a2...", "intent": "DEPOSIT_CANCEL", "page": "home", "lang": "en", "term": null }
 ```
+
+`conversationId`(선택): 채팅과 같은 값. 보내면 `guide_event`에 함께 저장되어, 한 대화에서 시작한
+여러 안내 기록을 묶어 볼 수 있습니다 (서비스 개선 분석용).
+
+**개인정보 최소화**: 상담원 연결 때 요약에는 **지금 진행 중인 안내의 기록만** 들어갑니다.
+같은 대화에서 그만둔 다른 안내 기록은 저장만 하고 상담원에게 넘기지 않습니다.
+화면은 [상담원 연결] 버튼 아래에 "이 채팅 내용과 지금 진행 중인 안내 상황만 전달된다"는 문구를 보여줍니다.
 
 응답
 
@@ -171,9 +178,13 @@
   "reason": "STUCK",
   "page": "deposit-cancel",
   "lang": "vi",
-  "intent": "DEPOSIT_CANCEL"
+  "intent": "DEPOSIT_CANCEL",
+  "customerId": "A"
 }
 ```
+
+`customerId`(선택): 티켓에 고객을 연결만 합니다. 고객 정보는 티켓에 복사하지 않고,
+상담 중 고객이 허용해야 상담원이 볼 수 있습니다 (9-1).
 
 응답
 
@@ -202,11 +213,49 @@
   "riskFlag": "NONE",
   "summarySource": "LLM",
   "messages": [ { "time": "14:04:00", "sender": "CUSTOMER", "lang": "vi", "content": "Sao tiền lãi ít vậy?" } ],
-  "createdAt": "14:05:00"
+  "createdAt": "14:05:00",
+  "hasCustomer": true,
+  "infoConsent": "NONE"
 }
 ```
 
 `status`: `WAITING`, `IN_PROGRESS`, `CLOSED`
+
+### 상담원 답장 번역 실패
+
+`POST /api/tickets/{ticketNo}/reply  {"text": "...", "sendOriginal": false}`
+
+- 번역이 실패하면 **보내지 않고** `422` + `message: "TRANSLATION_FAILED"`로 알립니다.
+  상담원 화면이 [다시 번역] / [입력한 그대로 보내기] / [취소]를 띄웁니다 (쉬운 영어로 고쳐 쓴 뒤 보내도 됨).
+- `sendOriginal: true`면 번역 없이 입력한 그대로 보냅니다. 상담원 화면 대화에 `시스템` 안내가 남고,
+  고객 화면의 `agent-messages` 응답에서 그 답장은 `"untranslated": true`가 되어 고객 언어로 안내가 붙습니다.
+
+## 9-1. 고객 정보 공유 (상담 중 동의)
+
+고객 정보(체류자격·만료일 등)와 가입 자격 판단 결과는 **상담 중 고객이 허용했을 때만** 상담원 창에 보입니다.
+
+```
+상담원 POST /api/tickets/{ticketNo}/info-request       → infoConsent: REQUESTED
+고객   GET  /api/tickets/{ticketNo}/agent-messages      → { ..., "infoConsent": "REQUESTED" } → [허용]/[거절] 카드
+고객   POST /api/tickets/{ticketNo}/info-consent {"granted": true}   → GRANTED (false면 DENIED, 상담원은 다시 요청 가능)
+상담원 GET  /api/tickets/{ticketNo}/customer-info?agent=agent-01     → 고객 정보 + 자격 판단 결과 + 조회 기록
+```
+
+- `customer-info`는 `GRANTED`이고 상담이 끝나지 않았을 때만 응답합니다. 그 밖에는 `403`.
+- 조회할 때마다 `customer_info_access`에 한 줄씩 남습니다 (누가, 언제, 어떤 항목). 응답의 `accessLog`로도 보입니다.
+- 고객 정보는 채팅 기록(`chat_message`)에 넣지 않습니다. 채팅 기록은 LLM 요약·답변 추천의 재료라서입니다.
+  요청·허용·거절은 `시스템` 메시지로만 남습니다.
+
+`customer-info` 응답
+
+```json
+{
+  "customerId": "A", "name": "Nguyen", "nationalityKo": "베트남", "visaType": "E-9",
+  "stayExpiry": "2027-05-31", "hasArc": true, "hasAccount": true, "incomeVerified": true,
+  "eligibility": [ { "time": "22:11:18", "category": "CARD", "confirmed": true, "result": ["[카드 발급] 고객 정보 확인: 맞음 ...", "신용카드 발급: 불가 - ..."] } ],
+  "accessLog": [ { "time": "22:12:29", "agentId": "agent-01", "items": "PROFILE,ELIGIBILITY" } ]
+}
+```
 
 ---
 
@@ -249,7 +298,7 @@
 [
   { "customerId": "A", "name": "Nguyen", "nationality": "베트남", "visaType": "E-9", "stayExpiry": "2027-05-31", "lang": "vi" },
   { "customerId": "B", "name": "Li Wei", "nationality": "중국", "visaType": "F-5", "stayExpiry": null, "lang": "zh" },
-  { "customerId": "C", "name": "Aziz", "nationality": "우즈베키스탄", "visaType": "D-2", "stayExpiry": "2026-12-15", "lang": "en" }
+  { "customerId": "C", "name": "Emily Carter", "nationality": "미국", "visaType": "D-2", "stayExpiry": "2027-12-31", "lang": "en" }
 ]
 ```
 
@@ -466,7 +515,18 @@
 
 # 3부. DB 테이블
 
-서버를 켤 때마다 `schema.sql` → `data.sql`로 새로 만듭니다 (데모용).
+서버를 켤 때 `schema.sql`이 **없는 테이블만** 만들고, `data.sql`이 **기준 데이터만** 지우고 다시 넣습니다.
+
+| 구분 | 테이블 | 재시작하면 |
+|---|---|---|
+| 기준 데이터 | `guide_task`, `guide_task_text`, `guide_step`, `guide_step_text`, `ui_text`, `intent_keyword`, `customer_profile`, `product`, `product_rule` | `data.sql` 내용으로 다시 채움 (문구·규칙 수정이 바로 반영) |
+| 상담 기록 | `handoff_ticket`, `chat_message`, `guide_event`, `eligibility_check`, `customer_info_access` | **그대로 남음** (MySQL 프로필일 때. 기본 H2는 메모리 DB라 서버를 끄면 사라짐) |
+
+- **전체 초기화**: Active profiles에 `reset`을 더해 한 번 실행합니다 (예: `mysql,reset`). `reset.sql`이 모든 테이블을 지운 뒤 새로 만듭니다.
+  리허설 기록을 지우고 시연을 시작할 때, **`schema.sql`의 테이블 구조를 바꾼 뒤**(이미 있는 테이블에는 새 컬럼이 생기지 않음)에 씁니다.
+  초기화한 다음에는 `reset`을 빼고 실행해야 기록이 남습니다.
+- 진행 중인 화면 안내 상태(몇 단계인지)는 서버 메모리에 있어서 재시작하면 사라집니다. 고객은 안내를 다시 시작하면 됩니다.
+- 티켓 번호는 그날 만든 티켓 수로 매깁니다 (`T-20261028-0001`부터).
 
 | 테이블 | 내용 |
 |---|---|

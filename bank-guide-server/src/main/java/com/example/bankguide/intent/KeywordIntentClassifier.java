@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -48,9 +49,12 @@ public class KeywordIntentClassifier {
         for (GuideTask task : tasks) {
             List<String> keywords = keywordsByTask.getOrDefault(task.getCode(), List.of());
             if (keywords.stream().anyMatch(lower::contains)) {
-                return new IntentResult(task.getCode(), List.of(), language, escalation);
+                return new IntentResult(task.getCode(), List.of(), language, escalation, "NONE");
             }
         }
-        return new IntentResult(IntentService.UNKNOWN, List.of(), language, escalation);
+        // 업무 키워드가 하나도 없으면 인사·감사·작별인지 본다 (예: "no that's all thank you")
+        Optional<SmallTalk.Match> talk = SmallTalk.guess(text);
+        return new IntentResult(IntentService.UNKNOWN, List.of(), talk.map(SmallTalk.Match::lang).orElse(language),
+                escalation, talk.map(m -> m.kind().name()).orElse("NONE"));
     }
 }

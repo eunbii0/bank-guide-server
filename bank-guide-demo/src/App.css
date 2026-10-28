@@ -263,6 +263,27 @@
 .guide-bar.off_path {
   border: 2px solid var(--warn);
 }
+/* 중요한 내용 확인 단계: 강조된 박스를 읽는 동안 다른 곳을 누르지 못하게 막는다 (안내 바·질문하기는 위에 있어 눌린다) */
+.guide-block {
+  position: absolute;
+  inset: 0;
+  z-index: 1500;
+}
+.guide-bar.review {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  border: 2px solid #ffb020;
+}
+.guide-confirm {
+  padding: 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--brand);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+}
 .guide-bar.done {
   border: 2px solid #16a34a;
 }
@@ -357,6 +378,19 @@
 }
 .bubble.agent::before {
   content: '👤 ';
+}
+/* 말풍선 + 아래 안내 한 줄. 감싸는 div는 배치에 끼어들지 않는다 */
+.bubble-wrap {
+  display: contents;
+}
+/* 번역 없이 온 상담원 답장 아래 안내 */
+.bubble-note {
+  align-self: flex-start;
+  max-width: 80%;
+  margin: -4px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--warn);
 }
 .confirm-row {
   display: flex;
@@ -807,16 +841,6 @@
 }
 .icon-btn:disabled {
   cursor: default;
-}
-.bell-dot {
-  position: absolute;
-  top: 5px;
-  right: 6px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #ff3b5c;
-  border: 1.5px solid #f2f8ff;
 }
 
 /* AI 챗봇 배너 */
@@ -1386,154 +1410,36 @@
   font-size: 12px;
   color: var(--muted);
 }
-.customer-box {
-  display: grid;
-  gap: 18px;
-}
-.customer-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--ink);
-  text-align: left;
-}
-.dev-panel .customer-toggle-heading {
-  margin: 0;
-}
-.customer-toggle-summary {
-  display: grid;
-  gap: 6px;
-  min-width: 0;
-  font-size: 18px;
-  font-weight: 700;
-}
-.customer-current {
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--muted);
-  overflow-wrap: anywhere;
-}
-.customer-toggle-action {
-  flex: none;
-  color: var(--brand);
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.customer-details:not([hidden]) {
-  display: grid;
-  gap: 18px;
-}
-.customer-intro, .customer-note, .customer-empty {
-  margin: 0;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.6;
-}
-.customer-intro {
-  margin-top: -8px;
-}
-.customer-options {
+/* 상담 중 상담원의 고객 정보 확인 요청 → [허용]/[거절] */
+.info-request {
   display: grid;
   gap: 8px;
-}
-.customer-option {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 14px;
+  padding: 12px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: #fff;
-  color: var(--ink);
-  text-align: left;
-}
-.customer-option:hover {
-  border-color: var(--brand);
-}
-.customer-option.selected {
-  border-color: var(--brand);
   background: var(--brand-soft);
-  box-shadow: inset 0 0 0 1px var(--brand);
 }
-.customer-avatar {
+.info-request strong {
+  font-size: 14px;
+}
+.info-request p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+/* 상담원 연결 버튼 아래: 상담원에게 무엇이 전달되는지 */
+.handoff-notice {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.logout-btn {
   display: grid;
   place-items: center;
-  flex: none;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: #f0f3f8;
+  width: 40px;
+  height: 40px;
   color: var(--muted);
-  font-weight: 700;
-}
-.selected .customer-avatar {
-  background: var(--brand);
-  color: #fff;
-}
-.customer-option-copy {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-.customer-option-copy strong {
-  font-size: 16px;
-}
-.customer-option-copy > span {
-  color: var(--muted);
-  font-size: 13px;
-}
-.customer-selection {
-  margin-left: auto;
-  flex: none;
-  color: var(--muted);
-  font-size: 12px;
-}
-.selected .customer-selection {
-  color: var(--brand);
-  font-weight: 700;
-}
-.customer-profile {
-  padding: 20px;
-  border: 1px solid #d6e4f6;
-  border-radius: 14px;
-  background: #f7faff;
-}
-.profile-caption {
-  color: var(--brand);
-  font-size: 12px;
-  font-weight: 600;
-}
-.customer-profile h3 {
-  margin: 6px 0 18px;
-  font-size: 22px;
-  overflow-wrap: anywhere;
-}
-.customer-facts {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px 16px;
-  margin: 0;
-}
-.customer-facts dt {
-  color: var(--muted);
-  font-size: 12px;
-}
-.customer-facts dd {
-  margin: 5px 0 0;
-  font-size: 15px;
-  font-weight: 650;
-  overflow-wrap: anywhere;
-}
-.customer-note {
-  font-size: 12px;
 }
 .log-toggle {
   display: flex;
@@ -1541,10 +1447,8 @@
   justify-content: space-between;
   gap: 12px;
   width: 100%;
-  margin-top: 24px;
-  padding: 16px 0 0;
+  padding: 0;
   border: 0;
-  border-top: 1px solid var(--line);
   background: none;
   color: var(--ink);
   text-align: left;
@@ -1568,7 +1472,7 @@
 .log-content {
   margin-top: 16px;
 }
-.customer-option:focus-visible, .customer-toggle:focus-visible, .log-toggle:focus-visible {
+.log-toggle:focus-visible {
   outline: 3px solid var(--brand);
   outline-offset: 4px;
 }
@@ -1590,6 +1494,28 @@
 }
 .chat-head-actions .waiting-badge {
   margin: 0 4px 0 0;
+}
+/* 화면 폭이 좁거나 문구가 긴 언어에서 [상담 종료]·[×]가 잘리지 않게:
+   왼쪽은 [아바타] 제목 + 그 아래 연결 상태, 오른쪽은 버튼. 버튼은 크기를 지키고 왼쪽 칸이 줄어든다 */
+.chat-head {
+  gap: 8px;
+}
+.chat-title-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+.chat-title-text .waiting-badge {
+  margin: 0;
+  max-width: 100%;
+  white-space: normal;
+  line-height: 1.25;
+  border-radius: 10px;   /* 두 줄이 되어도 동그랗게 찌그러지지 않게 */
+}
+.chat-head-actions {
+  flex-shrink: 0;
 }
 .chat-restart-icon {
   width: 32px;
@@ -1631,6 +1557,11 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
+}
+.logo-avatar {
+  display: block;
+  flex: none;
+  border-radius: 10px;
 }
 .chat-title strong {
   font-size: 18px;
@@ -1784,6 +1715,10 @@
   background: #fff;
   font-size: 14.5px;
   box-shadow: 0 2px 8px rgba(26, 95, 180, 0.08);
+}
+.chat-input input::placeholder {
+  color: #a9b4c2;
+  opacity: 1;
 }
 .chat-input input:focus {
   outline: 2px solid #8fc2fa;
