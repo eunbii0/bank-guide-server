@@ -42,8 +42,17 @@ public class LlmIntentClassifier {
               Only a question that asks for a judgment stays ADVICE, even if it names a service:
                 "Which card is better for me?" -> escalation ADVICE
                 "Should I close my deposit early?" -> escalation ADVICE
+              Thanks, greetings or filler words in front of the request ("thanks, ...", "고마워 근데 ...", "hi, ...")
+              do not change this. Ignore them and classify the request itself:
+                "thanks, how do I close my deposit early?" -> intent DEPOSIT_CANCEL, escalation NONE
+                "고마워 근데 예금 해지는 어떻게 해?" -> intent DEPOSIT_CANCEL, escalation NONE
+                "hi, how can I open a savings account?" -> intent SAVINGS_OPEN, escalation NONE
+                "예금 해지는 어떻게 해?" -> intent DEPOSIT_CANCEL, escalation NONE
             - If the customer only wants a card but does not say credit or debit, set "intent" to "AMBIGUOUS"
-              and list both card codes.
+              and list both card codes. This also holds for how-to questions, not "UNKNOWN":
+                "how do i get a card?" -> intent AMBIGUOUS, candidates [CREDIT_CARD, CHECK_CARD]
+                "I want a card" -> intent AMBIGUOUS, candidates [CREDIT_CARD, CHECK_CARD]
+                "카드는 어떻게 만들어요?" -> intent AMBIGUOUS, candidates [CREDIT_CARD, CHECK_CARD]
             - Greetings, thanks and goodbyes ("hello", "thank you", "안녕하세요", "no that's all") are "UNKNOWN",
               and "talk" (below) says which kind.
             - Overseas remittance, opening a new checking (입출금) account and loans are NOT in the list: "UNKNOWN",
@@ -75,6 +84,8 @@ public class LlmIntentClassifier {
             - "ADVICE" if the customer asks for a judgment or advice: whether they lose money,
               why the interest is low, which option is better, whether they should do it,
               or a complaint about the product.
+              Do NOT choose "ADVICE" just because the sentence is a question, or because it starts with thanks
+              or a greeting. A "how do I ...?" / "어떻게 해?" question about a service is "NONE".
             - Otherwise "NONE".
             """;
 
