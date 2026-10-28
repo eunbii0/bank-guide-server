@@ -3,6 +3,7 @@ package com.example.bankguide.intent;
 import com.example.bankguide.api.ApiDtos.ChatResponse;
 import com.example.bankguide.api.ApiDtos.Option;
 import com.example.bankguide.common.Masking;
+import com.example.bankguide.domain.ChatMessage;
 import com.example.bankguide.domain.CustomerProfile;
 import com.example.bankguide.domain.GuideTask;
 import com.example.bankguide.domain.GuideTaskRepository;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 고객 문장 → 업무 분류 + 이관 판단.
@@ -41,6 +43,8 @@ public class IntentService {
 
     // 챗봇 첫 메뉴 버튼. 상품 해지는 자격 판단 없이 기존 정기예금 중도해지로 간다.
     private static final List<String> MENU_ITEMS = List.of("MENU_CARD", "MENU_CANCEL", "MENU_JOIN");
+    // 위 세 가지 밖의 일: 업무로 이어지지 않고, 고객이 직접 쓰도록 안내만 한다
+    private static final String MENU_OTHER = "MENU_OTHER";
     private static final String CANCEL_TASK = "DEPOSIT_CANCEL";
     private static final int MAX_CANDIDATES = 3;
 
@@ -67,13 +71,47 @@ public class IntentService {
         this.eligibilityService = eligibilityService;
     }
 
-    /** 챗봇을 열었을 때: "도움이 필요하세요?" + 메뉴 버튼 3개. 언어가 없으면 고객 선호 언어 */
+    /** 챗봇을 열었을 때: "도움이 필요하세요?" + 메뉴 버튼 4개(맨 아래는 기타 문의). 언어가 없으면 고객 선호 언어 */
     public ChatResponse menu(String conversationId, String customerId, String lang) {
         CustomerProfile customer = eligibilityService.customer(customerId);
         String l = textService.normalize(lang == null || lang.isBlank() ? customer.getPreferredLang() : lang);
-        List<Option> options = MENU_ITEMS.stream().map(code -> new Option(code, textService.ui(code, l))).toList();
-        return reply(conversationId,
-                new ChatResponse(MENU, null, l, textService.ui("MENU_GREETING", l), options, "MENU", "NONE"));
+        return reply(conversationId, menuResponse(l, "MENU_GREETING", "MENU"));
+    }
+
+    /**
+     * 인사·감사·작별에 대한 답. 인사·감사는 메뉴 버튼을 함께 보여주고("더 도와드릴까요?"), 작별은 글만 보낸다.
+     * talk는 GREETING, THANKS, GOODBYE 중 하나이고 그 밖의 값(NONE, 빈 값)이면 빈 값을 돌려준다.
+     */
+    private Optional<ChatResponse> smallTalkResponse(String lang, String talk, String source) {
+        if (talk == null) {
+            return Optional.empty();
+        }
+        return switch (talk) {
+            case "GREETING" -> Optional.of(menuResponse(lang, "GREETING_REPLY", source));
+            case "THANKS" -> Optional.of(menuResponse(lang, "THANKS_REPLY", source));
+            case "GOODBYE" -> Optional.of(new ChatResponse(
+                    UNKNOWN, null, lang, textService.ui("GOODBYE_REPLY", lang), List.of(), source, "NONE"));
+            default -> Optional.empty();
+        };
+    }
+
+    /** 고객 말 직전에 챗봇이 한 말. LLM이 "아니요 괜찮아요" 같은 말을 대화 흐름 속에서 읽게 한다. 없으면 null */
+    private String lastBotMessage(String conversationId) {
+        List<ChatMessage> history = conversationService.history(conversationId);
+        for (int i = history.size() - 1; i >= 0; i--) {
+            ChatMessage m = history.get(i);
+            if ("AI".equals(m.getSender()) && !EligibilityService.VERIFY_PLACEHOLDER.equals(m.getContent())) {
+                return m.getContent();
+            }
+        }
+        return null;
+    }
+
+    /** 메시지(ui_text 키) + 메뉴 버튼 4개 */
+    private ChatResponse menuResponse(String lang, String messageKey, String source) {
+        List<Option> options = Stream.concat(MENU_ITEMS.stream(), Stream.of(MENU_OTHER))
+                .map(code -> new Option(code, textService.ui(code, lang))).toList();
+        return new ChatResponse(MENU, null, lang, textService.ui(messageKey, lang), options, source, "NONE");
     }
 
     public ChatResponse classify(String conversationId, String text) {
@@ -88,13 +126,23 @@ public class IntentService {
         if (text == null || text.isBlank()) {
             return reply(conversationId, unknown(textService.isSupported(preferredLang) ? preferredLang : "en", "NONE"));
         }
+        // 인사·감사·작별만 보낸 경우는 LLM을 부르기 전에 바로 답한다 (빠르고, 키가 없어도 된다)
+        Optional<SmallTalk.Match> smallTalk = SmallTalk.match(text);
+        if (smallTalk.isPresent()) {
+            SmallTalk.Match talk = smallTalk.get();
+            String lang = textService.isSupported(preferredLang)
+                    ? preferredLang.trim().toLowerCase()
+                    : talk.lang();
+            conversationService.customer(conversationId, lang, text);
+            return reply(conversationId, smallTalkResponse(lang, talk.kind().name(), "SMALL_TALK").orElseThrow());
+        }
         List<GuideTask> tasks = taskRepository.findAllByOrderByPriorityAsc();
         String safeText = Masking.mask(text);
 
         IntentResult result;
         String source;
         try {
-            result = llmClassifier.classify(safeText, tasks);
+            result = llmClassifier.classify(safeText, tasks, lastBotMessage(conversationId));
             if (result == null) {
                 throw new IllegalStateException("LLM 응답이 비어 있음");
             }
@@ -131,6 +179,13 @@ public class IntentService {
         if (intent == null && candidates.size() == 1) {
             intent = candidates.get(0);
         }
+        // 고를 업무가 없고 인사·감사·작별이면 "무슨 업무인지 모르겠어요" 대신 대화하듯 답한다
+        if (intent == null && candidates.isEmpty()) {
+            Optional<ChatResponse> talk = smallTalkResponse(lang, result.talk(), source);
+            if (talk.isPresent()) {
+                return reply(conversationId, talk.get());
+            }
+        }
         // 후보가 너무 많으면 고객 말을 이해하지 못한 것이다 ("안녕하세요", "새 계좌 만들래요" 등).
         // 관련 없는 업무 버튼 7개를 늘어놓지 말고 모른다고 답한다.
         if (candidates.size() > MAX_CANDIDATES) {
@@ -164,6 +219,11 @@ public class IntentService {
      */
     public ChatResponse choose(String conversationId, String intent, String lang, String customerId) {
         String l = textService.normalize(lang);
+        if (MENU_OTHER.equals(intent)) {
+            conversationService.customer(conversationId, l, "[메뉴] " + textService.ui(intent, "ko"));
+            return reply(conversationId,
+                    new ChatResponse(UNKNOWN, null, l, textService.ui("MENU_OTHER_ASK", l), List.of(), "CHOICE", "NONE"));
+        }
         String task = intent;
         if (MENU_ITEMS.contains(intent)) {
             conversationService.customer(conversationId, l, "[메뉴] " + textService.ui(intent, "ko"));

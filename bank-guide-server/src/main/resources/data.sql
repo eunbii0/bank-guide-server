@@ -252,6 +252,21 @@ INSERT INTO ui_text (text_key, lang, content) VALUES
 ('MENU_GREETING', 'en', 'Need help? Choose below or type your question.'),
 ('MENU_GREETING', 'vi', 'Bạn cần giúp đỡ không? Hãy chọn bên dưới hoặc nhập câu hỏi.'),
 ('MENU_GREETING', 'zh', '需要帮助吗？请在下方选择，或直接输入您的问题。'),
+-- 인사말("안녕하세요", "hi")에 대한 답
+('GREETING_REPLY', 'ko', '안녕하세요! 어떤 업무를 도와드릴까요? 아래에서 고르시거나 직접 써 주세요.'),
+('GREETING_REPLY', 'en', 'Hello! What can I help you with today? Choose below or type your question.'),
+('GREETING_REPLY', 'vi', 'Xin chào! Tôi có thể giúp gì cho bạn? Hãy chọn bên dưới hoặc nhập câu hỏi.'),
+('GREETING_REPLY', 'zh', '您好！请问需要办理什么业务？请在下方选择，或直接输入您的问题。'),
+-- 감사 인사("고마워요", "thanks")에 대한 답
+('THANKS_REPLY', 'ko', '도움이 되셨다니 다행이에요. 궁금한 점이 더 있으신가요?'),
+('THANKS_REPLY', 'en', 'Glad I could help! Is there anything else you would like to know?'),
+('THANKS_REPLY', 'vi', 'Rất vui vì đã giúp được bạn! Bạn còn thắc mắc nào khác không?'),
+('THANKS_REPLY', 'zh', '很高兴能帮到您！还有其他问题吗？'),
+-- 더 필요 없다거나 작별 인사("no that's all", "bye")에 대한 답
+('GOODBYE_REPLY', 'ko', '이용해 주셔서 감사합니다. 필요하실 때 언제든 불러 주세요!'),
+('GOODBYE_REPLY', 'en', 'Thank you for using our service. Feel free to ask anytime you need help!'),
+('GOODBYE_REPLY', 'vi', 'Cảm ơn bạn đã sử dụng dịch vụ. Cần giúp gì cứ hỏi tôi bất cứ lúc nào nhé!'),
+('GOODBYE_REPLY', 'zh', '感谢您的使用。需要帮助时，随时都可以问我！'),
 ('MENU_CARD',     'ko', '카드 발급'),
 ('MENU_CARD',     'en', 'Get a card'),
 ('MENU_CARD',     'vi', 'Làm thẻ'),
@@ -264,6 +279,15 @@ INSERT INTO ui_text (text_key, lang, content) VALUES
 ('MENU_JOIN',     'en', 'Open a product'),
 ('MENU_JOIN',     'vi', 'Đăng ký sản phẩm'),
 ('MENU_JOIN',     'zh', '办理新产品'),
+('MENU_OTHER',    'ko', '기타 문의'),
+('MENU_OTHER',    'en', 'Something else'),
+('MENU_OTHER',    'vi', 'Câu hỏi khác'),
+('MENU_OTHER',    'zh', '其他咨询'),
+-- [기타 문의]를 눌렀을 때: 위 세 가지 밖의 일은 직접 쓰도록 안내한다
+('MENU_OTHER_ASK', 'ko', '어떤 일이 필요하세요? 아래 입력창에 궁금한 점을 직접 적어 주세요.'),
+('MENU_OTHER_ASK', 'en', 'What do you need help with? Please type your question in the box below.'),
+('MENU_OTHER_ASK', 'vi', 'Bạn cần giúp việc gì? Hãy nhập câu hỏi vào ô bên dưới.'),
+('MENU_OTHER_ASK', 'zh', '您需要办理什么？请在下方输入框中直接输入您的问题。'),
 -- 고객 정보 확인 질문. {name} {visa} {expiry}는 서버가 채운다 (이 문구는 채팅 기록에 저장하지 않는다)
 ('VERIFY_PROFILE', 'ko', '{name}님, {visa} 비자, 체류기간 {expiry}까지로 확인돼요. 맞으세요?'),
 ('VERIFY_PROFILE', 'en', '{name}, our records show your visa type as {visa}, with your stay valid until {expiry}. Is that correct?'),
@@ -336,11 +360,11 @@ INSERT INTO ui_text (text_key, lang, content) VALUES
 -- 데모용 가상 고객 3명 (기준일 2026-10-27)
 --  A: 체크카드 O, 신용카드 X(E-9), 예금·적금은 6개월만
 --  B: 모든 상품 가능
---  C: 은행 기록상 만료 2026-12-15 → [아니요, 연장했어요] 시나리오. 영어 사용자 (유학생)
+--  C: 체류 만료 2027-12-31 (D-2). 영어 사용자 (유학생)
 INSERT INTO customer_profile (customer_id, name, nationality_ko, visa_type, stay_expiry, has_arc, has_account, income_verified, preferred_lang) VALUES
 ('A', 'Nguyen',       '베트남', 'E-9', DATE '2027-05-31', TRUE, TRUE, TRUE,  'ko'),
 ('B', 'Li Wei',       '중국',   'F-5', NULL,              TRUE, TRUE, TRUE,  'ko'),
-('C', 'Emily Carter', '미국',   'D-2', DATE '2026-12-15', TRUE, TRUE, FALSE, 'en');
+('C', 'Emily Carter', '미국',   'D-2', DATE '2027-12-31', TRUE, TRUE, FALSE, 'en');
 
 INSERT INTO product (code, category, task_code, sort) VALUES
 ('CHECK_CARD',   'CARD', 'CHECK_CARD',        1),
