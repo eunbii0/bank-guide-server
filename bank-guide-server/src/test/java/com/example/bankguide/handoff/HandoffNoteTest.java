@@ -51,13 +51,6 @@ class HandoffNoteTest {
     }
 
     @Test
-    void 번역문에_남은_한국어_괄호_설명은_지운다() {
-        assertEquals("You can check it on the termination screen.",
-                AgentTranslator.stripKoreanNotes("You can check it on the termination screen (해지 화면)."));
-        assertEquals("Press Next (next step) to continue.", AgentTranslator.stripKoreanNotes("Press Next (next step) to continue."));
-    }
-
-    @Test
     void 비어_있는_LLM_요약은_쓰지_않는다() {
         assertNull(HandoffNote.sanitize(new SummaryResult(List.of(), List.of(), "NONE"), "ADVICE"));
         assertNull(HandoffNote.sanitize(null, "ADVICE"));

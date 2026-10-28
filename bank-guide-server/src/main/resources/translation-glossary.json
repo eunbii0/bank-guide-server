@@ -1,0 +1,146 @@
+[
+  {
+    "key": "products",
+    "labels": {
+      "ko": "상품관리",
+      "en": "My Products",
+      "zh": "产品管理",
+      "vi": "Quản lý sản phẩm",
+      "uz": "Mening mahsulotlarim",
+      "ne": "मेरा उत्पादन",
+      "km": "ផលិតផលរបស់ខ្ញុំ"
+    }
+  },
+  {
+    "key": "transfer",
+    "labels": {
+      "ko": "이체",
+      "en": "Transfer",
+      "zh": "转账",
+      "vi": "Chuyển khoản",
+      "uz": "Oʻtkazma",
+      "ne": "ट्रान्सफर",
+      "km": "ផ្ទេរប្រាក់"
+    }
+  },
+  {
+    "key": "deposit",
+    "labels": {
+      "ko": "예금",
+      "en": "Deposits",
+      "zh": "存款",
+      "vi": "Tiền gửi",
+      "uz": "Omonatlar",
+      "ne": "निक्षेप",
+      "km": "គណនីសន្សំ"
+    }
+  },
+  {
+    "key": "savings",
+    "labels": {
+      "ko": "적금",
+      "en": "Savings",
+      "zh": "储蓄",
+      "vi": "Tiết kiệm",
+      "uz": "Jamgʻarma",
+      "ne": "बचत",
+      "km": "សន្សំ"
+    }
+  },
+  {
+    "key": "timeDeposit",
+    "labels": {
+      "ko": "정기예금",
+      "en": "Time deposit",
+      "zh": "定期存款",
+      "vi": "Tiền gửi có kỳ hạn",
+      "uz": "Muddatli omonat",
+      "ne": "मुद्दती निक्षेप",
+      "km": "គណនីសន្សំមានកំណត់"
+    }
+  },
+  {
+    "key": "earlyCancel",
+    "labels": {
+      "ko": "중도해지",
+      "en": "Early termination",
+      "zh": "提前解约",
+      "vi": "Tất toán trước hạn",
+      "uz": "Muddatidan oldin yopish",
+      "ne": "म्याद अगावै बन्द",
+      "km": "បិទមុនកំណត់"
+    }
+  },
+  {
+    "key": "cancelRequest",
+    "labels": {
+      "ko": "해지 신청",
+      "en": "Request termination",
+      "zh": "申请解约",
+      "vi": "Yêu cầu tất toán",
+      "uz": "Yopish uchun ariza",
+      "ne": "बन्द गर्ने अनुरोध",
+      "km": "ស្នើសុំបិទ"
+    }
+  },
+  {
+    "key": "certificates",
+    "labels": {
+      "ko": "증명서",
+      "en": "Certificates",
+      "zh": "证明书",
+      "vi": "Giấy chứng nhận",
+      "uz": "Maʼlumotnomalar",
+      "ne": "प्रमाणपत्र",
+      "km": "លិខិតបញ្ជាក់"
+    }
+  },
+  {
+    "key": "cards",
+    "labels": {
+      "ko": "카드",
+      "en": "Cards",
+      "zh": "银行卡",
+      "vi": "Thẻ",
+      "uz": "Kartalar",
+      "ne": "कार्ड",
+      "km": "កាត"
+    }
+  },
+  {
+    "key": "join",
+    "labels": {
+      "ko": "상품가입",
+      "en": "Open a product",
+      "zh": "办理新产品",
+      "vi": "Đăng ký sản phẩm",
+      "uz": "Mahsulot ochish",
+      "ne": "उत्पादन खोल्नुहोस्",
+      "km": "បើកផលិតផល"
+    }
+  },
+  {
+    "key": "cardNameCheck",
+    "labels": {
+      "ko": "든든 체크카드",
+      "en": "Steady debit card",
+      "zh": "安心借记卡",
+      "vi": "Thẻ ghi nợ An Tâm",
+      "uz": "Ishonchli debet karta",
+      "ne": "भरपर्दो डेबिट कार्ड",
+      "km": "កាតឥណពន្ធ ទុកចិត្ត"
+    }
+  },
+  {
+    "key": "cardNameCredit",
+    "labels": {
+      "ko": "든든 신용카드",
+      "en": "Steady credit card",
+      "zh": "安心信用卡",
+      "vi": "Thẻ tín dụng An Tâm",
+      "uz": "Ishonchli kredit karta",
+      "ne": "भरपर्दो क्रेडिट कार्ड",
+      "km": "កាតឥណទាន ទុកចិត្ត"
+    }
+  }
+]

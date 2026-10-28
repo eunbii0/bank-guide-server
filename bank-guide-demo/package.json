@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "glossary:sync": "node scripts/sync-translation-glossary.mjs",
+    "glossary:check": "node scripts/sync-translation-glossary.mjs --check"
   },
   "dependencies": {
     "react": "^19.3.1",

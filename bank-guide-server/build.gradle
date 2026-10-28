@@ -48,3 +48,12 @@ tasks.withType(JavaCompile).configureEach {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+// App labels remain owned by frontend i18n.js; reject stale generated Java resources.
+tasks.register('checkTranslationGlossary', Exec) {
+    workingDir rootProject.projectDir.parentFile
+    commandLine 'node', 'bank-guide-demo/scripts/sync-translation-glossary.mjs', '--check'
+}
+tasks.named('test') {
+    dependsOn tasks.named('checkTranslationGlossary')
+}

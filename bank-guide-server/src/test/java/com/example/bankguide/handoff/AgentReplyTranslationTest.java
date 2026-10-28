@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 /**
@@ -40,7 +41,7 @@ class AgentReplyTranslationTest {
     @Test
     void 번역이_실패하면_보내지_않고_TRANSLATION_FAILED로_알린다() {
         ticket("T-TR-1", "c-tr-1", "vi");
-        when(translator.translate(anyString(), anyString())).thenThrow(new IllegalStateException("LLM down"));
+        when(translator.translate(anyString(), anyString(), any(TranslationContext.class))).thenThrow(new IllegalStateException("LLM down"));
 
         ResponseStatusException e = assertThrows(ResponseStatusException.class,
                 () -> handoffService.reply("T-TR-1", "버튼을 눌러 주세요", false));
@@ -68,7 +69,7 @@ class AgentReplyTranslationTest {
     @Test
     void 번역되면_고객_언어로_가고_표시가_없다() {
         ticket("T-TR-3", "c-tr-3", "vi");
-        when(translator.translate(anyString(), anyString())).thenReturn("Vui lòng nhấn nút.");
+        when(translator.translate(anyString(), anyString(), any(TranslationContext.class))).thenReturn("Vui lòng nhấn nút.");
 
         handoffService.reply("T-TR-3", "버튼을 눌러 주세요", false);
 
@@ -84,6 +85,17 @@ class AgentReplyTranslationTest {
         handoffService.reply("T-TR-4", "버튼을 눌러 주세요", false);
 
         assertFalse(handoffService.poll("T-TR-4", 0).messages().get(0).untranslated());
+    }
+
+    @Test
+    void customerTranslationFailurePreservesTheOriginalWithoutInventingKorean() {
+        ticket("T-TR-5", "c-tr-5", "vi");
+        when(translator.toKorean(anyString(), anyString(), any(TranslationContext.class)))
+                .thenThrow(new IllegalStateException("TRANSLATION_VALIDATION_FAILED"));
+        var message = handoffService.customerMessage("T-TR-5", "Please explain again.");
+        assertEquals("Please explain again.", message.content());
+        org.junit.jupiter.api.Assertions.assertNull(message.translated());
+        assertEquals("Please explain again.", conversationService.history("c-tr-5").get(0).getContent());
     }
 
     private void ticket(String ticketNo, String conversationId, String lang) {
