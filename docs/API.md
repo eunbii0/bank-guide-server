@@ -298,7 +298,7 @@
 [
   { "customerId": "A", "name": "Nguyen", "nationality": "베트남", "visaType": "E-9", "stayExpiry": "2027-05-31", "lang": "vi" },
   { "customerId": "B", "name": "Li Wei", "nationality": "중국", "visaType": "F-5", "stayExpiry": null, "lang": "zh" },
-  { "customerId": "C", "name": "Emily Carter", "nationality": "미국", "visaType": "D-2", "stayExpiry": "2026-12-15", "lang": "en" }
+  { "customerId": "C", "name": "Emily Carter", "nationality": "미국", "visaType": "D-2", "stayExpiry": "2027-12-31", "lang": "en" }
 ]
 ```
 
