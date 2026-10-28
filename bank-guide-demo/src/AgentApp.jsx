@@ -241,6 +241,9 @@ export default function AgentApp() {
                   </span>
                   {m.content}
                   {m.translated && <span className="msg-tr">한국어: {m.translated}</span>}
+                  {m.sender === 'CUSTOMER' && m.lang !== 'ko' && !m.translated && (
+                    <span className="msg-tr">번역을 확인할 수 없어 원문을 표시합니다. 내용을 재확인해 주세요.</span>
+                  )}
                 </p>
               ))}
             </div>
