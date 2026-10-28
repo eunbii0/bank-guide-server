@@ -1,20 +1,10 @@
-// 홈 화면 전용 아이콘·일러스트 (외부 이미지 없이 SVG로 그린다)
+import logo from '../assets/for-won-logo.png';
+
+// 홈 화면 전용 아이콘·일러스트 (SVG로 그린다. 챗봇 제목줄의 ForWON 로고만 이미지 파일)
 
 const S = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.9, strokeLinecap: 'round', strokeLinejoin: 'round' };
 
 const PATHS = {
-  search: (
-    <>
-      <circle cx="11" cy="11" r="7" />
-      <path d="M20 20l-4-4" />
-    </>
-  ),
-  bell: (
-    <>
-      <path d="M6 16V11a6 6 0 1 1 12 0v5l1.6 2H4.4L6 16z" />
-      <path d="M10 21h4" />
-    </>
-  ),
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
   eye: (
     <>
@@ -393,52 +383,7 @@ export function Donut({ percent, size = 68 }) {
   );
 }
 
-// 챗봇 창 제목줄의 꿀벌 아바타
-export function BeeAvatar({ size = 40 }) {
-  return (
-    <svg width={size} height={size} viewBox="44 22 132 132" aria-hidden="true">
-      <defs>
-        <radialGradient id="avBody" cx="0.35" cy="0.25" r="0.95">
-          <stop offset="0" stopColor="#ffe98a" />
-          <stop offset="0.5" stopColor="#ffc933" />
-          <stop offset="1" stopColor="#f29a00" />
-        </radialGradient>
-        <clipPath id="avClip">
-          <ellipse cx="110" cy="98" rx="44" ry="40" />
-        </clipPath>
-      </defs>
-      <circle cx="110" cy="88" r="66" fill="#e3f1ff" />
-
-      {/* 날개 */}
-      <ellipse cx="86" cy="54" rx="14" ry="26" transform="rotate(-30 86 54)" fill="#fff" fillOpacity="0.95" stroke="#cfe6fb" strokeWidth="1.2" />
-      <ellipse cx="134" cy="54" rx="14" ry="26" transform="rotate(30 134 54)" fill="#fff" fillOpacity="0.95" stroke="#cfe6fb" strokeWidth="1.2" />
-
-      {/* 더듬이 */}
-      <path d="M100 62q-4-17-13-22" fill="none" stroke="#4a3220" strokeWidth="3" strokeLinecap="round" />
-      <path d="M120 62q4-17 13-22" fill="none" stroke="#4a3220" strokeWidth="3" strokeLinecap="round" />
-      <circle cx="86" cy="38" r="5.5" fill="#4a3220" />
-      <circle cx="134" cy="38" r="5.5" fill="#4a3220" />
-
-      {/* 몸통 + 검은 띠 두 줄 */}
-      <ellipse cx="110" cy="98" rx="44" ry="40" fill="url(#avBody)" />
-      <g clipPath="url(#avClip)">
-        <path d="M60 112q50 8 100 0v7q-50 8-100 0z" fill="#4a3220" />
-        <path d="M60 126q50 8 100 0v7q-50 8-100 0z" fill="#4a3220" />
-      </g>
-      <ellipse cx="90" cy="76" rx="15" ry="7" fill="#fff" opacity="0.45" transform="rotate(-24 90 76)" />
-
-      {/* 얼굴 */}
-      <ellipse cx="92" cy="95" rx="5.2" ry="7.2" fill="#2a1a12" />
-      <ellipse cx="128" cy="95" rx="5.2" ry="7.2" fill="#2a1a12" />
-      <circle cx="93.6" cy="92" r="1.9" fill="#fff" />
-      <circle cx="129.6" cy="92" r="1.9" fill="#fff" />
-      <ellipse cx="81" cy="106" rx="6.5" ry="4" fill="#ff8f9c" opacity="0.6" />
-      <ellipse cx="139" cy="106" rx="6.5" ry="4" fill="#ff8f9c" opacity="0.6" />
-      <path d="M103 104q7 7.5 14 0" fill="none" stroke="#2a1a12" strokeWidth="2.6" strokeLinecap="round" />
-
-      {/* 팔 */}
-      <ellipse cx="64" cy="108" rx="8.5" ry="13" fill="url(#avBody)" transform="rotate(24 64 108)" />
-      <ellipse cx="156" cy="112" rx="8.5" ry="12" fill="url(#avBody)" transform="rotate(-18 156 112)" />
-    </svg>
-  );
+// 챗봇 창 제목줄의 ForWON 로고
+export function LogoAvatar({ size = 40 }) {
+  return <img className="logo-avatar" src={logo} width={size} height={size} alt="" aria-hidden="true" />;
 }

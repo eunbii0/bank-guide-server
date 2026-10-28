@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { t } from '../i18n';
 import EligibilityList from './EligibilityList';
-import { Icon, BeeAvatar } from './HomeArt';
+import { Icon, LogoAvatar } from './HomeArt';
 
 // AI 채팅창. 고객 질문을 받아 onAsk로 넘기고, 상황에 따라 버튼을 보여준다.
 //  - 확인 버튼(네/아니요): 업무를 맞게 알아들었는지
@@ -13,7 +13,7 @@ import { Icon, BeeAvatar } from './HomeArt';
 export default function ChatPanel({
   open, onClose, lang, busy, messages, pendingIntent, options, offer, waiting, agentJoined, suggestions,
   onEndChat, onAsk, onConfirm, onChoose, onAcceptOffer, onDeclineOffer,
-  verifying, eligibility, restartOffered, onVerify, onPickProduct, onProductHandoff, onRestart,
+  verifying, eligibility, onVerify, onPickProduct, onProductHandoff, onRestart,
   infoRequest, onAnswerInfo,
 }) {
   const [text, setText] = useState('');
@@ -23,7 +23,7 @@ export default function ChatPanel({
   useEffect(() => {
     const el = bodyRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [open, messages, busy, pendingIntent, options, offer, verifying, eligibility, restartOffered, infoRequest]);
+  }, [open, messages, busy, pendingIntent, options, offer, verifying, eligibility, infoRequest]);
 
   if (!open) return null;
 
@@ -41,7 +41,7 @@ export default function ChatPanel({
     <div className="chat-panel" role="dialog" aria-label={t(lang, 'chatTitle')}>
       <div className="chat-head">
         <div className="chat-title">
-          <BeeAvatar />
+          <LogoAvatar />
           {/* 연결 상태는 제목 아래에 둔다: 한 줄에 다 넣으면 좁은 화면·긴 언어에서 [상담 종료]가 잘린다 */}
           <div className="chat-title-text">
             <strong>{t(lang, 'chatTitle')}</strong>
@@ -127,13 +127,6 @@ export default function ChatPanel({
         {eligibility && (
           <EligibilityList lang={lang} result={eligibility} onPick={onPickProduct} onHandoff={onProductHandoff} />
         )}
-        {restartOffered && (
-          <div className="confirm-row">
-            <button className="pill-btn" onClick={onRestart} disabled={busy}>
-              ↺ {t(lang, 'restart')}
-            </button>
-          </div>
-        )}
         {offer && (
           <div className="option-list">
             <button className="pill-btn" onClick={onAcceptOffer}>
@@ -177,6 +170,7 @@ export default function ChatPanel({
       <form className="chat-input" onSubmit={submit}>
         <input
           id="chat-text"
+          autoComplete="off"
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={t(lang, waiting ? 'placeholderAgent' : 'placeholder')}

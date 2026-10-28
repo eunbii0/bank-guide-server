@@ -177,7 +177,8 @@ public class HandoffService {
             log.info("[번역 없이 전달] {}", ticketNo);
         } else {
             try {
-                translated = translator.translate(original, t.getLang());
+                translated = translator.translate(original, t.getLang(),
+                        TranslationContext.from(t.getIntent(), conversationService.history(t.getConversationId())));
                 if (translated == null || translated.isBlank()) {
                     throw new IllegalStateException("번역 결과가 비어 있음");
                 }
@@ -228,7 +229,8 @@ public class HandoffService {
         String korean = null;
         if (!"ko".equals(t.getLang())) {
             try {
-                korean = translator.toKorean(original, t.getLang());
+                korean = translator.toKorean(original, t.getLang(),
+                        TranslationContext.from(t.getIntent(), conversationService.history(t.getConversationId())));
                 if (korean == null || korean.isBlank()) {
                     korean = null;
                 }

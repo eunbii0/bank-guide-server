@@ -44,7 +44,8 @@ public class LlmIntentClassifier {
                 "Should I close my deposit early?" -> escalation ADVICE
             - If the customer only wants a card but does not say credit or debit, set "intent" to "AMBIGUOUS"
               and list both card codes.
-            - Greetings, thanks and small talk ("hello", "thank you", "안녕하세요") are "UNKNOWN".
+            - Greetings, thanks and goodbyes ("hello", "thank you", "안녕하세요", "no that's all") are "UNKNOWN",
+              and "talk" (below) says which kind.
             - Overseas remittance, opening a new checking (입출금) account and loans are NOT in the list: "UNKNOWN",
               even though they mention sending money or an account.
               Opening an installment savings (적금) or a time deposit (정기예금) IS in the list.
@@ -52,6 +53,17 @@ public class LlmIntentClassifier {
 
             Rules for "language":
             - The ISO 639-1 code of the language the customer wrote in (e.g. ko, en, vi, zh, ne, uz).
+
+            Rules for "talk" (the customer is just chatting, not asking for a service):
+            - "GREETING" if the customer only greets ("hello", "안녕하세요", "hi there").
+            - "THANKS" if the customer only thanks ("thanks", "고마워요", "cảm ơn").
+            - "GOODBYE" if the customer says they need nothing more or says goodbye
+              ("no that's all, thank you", "that's all", "이제 됐어요", "아니요 괜찮아요", "bye").
+              The message may be preceded by the previous chatbot message. If the chatbot just asked whether
+              the customer needs anything else, a refusal such as "no" or "아니요" is "GOODBYE".
+            - "NONE" otherwise. Always "NONE" when the sentence asks for a service or anything else,
+              even if it also contains thanks ("thanks, now how do I get a card?" -> that service, talk NONE).
+              Classify only the customer's message; the previous chatbot message is context only.
 
             Rules for "escalation" (whether a human agent must take over):
             - "FRAUD" if someone asks the customer to lend, rent or sell their bank account or card,
@@ -73,13 +85,21 @@ public class LlmIntentClassifier {
     }
 
     public IntentResult classify(String text, List<GuideTask> tasks) {
+        return classify(text, tasks, null);
+    }
+
+    /** previousBotMessage: 고객 말 직전에 챗봇이 한 말 (대화 흐름을 보게 한다). 없으면 null */
+    public IntentResult classify(String text, List<GuideTask> tasks, String previousBotMessage) {
         String services = tasks.stream()
                 .map(t -> "- " + t.getCode() + ": " + t.getDescription())
                 .collect(Collectors.joining("\n"));
+        String user = previousBotMessage == null || previousBotMessage.isBlank()
+                ? text
+                : "Previous chatbot message: " + previousBotMessage + "\nCustomer message: " + text;
 
         return chatClient.prompt()
                 .system(SYSTEM_PROMPT.formatted(services))
-                .user(text)
+                .user(user)
                 .call()
                 .entity(IntentResult.class);
     }
