@@ -239,6 +239,146 @@
   font-size: 16px;
   font-weight: 700;
 }
+/* 현재 화면이 바뀌면 잠깐 강조 (상담 중 고객이 화면을 옮겼을 때) */
+.hc-moved {
+  border-radius: 8px;
+  animation: hc-flash 2.4s ease-out;
+}
+@keyframes hc-flash {
+  0%,
+  35% {
+    background: #fff4d6;
+    box-shadow: 0 0 0 6px #fff4d6;
+  }
+  100% {
+    background: transparent;
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+.hc-moved-badge {
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #ffb020;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  animation: hc-badge 6s ease-out forwards;
+}
+@keyframes hc-badge {
+  0%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* 고객 화면 미러 + 경로 예측 */
+.hc-live {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+.mirror-frame {
+  flex-shrink: 0;
+  width: 218px;
+  height: 407px;
+  overflow: hidden;
+}
+.mirror-phone {
+  width: 375px;
+  max-width: none;
+  transform: scale(0.55);
+  transform-origin: top left;
+  pointer-events: none;
+}
+.mirror-unknown {
+  padding: 24px;
+  color: var(--muted);
+}
+.hc-note {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.route {
+  flex: 1;
+  min-width: 0;
+}
+.route-off {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #fef3f2;
+  color: #b42318;
+  font-size: 14px;
+}
+.route-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.route-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.route-step em {
+  margin-left: auto;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+.route-step.done {
+  color: var(--ink);
+}
+.route-step.done svg {
+  color: #16a34a;
+}
+.route-step.current {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-weight: 700;
+}
+.route-step.next {
+  border: 2px dashed #ffb020;
+  color: var(--ink);
+  font-weight: 700;
+}
+.route-step.next em {
+  color: #b45309;
+}
+.route-arrow {
+  padding: 1px 0 1px 18px;
+  color: #c0c6d0;
+  line-height: 1.1;
+}
+.route-arrow.next {
+  color: #ffb020;
+  font-size: 18px;
+  font-weight: 700;
+}
+.route-action {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fff8e6;
+}
+.route-action p {
+  margin: 0 0 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
 .hc-section {
   margin-top: 16px;
   padding-top: 14px;

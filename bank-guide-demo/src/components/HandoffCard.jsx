@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as api from '../api/guideApi';
 import { Icon } from './HomeArt';
+import RoutePath from './RoutePath';
+import ScreenMirror from './ScreenMirror';
 
 // 서버가 주는 아이콘 이름 → 선 아이콘 (색은 줄의 tone으로 정한다)
 const ICONS = {
@@ -40,6 +42,19 @@ export default function HandoffCard({ ticket }) {
     };
   }, [ticket.ticketNo]);
 
+  // 같은 티켓에서 현재 화면이 바뀌면 그 칸을 잠깐 강조한다 (key를 바꿔 애니메이션을 다시 시작)
+  const [moved, setMoved] = useState(0);
+  const last = useRef({ ticketNo: null, page: null });
+  useEffect(() => {
+    const prev = last.current;
+    if (prev.ticketNo === ticket.ticketNo && prev.page !== ticket.currentPageId) setMoved((n) => n + 1);
+    if (prev.ticketNo !== ticket.ticketNo) setMoved(0);
+    last.current = { ticketNo: ticket.ticketNo, page: ticket.currentPageId };
+  }, [ticket.ticketNo, ticket.currentPageId]);
+
+  const route = ticket.route;
+  const joinKind = route?.steps.some((s) => s.page === 'deposit-join') ? 'deposit' : 'savings';
+
   const hidden = showAll ? 0 : Math.max(0, timeline.length - RECENT);
   const shown = timeline.slice(hidden);
 
@@ -58,8 +73,10 @@ export default function HandoffCard({ ticket }) {
           <dt>고객 의도</dt>
           <dd>{ticket.intentName}</dd>
         </div>
-        <div>
-          <dt>현재 화면</dt>
+        <div key={moved} className={moved > 0 ? 'hc-moved' : undefined}>
+          <dt>
+            현재 화면 {moved > 0 && <span className="hc-moved-badge">방금 이동</span>}
+          </dt>
           <dd>{ticket.currentPage}</dd>
         </div>
         <div>
@@ -71,6 +88,21 @@ export default function HandoffCard({ ticket }) {
           <dd>{ticket.lang}</dd>
         </div>
       </dl>
+
+      {ticket.currentPageId && (
+        <div className="hc-section">
+          <h4>고객 화면 {route && '· 경로 예측'}</h4>
+          <div className="hc-live">
+            <ScreenMirror page={ticket.currentPageId} target={route?.nextTarget} joinKind={joinKind} />
+            {route ? (
+              <RoutePath route={route} />
+            ) : (
+              <p className="hc-empty">업무가 정해지지 않아 예상 경로가 없습니다. 고객이 지금 보고 있는 화면만 보여줍니다.</p>
+            )}
+          </div>
+          <p className="hc-note">고객 앱과 같은 화면을 다시 그린 것으로, 고객이 입력한 값은 보이지 않고 금액·계좌번호는 가립니다.</p>
+        </div>
+      )}
 
       <div className="hc-section">
         <h4>업무 진행 이력</h4>

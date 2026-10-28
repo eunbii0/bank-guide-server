@@ -86,6 +86,15 @@ public final class PathNote {
         }
     }
 
+    /** 안내 시작 기록에서 가입 기간(개월)을 꺼낸다. 다른 업무이거나 기간이 없으면 null. 예) "SAVINGS_OPEN 6개월 (vi)" → 6 */
+    public static Integer term(String startDetail, String intent) {
+        Matcher m;
+        if (startDetail == null || !(m = START.matcher(startDetail)).matches() || !m.group(1).equals(intent)) {
+            return null;
+        }
+        return m.group(2) == null ? null : Integer.valueOf(m.group(2));
+    }
+
     /** taskName: 업무 코드 → 한국어 업무 이름 (모르면 코드 그대로) */
     public static String detailKo(String type, String detail, Function<String, String> taskName) {
         if (detail == null || detail.isBlank()) {

@@ -2,6 +2,8 @@ package com.example.bankguide.service;
 
 import com.example.bankguide.api.ApiDtos.EventResponse;
 import com.example.bankguide.api.ApiDtos.EventView;
+import com.example.bankguide.api.ApiDtos.RouteView;
+import com.example.bankguide.engine.RoutePreview;
 import com.example.bankguide.api.ApiDtos.StartResponse;
 import com.example.bankguide.api.ApiDtos.StuckResponse;
 import com.example.bankguide.domain.GuideEvent;
@@ -151,6 +153,19 @@ public class GuideService {
         eventRepository.save(new GuideEvent(session.getConversationId(), session.getSessionId(), type, page, detail));
     }
 
+    /**
+     * 상담원 화면 '경로 예측': 업무의 안내 경로(한국어 문구) 위에서 고객이 지금 어디 있고 다음에 무엇을 누를지.
+     * 고객 화면의 하이라이트와 같은 엔진(GuideEngine)으로 계산한다. 업무를 모르면 empty.
+     * visited: 지금까지 고객이 들어간 화면 (오래된 순). 경로 밖에 있을 때 돌아갈 단계를 찾는 데 쓴다
+     */
+    public Optional<RouteView> preview(String intent, Integer term, String page, List<String> visited) {
+        if (intent == null || page == null || !taskRepository.existsById(intent)) {
+            return Optional.empty();
+        }
+        Route route = loadRoute(intent, "ko", term, false);
+        return Optional.of(RoutePreview.of(route, GuideEngine.onPageEnter(route, page), page, visited));
+    }
+
     private Guide enter(GuideSession session, Route route, String page) {
         GuideEngine.Result result = GuideEngine.onPageEnter(route, page);
         session.apply(result);
@@ -162,12 +177,17 @@ public class GuideService {
      * 버튼 id·문구의 {term}은 고객이 고른 가입 기간으로 바꾼다. 예) btn-term-{term} → btn-term-6
      */
     private Route loadRoute(String intent, String lang, Integer term) {
+        return loadRoute(intent, lang, term, true);
+    }
+
+    /** strict=false면 가입 기간을 몰라도 경로를 만든다 (기간 버튼 id가 비어서 RoutePreview가 걸러 낸다) */
+    private Route loadRoute(String intent, String lang, Integer term, boolean strict) {
         GuideTask task = taskRepository.findById(intent)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown service: " + intent));
         Map<Integer, String> messages = textService.stepMessages(intent, lang);
 
         List<GuideStep> rows = stepRepository.findByTaskCodeOrderByStepNoAsc(intent);
-        if (term == null && rows.stream().anyMatch(s -> s.getTarget().contains(TERM))) {
+        if (strict && term == null && rows.stream().anyMatch(s -> s.getTarget().contains(TERM))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "term is required for " + intent);
         }
         String months = term == null ? "" : String.valueOf(term);

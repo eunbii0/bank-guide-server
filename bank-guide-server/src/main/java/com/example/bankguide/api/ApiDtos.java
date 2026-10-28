@@ -134,12 +134,27 @@ public final class ApiDtos {
      * 상담원 화면에 보일 티켓 (5단계에서 상담원 페이지가 이걸 그대로 쓴다).
      * infoConsent: 고객 정보 공유 동의 (NONE, REQUESTED, GRANTED, DENIED). hasCustomer=false면 정보 요청을 할 수 없다
      * headline: 인계 카드 제목 한 줄 (예: "적금 가입 중 경로 이탈 반복")
+     * currentPageId: 고객이 지금 있는 화면 ID (상담원 화면의 고객 화면 미러가 이 화면을 그린다)
+     * route: 업무 경로 위의 위치와 다음 예상 동작 (업무를 모르면 null, 목록 조회에서도 null)
      */
     public record TicketView(String ticketNo, String headline, String queue, String status, String reason,
-                             String lang, String intentName, String currentPage,
+                             String lang, String intentName, String currentPage, String currentPageId,
+                             RouteView route,
                              List<String> summary, List<String> checkpoints, String riskFlag,
                              String summarySource, List<MessageView> messages, String createdAt,
                              boolean hasCustomer, String infoConsent) {}
+
+    /**
+     * 상담원 화면 '경로 예측'.
+     * status: STEP(경로 위), OFF_PATH(경로 밖), DONE(목표 화면 도착)
+     * nextTarget: 고객 화면 미러에서 짚어 줄 다음 버튼 id (없으면 null), nextAction: 다음 예상 동작 (한국어)
+     * offPage: 경로 밖일 때 고객이 있는 화면 이름
+     */
+    public record RouteView(String status, List<RouteStepView> steps, String nextTarget, String nextAction,
+                            String offPage) {}
+
+    /** 경로의 화면 하나. state: done(지나옴), current(지금), next(다음 예상), todo(남음) */
+    public record RouteStepView(String page, String name, String state) {}
 
     /** 원문 대화 한 줄 */
     public record MessageView(String time, String sender, String lang, String content, String translated) {

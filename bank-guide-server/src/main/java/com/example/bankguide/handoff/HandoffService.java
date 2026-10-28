@@ -6,6 +6,7 @@ import com.example.bankguide.api.ApiDtos.EventView;
 import com.example.bankguide.api.ApiDtos.HandoffRequest;
 import com.example.bankguide.api.ApiDtos.HandoffResponse;
 import com.example.bankguide.api.ApiDtos.MessageView;
+import com.example.bankguide.api.ApiDtos.RouteView;
 import com.example.bankguide.api.ApiDtos.TicketView;
 import com.example.bankguide.api.ApiDtos.TimelineView;
 import com.example.bankguide.common.PageNames;
@@ -26,6 +27,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -131,7 +133,7 @@ public class HandoffService {
     }
 
     public List<TicketView> tickets() {
-        return ticketRepository.findAllByOrderByIdDesc().stream().map(this::view).toList();
+        return ticketRepository.findAllByOrderByIdDesc().stream().map(t -> view(t, false)).toList();
     }
 
     public TicketView ticket(String ticketNo) {
@@ -291,6 +293,11 @@ public class HandoffService {
     }
 
     TicketView view(HandoffTicket t) {
+        return view(t, true);
+    }
+
+    /** withRoute=false: 목록용 (3초마다 모든 티켓을 다시 읽으므로 경로 예측은 고른 티켓에서만 계산한다) */
+    TicketView view(HandoffTicket t, boolean withRoute) {
         String intentName = t.getIntent() != null && taskRepository.existsById(t.getIntent())
                 ? textService.task(t.getIntent(), "ko").getName() : "미확인 업무";
         String headline = HandoffNote.headline(
@@ -298,16 +305,36 @@ public class HandoffService {
                 t.getReason(), t.getRiskFlag());
         // 현재 화면: 이 티켓을 만든 뒤 고객이 옮긴 화면이 있으면 그것 (상담 중에도 상담원이 고객 위치를 안다)
         List<ChatMessage> history = conversationService.history(t.getConversationId());
-        String currentPage = history.stream()
+        List<String> moves = history.stream()
                 .filter(m -> "ACTIVITY".equals(m.getSender()) && !m.getCreatedAt().isBefore(t.getCreatedAt()))
-                .reduce((a, b) -> b)
                 .map(ChatMessage::getContent)
-                .orElse(t.getCurrentPage());
+                .toList();
+        String currentPage = moves.isEmpty() ? t.getCurrentPage() : moves.get(moves.size() - 1);
+        RouteView route = withRoute ? route(t, currentPage, moves) : null;
         return new TicketView(t.getTicketNo(), headline, t.getQueue(), t.getStatus(), HandoffNote.reasonKo(t.getReason()),
-                HandoffNote.langKo(t.getLang()), intentName, PageNames.of(currentPage),
+                HandoffNote.langKo(t.getLang()), intentName, PageNames.of(currentPage), currentPage, route,
                 lines(t.getSummaryKo()), lines(t.getCheckpoints()), t.getRiskFlag(), t.getSummarySource(),
                 history.stream().map(HandoffService::view).toList(), t.getCreatedAt().format(TIME),
                 t.getCustomerId() != null, t.getInfoConsent());
+    }
+
+    /**
+     * 경로 예측: 연결 전 안내 기록의 화면 + 연결 뒤 화면 이동을 지나온 순서로 넘긴다.
+     * 가입 기간은 이 업무를 마지막으로 시작한 안내 기록에서 찾는다 (예: "SAVINGS_OPEN 6개월 (vi)")
+     */
+    private RouteView route(HandoffTicket t, String currentPage, List<String> moves) {
+        List<EventView> events = guideService.conversationEvents(t.getConversationId(), t.getSessionId(), t.getCreatedAt());
+        List<String> visited = new ArrayList<>();
+        Integer term = null;
+        for (EventView e : events) {
+            if (e.page() != null) visited.add(e.page());
+            if ("GUIDE_START".equals(e.type())) {
+                Integer found = PathNote.term(e.detail(), t.getIntent());
+                if (found != null) term = found;
+            }
+        }
+        visited.addAll(moves);
+        return guideService.preview(t.getIntent(), term, currentPage, visited).orElse(null);
     }
 
     private List<MessageView> messages(String conversationId) {
