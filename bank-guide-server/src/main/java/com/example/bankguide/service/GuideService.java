@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -116,7 +117,32 @@ public class GuideService {
     }
 
     public List<EventView> events(String sessionId) {
-        return eventRepository.findBySessionIdOrderByIdAsc(sessionId).stream()
+        return view(eventRepository.findBySessionIdOrderByIdAsc(sessionId));
+    }
+
+    /**
+     * 한 대화 안의 모든 안내 기록 (챗봇을 시작한 뒤 그만두거나 바꾼 안내까지, 시간순).
+     * conversationId를 보내지 않은 옛 화면의 기록은 대화로 묶을 수 없으므로 sessionId의 기록으로 대신한다
+     */
+    public List<EventView> conversationEvents(String conversationId, String sessionId) {
+        return conversationEvents(conversationId, sessionId, null);
+    }
+
+    /** until: 이 시각까지의 기록만 (null이면 전부). 상담원 화면이 티켓을 만든 시점까지만 보여줄 때 쓴다 */
+    public List<EventView> conversationEvents(String conversationId, String sessionId, LocalDateTime until) {
+        List<GuideEvent> rows = conversationId == null ? List.of()
+                : eventRepository.findByConversationIdOrderByIdAsc(conversationId);
+        if (rows.isEmpty() && sessionId != null) {
+            rows = eventRepository.findBySessionIdOrderByIdAsc(sessionId);
+        }
+        if (until != null) {
+            rows = rows.stream().filter(e -> !e.getCreatedAt().isAfter(until)).toList();
+        }
+        return view(rows);
+    }
+
+    private static List<EventView> view(List<GuideEvent> rows) {
+        return rows.stream()
                 .map(e -> new EventView(e.getCreatedAt().format(TIME), e.getEventType(), e.getPage(), e.getDetail()))
                 .toList();
     }

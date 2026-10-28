@@ -74,7 +74,7 @@ export const fetchTicket = (ticketNo) => get(`/api/tickets/${ticketNo}`);
 
 // ---------- 상담원 화면 (5단계) ----------
 
-/** 고객 이동 경로 (DB guide_event, 화면 이름은 한국어) → [{ time, type, page, detail }] */
+/** 업무 진행 이력 (챗봇 시작부터 상담원 연결까지, 한국어) → [{ time, tone: ok|warn|agent|info, icon, text }] */
 export const fetchTicketEvents = (ticketNo) => get(`/api/tickets/${ticketNo}/events`);
 
 /** 티켓 목록 (최신순) */

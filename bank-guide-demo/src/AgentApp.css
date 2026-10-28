@@ -182,62 +182,140 @@
 .meta dd {
   margin: 0;
 }
-.cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-.cards > div {
-  padding: 12px 16px;
+/* 상담원 업무 인계 카드: 제목 → 핵심 정보 4칸 → 업무 진행 이력 → 요약 → 권장 다음 행동 */
+.handoff-card {
+  margin: 16px 0;
+  padding: 18px 20px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 12px;
   background: #fff;
 }
-.cards h3 {
-  font-size: 14px;
-  margin-bottom: 6px;
+.hc-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
 }
-.cards ol,
-.cards ul {
+.hc-kicker {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.hc-title {
+  font-size: 20px;
+}
+.hc-badge {
+  flex-shrink: 0;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.hc-badge.waiting {
+  background: #ffedd5;
+  color: var(--warn);
+}
+.hc-badge.in_progress {
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+.hc-badge.closed {
+  background: #f2f4f7;
+  color: var(--muted);
+}
+.hc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 24px;
+  margin: 16px 0 0;
+  padding: 0 4px;
+}
+.hc-grid dt {
+  color: var(--muted);
+  font-size: 13px;
+}
+.hc-grid dd {
+  margin: 2px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+.hc-section {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.hc-section h4 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+.hc-empty {
   margin: 0;
-  padding-left: 20px;
-  line-height: 1.6;
+  color: var(--muted);
+  font-size: 14px;
 }
-/* 고객 이동 경로 (기본 접힘, 기록이 없으면 안 보임) */
-.sources {
-  margin: -4px 0 16px;
-}
-.sources-toggle {
-  padding: 4px 10px;
+.hc-more {
+  margin-bottom: 6px;
+  padding: 2px 10px;
   border: 1px dashed #d0d5dd;
   border-radius: 999px;
   background: #fff;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
 }
-.sources-body {
-  margin-top: 8px;
-  padding: 10px 14px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: #fff;
+.hc-timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
-.sources-table {
-  width: 100%;
-  border-collapse: collapse;
+.hc-timeline li {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: 14px;
+}
+.hc-timeline .hc-icon {
+  text-align: center;
+}
+.hc-timeline time {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.hc-timeline li.warn .hc-text {
+  color: #b42318;
+  font-weight: 600;
+}
+.hc-timeline li.agent .hc-text {
+  color: var(--brand);
+  font-weight: 600;
+}
+.hc-summary {
+  margin: 0;
+  line-height: 1.7;
+}
+.hc-next {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #f6f8fb;
+}
+.hc-next p {
+  margin: 0 0 4px;
+  color: var(--muted);
   font-size: 13px;
 }
-.sources-table th,
-.sources-table td {
-  padding: 4px 6px;
-  border-bottom: 1px solid var(--line);
-  text-align: left;
+.hc-next ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  line-height: 1.7;
 }
-.sources-table th {
-  color: var(--muted);
-  font-weight: 600;
+.hc-next li::before {
+  content: '→ ';
+  color: var(--brand);
 }
 /* 상담원 답장 번역 실패 → 다시 번역 / 그대로 보내기 */
 .translate-failed {

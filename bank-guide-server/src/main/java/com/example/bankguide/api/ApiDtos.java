@@ -111,6 +111,12 @@ public final class ApiDtos {
     /** GET /api/guide/{sessionId}/events 의 한 줄 */
     public record EventView(String time, String type, String page, String detail) {}
 
+    /**
+     * 상담원 화면 '업무 진행 이력' 한 줄 (GET /api/tickets/{ticketNo}/events).
+     * tone: ok(정상 진행), warn(이탈·멈춤 등 확인할 일), agent(상담원 연결), info(그 밖의 기록)
+     */
+    public record TimelineView(String time, String tone, String icon, String text) {}
+
     // ---------- 상담원 연결 (4단계) ----------
 
     /**
@@ -126,8 +132,9 @@ public final class ApiDtos {
     /**
      * 상담원 화면에 보일 티켓 (5단계에서 상담원 페이지가 이걸 그대로 쓴다).
      * infoConsent: 고객 정보 공유 동의 (NONE, REQUESTED, GRANTED, DENIED). hasCustomer=false면 정보 요청을 할 수 없다
+     * headline: 인계 카드 제목 한 줄 (예: "적금 가입 중 경로 이탈 반복")
      */
-    public record TicketView(String ticketNo, String queue, String status, String reason,
+    public record TicketView(String ticketNo, String headline, String queue, String status, String reason,
                              String lang, String intentName, String currentPage,
                              List<String> summary, List<String> checkpoints, String riskFlag,
                              String summarySource, List<MessageView> messages, String createdAt,

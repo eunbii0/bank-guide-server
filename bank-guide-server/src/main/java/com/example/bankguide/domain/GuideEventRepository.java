@@ -7,4 +7,6 @@ import java.util.List;
 public interface GuideEventRepository extends JpaRepository<GuideEvent, Long> {
 
     List<GuideEvent> findBySessionIdOrderByIdAsc(String sessionId);
+
+    List<GuideEvent> findByConversationIdOrderByIdAsc(String conversationId);
 }

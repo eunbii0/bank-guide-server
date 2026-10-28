@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import './AgentApp.css';
 import * as api from './api/guideApi';
 import CustomerInfoBox from './components/CustomerInfoBox';
-import CustomerPath from './components/CustomerPath';
+import HandoffCard from './components/HandoffCard';
 
 const QUEUES = [
   { code: 'ALL', name: '전체' },
@@ -174,8 +174,7 @@ export default function AgentApp() {
               <div>
                 <h2>{detail.ticketNo}</h2>
                 <p>
-                  <span className={`badge ${detail.queue.toLowerCase()}`}>{QUEUE_NAMES[detail.queue] ?? detail.queue}</span>{' '}
-                  <span className={`status ${detail.status.toLowerCase()}`}>{STATUS_NAMES[detail.status] ?? detail.status}</span>
+                  <span className={`badge ${detail.queue.toLowerCase()}`}>{QUEUE_NAMES[detail.queue] ?? detail.queue}</span>
                 </p>
               </div>
               <div className="detail-actions">
@@ -190,37 +189,7 @@ export default function AgentApp() {
 
             {detail.riskFlag !== 'NONE' && <p className="risk-banner">금융사기가 의심됩니다. 제3자가 송금·계좌 대여를 요구했는지 먼저 확인하세요.</p>}
 
-            <dl className="meta">
-              <dt>고객 언어</dt>
-              <dd>{detail.lang}</dd>
-              <dt>업무</dt>
-              <dd>{detail.intentName}</dd>
-              <dt>연결 사유</dt>
-              <dd>{detail.reason}</dd>
-              <dt>현재 화면</dt>
-              <dd>{detail.currentPage}</dd>
-            </dl>
-
-            <div className="cards">
-              <div>
-                <h3>요약 ({detail.summarySource === 'LLM' ? 'AI' : '규칙 기반'})</h3>
-                <ol>
-                  {detail.summary.map((s, i) => (
-                    <li key={i}>{s}</li>
-                  ))}
-                </ol>
-              </div>
-              <div>
-                <h3>확인할 것</h3>
-                <ul>
-                  {detail.checkpoints.map((c, i) => (
-                    <li key={i}>{c}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            <CustomerPath ticketNo={detail.ticketNo} />
+            <HandoffCard ticket={detail} />
 
             <CustomerInfoBox
               ticket={detail}

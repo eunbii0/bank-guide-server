@@ -7,6 +7,7 @@ import com.example.bankguide.api.ApiDtos.HandoffRequest;
 import com.example.bankguide.api.ApiDtos.HandoffResponse;
 import com.example.bankguide.api.ApiDtos.MessageView;
 import com.example.bankguide.api.ApiDtos.TicketView;
+import com.example.bankguide.api.ApiDtos.TimelineView;
 import com.example.bankguide.common.PageNames;
 import com.example.bankguide.domain.ChatMessage;
 import com.example.bankguide.domain.CustomerProfileRepository;
@@ -88,11 +89,12 @@ public class HandoffService {
 
         guideService.endForHandoff(req.sessionId(), reason);
 
-        // 개인정보 최소화: 상담원에게는 지금 진행 중인 안내의 기록만 넘긴다.
-        // 같은 대화에서 그만둔 다른 안내 기록은 서비스 개선용으로 저장만 하고 요약에 넣지 않는다
-        List<EventView> events = req.sessionId() == null ? List.of() : guideService.events(req.sessionId());
+        // 연결 직전 화면만으로는 고객이 왜 막혔는지 알기 어려워서, 챗봇을 시작한 뒤 이 대화에서 남은
+        // 모든 안내 기록(그만두거나 바꾼 안내 포함)을 요약에 넣는다. 다른 대화의 기록은 넣지 않는다
+        List<EventView> events = guideService.conversationEvents(req.conversationId(), req.sessionId());
         List<MessageView> messages = messages(req.conversationId());
-        HandoffNote.Input input = new HandoffNote.Input(lang, intentNameKo, reason, req.page(), events, messages);
+        HandoffNote.Input input = new HandoffNote.Input(lang, intentNameKo, reason, req.page(), events, messages,
+                PathNote.timeline(firstChatTime(messages), events, this::taskNameKo));
 
         SummaryResult summary;
         String source;
@@ -249,18 +251,19 @@ public class HandoffService {
     }
 
     /**
-     * 상담원 화면 '고객 이동 경로': 연결 당시 진행 중이던 안내의 guide_event (요약의 재료이기도 하다).
-     * 화면 이름과 내용은 상담원이 알아볼 수 있게 한국어로 바꾼다. 안내 없이 채팅으로만 연결된 티켓이면 빈 목록
+     * 상담원 화면 '업무 진행 이력': 챗봇 시작부터 상담원 연결까지 이 대화의 모든 기록 (요약의 재료와 같다).
+     * 요약과 맞추기 위해 티켓을 만든 뒤에 남은 기록(같은 대화에서 다시 시작한 안내 등)은 넣지 않는다
      */
-    public List<EventView> events(String ticketNo) {
+    public List<TimelineView> events(String ticketNo) {
         HandoffTicket t = find(ticketNo);
-        if (t.getSessionId() == null) {
-            return List.of();
-        }
-        return guideService.events(t.getSessionId()).stream()
-                .map(e -> new EventView(e.time(), e.type(), PageNames.of(e.page()),
-                        PathNote.detailKo(e.type(), e.detail(), this::taskNameKo)))
-                .toList();
+        List<EventView> events = guideService.conversationEvents(t.getConversationId(), t.getSessionId(), t.getCreatedAt());
+        return PathNote.timeline(firstChatTime(messages(t.getConversationId())), events, this::taskNameKo);
+    }
+
+    /** 고객이 챗봇에 처음 말한 시각 (없으면 null) */
+    private static String firstChatTime(List<MessageView> messages) {
+        return messages.stream().filter(m -> "CUSTOMER".equals(m.sender())).findFirst()
+                .map(MessageView::time).orElse(null);
     }
 
     private String taskNameKo(String code) {
@@ -275,7 +278,10 @@ public class HandoffService {
     TicketView view(HandoffTicket t) {
         String intentName = t.getIntent() != null && taskRepository.existsById(t.getIntent())
                 ? textService.task(t.getIntent(), "ko").getName() : "미확인 업무";
-        return new TicketView(t.getTicketNo(), t.getQueue(), t.getStatus(), HandoffNote.reasonKo(t.getReason()),
+        String headline = HandoffNote.headline(
+                t.getIntent() != null && taskRepository.existsById(t.getIntent()) ? intentName : null,
+                t.getReason(), t.getRiskFlag());
+        return new TicketView(t.getTicketNo(), headline, t.getQueue(), t.getStatus(), HandoffNote.reasonKo(t.getReason()),
                 HandoffNote.langKo(t.getLang()), intentName, PageNames.of(t.getCurrentPage()),
                 lines(t.getSummaryKo()), lines(t.getCheckpoints()), t.getRiskFlag(), t.getSummarySource(),
                 messages(t.getConversationId()), t.getCreatedAt().format(TIME),

@@ -71,4 +71,31 @@ class HandoffNoteTest {
         assertTrue(prompt.contains("현재 화면: 중도해지 확인 화면"));
         assertTrue(prompt.contains("Tài khoản ***"));
     }
+
+    @Test
+    void LLM_입력에는_행동_신호_횟수와_확인할_기록_표시가_들어간다() {
+        String prompt = HandoffNote.toPrompt(input);
+
+        assertTrue(prompt.contains("행동 신호: 경로 이탈 1회 · 멈춤 1회"));
+        assertTrue(prompt.contains("19:02:24 대출 진입 · 안내 경로에서 벗어남  ← 확인 필요"));
+        assertTrue(prompt.contains("19:03:30 고객: Sao tiền lãi"));
+    }
+
+    @Test
+    void 이탈_사유로_연결된_기록은_경로_이탈_횟수에_넣지_않는다() {
+        HandoffNote.Input in = new HandoffNote.Input("en", "적금 가입", "OFF_PATH", "loan",
+                List.of(new EventView("10:00:01", "PAGE_ENTER", "loan", "OFF_PATH"),
+                        new EventView("10:00:09", "HANDOFF", null, "OFF_PATH")),
+                List.of());
+
+        assertTrue(HandoffNote.fallback(in).summary().get(1).contains("경로 이탈 1회"));
+        assertTrue(HandoffNote.toPrompt(in).contains("행동 신호: 경로 이탈 1회\n"));
+    }
+
+    @Test
+    void 인계_카드_제목은_업무와_연결_사유로_만든다() {
+        assertEquals("적금 가입 중 경로 이탈 반복", HandoffNote.headline("적금 가입", "OFF_PATH", "NONE"));
+        assertEquals("업무 확인 전 상담원 연결 요청", HandoffNote.headline(null, "CUSTOMER_REQUEST", "NONE"));
+        assertEquals("송금 중 금융사기 의심", HandoffNote.headline("송금", "CUSTOMER_REQUEST", "FRAUD_SUSPECTED"));
+    }
 }

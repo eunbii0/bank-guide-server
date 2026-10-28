@@ -3,7 +3,6 @@ package com.example.bankguide.api;
 import com.example.bankguide.api.ApiDtos.AgentPoll;
 import com.example.bankguide.api.ApiDtos.CustomerInfoView;
 import com.example.bankguide.api.ApiDtos.CustomerMessageRequest;
-import com.example.bankguide.api.ApiDtos.EventView;
 import com.example.bankguide.api.ApiDtos.HandoffRequest;
 import com.example.bankguide.api.ApiDtos.HandoffResponse;
 import com.example.bankguide.api.ApiDtos.InfoConsentRequest;
@@ -11,6 +10,7 @@ import com.example.bankguide.api.ApiDtos.MessageView;
 import com.example.bankguide.api.ApiDtos.ReplyRequest;
 import com.example.bankguide.api.ApiDtos.StatusRequest;
 import com.example.bankguide.api.ApiDtos.TicketView;
+import com.example.bankguide.api.ApiDtos.TimelineView;
 import com.example.bankguide.handoff.CustomerInfoService;
 import com.example.bankguide.handoff.HandoffService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -54,9 +54,9 @@ public class HandoffController {
         return handoffService.ticket(ticketNo);
     }
 
-    /** 고객 이동 경로 (상담원 화면 토글). 화면 이름은 한국어 */
+    /** 업무 진행 이력 (상담원 화면). 챗봇 시작부터 상담원 연결까지, 이모지와 한국어 문장 */
     @GetMapping("/tickets/{ticketNo}/events")
-    public List<EventView> events(@PathVariable String ticketNo) {
+    public List<TimelineView> events(@PathVariable String ticketNo) {
         return handoffService.events(ticketNo);
     }
 
