@@ -34,7 +34,7 @@ public final class PathNote {
                                               Function<String, String> taskName) {
         List<TimelineView> out = new ArrayList<>();
         if (firstChatTime != null) {
-            out.add(new TimelineView(firstChatTime, "info", "💬", "챗봇 상담 시작"));
+            out.add(new TimelineView(firstChatTime, "info", "chat", "챗봇 상담 시작"));
         }
         for (EventView e : events) {
             out.add(line(e, taskName));
@@ -42,7 +42,7 @@ public final class PathNote {
         return out;
     }
 
-    /** 기록 한 줄 → 이모지 + 상담원이 읽을 문장 */
+    /** 기록 한 줄 → 아이콘 이름 + 상담원이 읽을 문장 */
     public static TimelineView line(EventView e, Function<String, String> taskName) {
         String t = e.time();
         String page = e.page() == null ? null : PageNames.of(e.page());
@@ -50,38 +50,38 @@ public final class PathNote {
         Matcher m;
         switch (e.type()) {
             case "GUIDE_START" -> {
-                return new TimelineView(t, "info", "▶️", "안내 시작 · " + detailKo(e.type(), e.detail(), taskName));
+                return new TimelineView(t, "info", "start", "안내 시작 · " + detailKo(e.type(), e.detail(), taskName));
             }
             case "PAGE_ENTER" -> {
                 if ((m = STEP.matcher(detail)).matches()) {
-                    return new TimelineView(t, "ok", "✅",
+                    return new TimelineView(t, "ok", "step",
                             page + " 진입 · " + m.group(1) + "/" + m.group(2) + "단계");
                 }
                 if ("OFF_PATH".equals(detail)) {
-                    return new TimelineView(t, "warn", "⚠️", page + " 진입 · 안내 경로에서 벗어남");
+                    return new TimelineView(t, "warn", "off-path", page + " 진입 · 안내 경로에서 벗어남");
                 }
                 if ("DONE".equals(detail)) {
-                    return new TimelineView(t, "ok", "🏁", page + " 도착 · 안내 완료");
+                    return new TimelineView(t, "ok", "done", page + " 도착 · 안내 완료");
                 }
-                return new TimelineView(t, "info", "📄", page + " 진입" + (detail.isEmpty() ? "" : " · " + detail));
+                return new TimelineView(t, "info", "page", page + " 진입" + (detail.isEmpty() ? "" : " · " + detail));
             }
             case "OFFER" -> {
-                return new TimelineView(t, "warn", "💡", detailKo(e.type(), e.detail(), taskName));
+                return new TimelineView(t, "warn", "offer", detailKo(e.type(), e.detail(), taskName));
             }
             case "STUCK" -> {
                 String where = page == null ? "" : page + "에서 ";
                 String how = (m = IDLE.matcher(detail)).matches() ? m.group(1) + "초 동안 멈춤" : "멈춤";
-                return new TimelineView(t, "warn", "⏸️", where + how);
+                return new TimelineView(t, "warn", "stuck", where + how);
             }
             case "GUIDE_STOP" -> {
-                return new TimelineView(t, "info", "⏹️", "고객이 안내를 그만둠");
+                return new TimelineView(t, "info", "stop", "고객이 안내를 그만둠");
             }
             case "HANDOFF" -> {
-                return new TimelineView(t, "agent", "🎧", "상담원 연결 요청 · " + HandoffNote.reasonKo(e.detail()));
+                return new TimelineView(t, "agent", "handoff", "상담원 연결 요청 · " + HandoffNote.reasonKo(e.detail()));
             }
             default -> {
                 String text = e.type() + (page == null ? "" : " · " + page) + (detail.isEmpty() ? "" : " · " + detail);
-                return new TimelineView(t, "info", "•", text);
+                return new TimelineView(t, "info", "page", text);
             }
         }
     }

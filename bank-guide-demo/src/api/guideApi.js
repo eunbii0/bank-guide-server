@@ -101,6 +101,9 @@ export const replyTicket = (ticketNo, text, sendOriginal = false) =>
 /** 상담 중 고객이 상담원에게 보내는 말(고객 언어 그대로). 서버가 한국어로 번역해 저장한다 */
 export const sendCustomerMessage = (ticketNo, text) => post(`/api/tickets/${ticketNo}/customer-message`, { text });
 
+/** 상담 중 고객이 앱 화면을 옮겼다 → 상담원 대화에 이동 기록으로 공유 */
+export const shareActivity = (ticketNo, page) => post(`/api/tickets/${ticketNo}/activity`, { page });
+
 /**
  * 대화 맥락에서 AI가 만든 추천 문장. role은 'agent'(상담원이 보낼 한국어 답변) 또는 'customer'(고객 언어).
  * → { suggestions: [...], source: 'LLM' | 'NONE' }. 실패하면 빈 목록을 돌려줘서 화면이 고정 예시를 쓴다.

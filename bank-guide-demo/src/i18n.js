@@ -28,6 +28,7 @@ const TEXT = {
     infoDenied: '정보 확인을 거절했어요. 필요한 내용은 상담원이 직접 여쭤볼 수 있어요.',
     // 번역이 안 돼서 상담원이 쓴 그대로 온 답장 아래에 붙이는 안내
     untranslated: '번역이 잠시 안 돼서 상담원이 쓴 그대로 보여드려요. 이해가 어려우면 쉬운 영어로 다시 물어봐 주세요.',
+    sharedWithAgent: '상담원에게 공유됨', // 상담 중 화면 이동이 상담원 화면에도 보인다는 표시
     continueSelf: '혼자 계속할게요',
     waiting: '상담원 연결 대기 중',
     // 챗봇 메뉴 + 가입 자격 판단
@@ -72,6 +73,7 @@ const TEXT = {
     infoAllowed: 'You allowed it. The agent can no longer see your information after this chat ends.',
     infoDenied: 'You declined. The agent may ask you directly for anything they need.',
     untranslated: "Translation isn't working right now, so this is shown as the agent wrote it. If it's hard to understand, please ask again in simple English.",
+    sharedWithAgent: 'Shared with your agent', // 상담 중 화면 이동이 상담원 화면에도 보인다는 표시
     continueSelf: "I'll continue myself",
     waiting: 'Waiting for an agent',
     // 챗봇 메뉴 + 가입 자격 판단
@@ -116,6 +118,7 @@ const TEXT = {
     infoAllowed: 'Bạn đã cho phép. Sau khi cuộc trò chuyện kết thúc, nhân viên sẽ không xem được nữa.',
     infoDenied: 'Bạn đã từ chối. Nhân viên có thể hỏi trực tiếp bạn những gì cần thiết.',
     untranslated: 'Hiện chưa dịch được nên tin nhắn được hiển thị nguyên văn như nhân viên đã viết. Nếu khó hiểu, bạn hãy hỏi lại bằng tiếng Anh đơn giản.',
+    sharedWithAgent: 'Đã chia sẻ với nhân viên', // 상담 중 화면 이동이 상담원 화면에도 보인다는 표시
     continueSelf: 'Tôi sẽ tự làm tiếp',
     waiting: 'Đang chờ nhân viên tư vấn',
     // 챗봇 메뉴 + 가입 자격 판단
@@ -160,6 +163,7 @@ const TEXT = {
     infoAllowed: '您已允许。咨询结束后，客服将无法再查看。',
     infoDenied: '您已拒绝。如有需要，客服会直接询问您。',
     untranslated: '翻译暂时无法使用，以下按客服原文显示。如果看不懂，请用简单的英语再问一次。',
+    sharedWithAgent: '已同步给客服', // 상담 중 화면 이동이 상담원 화면에도 보인다는 표시
     continueSelf: '我自己继续',
     waiting: '正在等待客服',
     // 챗봇 메뉴 + 가입 자격 판단
@@ -204,6 +208,7 @@ const TEXT = {
     infoAllowed: 'Ruxsat berdingiz. Suhbat tugagach, xodim boshqa koʻra olmaydi.',
     infoDenied: 'Rad etdingiz. Kerakli narsalarni xodim sizdan bevosita soʻrashi mumkin.',
     untranslated: 'Hozir tarjima ishlamayapti, shuning uchun xabar xodim yozganidek koʻrsatildi. Tushunish qiyin boʻlsa, oddiy ingliz tilida qayta soʻrang.',
+    sharedWithAgent: 'Xodimga koʻrinadi', // 상담 중 화면 이동이 상담원 화면에도 보인다는 표시
     continueSelf: 'Oʻzim davom etaman',
     waiting: 'Xodim kutilmoqda',
     closed: 'Xodim bilan suhbat tugadi. Kerak boʻlsa, yana soʻrang.',
@@ -247,6 +252,7 @@ const TEXT = {
     infoAllowed: 'तपाईंले अनुमति दिनुभयो। कुराकानी सकिएपछि कर्मचारीले फेरि हेर्न सक्दैनन्।',
     infoDenied: 'तपाईंले अस्वीकार गर्नुभयो। आवश्यक कुरा कर्मचारीले तपाईंसँग सोध्न सक्नुहुन्छ।',
     untranslated: 'अहिले अनुवाद भइरहेको छैन, त्यसैले कर्मचारीले लेखेजस्तै देखाइएको छ। बुझ्न गाह्रो भए सजिलो अंग्रेजीमा फेरि सोध्नुहोस्।',
+    sharedWithAgent: 'कर्मचारीसँग साझा गरियो', // 상담 중 화면 이동이 상담원 화면에도 보인다는 표시
     continueSelf: 'म आफै जारी राख्छु',
     waiting: 'कर्मचारीको प्रतीक्षा गर्दै',
     closed: 'कर्मचारीसँगको कुराकानी सकियो। केही चाहिएमा फेरि सोध्नुहोस्।',
@@ -290,6 +296,7 @@ const TEXT = {
     infoAllowed: 'អ្នកបានអនុញ្ញាត។ ក្រោយការសន្ទនាបញ្ចប់ បុគ្គលិកនឹងមើលមិនបានទៀតទេ។',
     infoDenied: 'អ្នកបានបដិសេធ។ បុគ្គលិកអាចសួរអ្នកដោយផ្ទាល់នូវអ្វីដែលត្រូវការ។',
     untranslated: 'ការបកប្រែមិនដំណើរការបណ្ដោះអាសន្ន ដូច្នេះសារត្រូវបានបង្ហាញដូចបុគ្គលិកបានសរសេរ។ បើពិបាកយល់ សូមសួរម្ដងទៀតជាភាសាអង់គ្លេសងាយៗ។',
+    sharedWithAgent: 'បានចែករំលែកជាមួយបុគ្គលិក', // 상담 중 화면 이동이 상담원 화면에도 보인다는 표시
     continueSelf: 'ខ្ញុំនឹងធ្វើបន្តខ្លួនឯង',
     waiting: 'កំពុងរង់ចាំបុគ្គលិក',
     closed: 'ការសន្ទនាជាមួយបុគ្គលិកបានបញ្ចប់។ សូមសួរម្ដងទៀតប្រសិនបើត្រូវការ។',

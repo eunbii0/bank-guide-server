@@ -114,6 +114,7 @@ public final class ApiDtos {
     /**
      * 상담원 화면 '업무 진행 이력' 한 줄 (GET /api/tickets/{ticketNo}/events).
      * tone: ok(정상 진행), warn(이탈·멈춤 등 확인할 일), agent(상담원 연결), info(그 밖의 기록)
+     * icon: 화면이 그릴 선 아이콘 이름 (chat, start, step, done, off-path, stuck, offer, stop, handoff, page)
      */
     public record TimelineView(String time, String tone, String icon, String text) {}
 
@@ -166,6 +167,9 @@ public final class ApiDtos {
 
     /** POST /api/tickets/{ticketNo}/customer-message  {"text":"My name doesn't work"}  고객 언어 그대로 보낸다 */
     public record CustomerMessageRequest(String text) {}
+
+    /** POST /api/tickets/{ticketNo}/activity  {"page":"transfer"}  상담 중 고객이 앱 화면을 옮겼다 (상담원 대화에 공유) */
+    public record ActivityRequest(String page) {}
 
     /**
      * 고객 화면이 가져가는 상담원 답장. text는 고객 언어로 번역된 문장.

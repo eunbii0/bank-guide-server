@@ -41,7 +41,7 @@ class PathNoteTest {
     }
 
     @Test
-    void 업무_진행_이력은_챗봇_시작부터_이모지와_한국어_문장으로_만든다() {
+    void 업무_진행_이력은_챗봇_시작부터_아이콘과_한국어_문장으로_만든다() {
         List<TimelineView> t = PathNote.timeline("14:01:50", List.of(
                 new EventView("14:02:00", "GUIDE_START", "home", "CHECK_CARD (en)"),
                 new EventView("14:02:05", "GUIDE_STOP", null, null),
@@ -51,13 +51,13 @@ class PathNoteTest {
                 new EventView("14:02:40", "STUCK", "savings-join", "idle 30s"),
                 new EventView("14:02:45", "HANDOFF", null, "CUSTOMER_REQUEST")), TASKS);
 
-        assertEquals(new TimelineView("14:01:50", "info", "💬", "챗봇 상담 시작"), t.get(0));
+        assertEquals(new TimelineView("14:01:50", "info", "chat", "챗봇 상담 시작"), t.get(0));
         assertEquals("안내 시작 · 체크카드 발급 · 영어", t.get(1).text());
         assertEquals("고객이 안내를 그만둠", t.get(2).text());
-        assertEquals(new TimelineView("14:02:18", "ok", "✅", "상품가입 메뉴 진입 · 2/4단계"), t.get(4));
-        assertEquals(new TimelineView("14:02:31", "warn", "⚠️", "대출 진입 · 안내 경로에서 벗어남"), t.get(5));
-        assertEquals(new TimelineView("14:02:40", "warn", "⏸️", "적금 가입 (기간 선택)에서 30초 동안 멈춤"), t.get(6));
-        assertEquals(new TimelineView("14:02:45", "agent", "🎧", "상담원 연결 요청 · 고객이 직접 요청"), t.get(7));
+        assertEquals(new TimelineView("14:02:18", "ok", "step", "상품가입 메뉴 진입 · 2/4단계"), t.get(4));
+        assertEquals(new TimelineView("14:02:31", "warn", "off-path", "대출 진입 · 안내 경로에서 벗어남"), t.get(5));
+        assertEquals(new TimelineView("14:02:40", "warn", "stuck", "적금 가입 (기간 선택)에서 30초 동안 멈춤"), t.get(6));
+        assertEquals(new TimelineView("14:02:45", "agent", "handoff", "상담원 연결 요청 · 고객이 직접 요청"), t.get(7));
     }
 
     @Test

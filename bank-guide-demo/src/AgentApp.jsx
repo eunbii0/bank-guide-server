@@ -3,6 +3,7 @@ import './AgentApp.css';
 import * as api from './api/guideApi';
 import CustomerInfoBox from './components/CustomerInfoBox';
 import HandoffCard from './components/HandoffCard';
+import { Icon } from './components/HomeArt';
 
 const QUEUES = [
   { code: 'ALL', name: '전체' },
@@ -68,7 +69,7 @@ export default function AgentApp() {
 
   // 상담원 차례(마지막 말이 고객·AI)가 되면 대화 맥락으로 AI가 답변 문장을 추천한다
   const [aiSuggest, setAiSuggest] = useState({ items: [], loading: false });
-  const talk = detail ? detail.messages.filter((m) => m.sender !== 'SYSTEM') : [];
+  const talk = detail ? detail.messages.filter((m) => m.sender !== 'SYSTEM' && m.sender !== 'ACTIVITY') : [];
   const curNo = detail?.ticketNo;
   const curStatus = detail?.status;
   const lastSender = talk.at(-1)?.sender;
@@ -202,7 +203,14 @@ export default function AgentApp() {
 
             <h3>대화</h3>
             <div className="thread" ref={threadRef}>
-              {detail.messages.map((m, i) => (
+              {detail.messages.map((m, i) =>
+                m.sender === 'ACTIVITY' ? (
+                  // 상담 중 고객이 앱 화면을 옮긴 기록 (고객 대화창에도 같은 줄이 보인다)
+                  <p key={i} className="msg activity">
+                    <Icon name="pin" size={16} />
+                    {m.time} 고객이 <b>{m.content}</b> 화면으로 이동
+                  </p>
+                ) : (
                 <p key={i} className={`msg ${m.sender.toLowerCase()}`}>
                   <span className="msg-head">
                     {m.time} {SENDER_NAMES[m.sender] ?? m.sender}
@@ -211,7 +219,8 @@ export default function AgentApp() {
                   {m.content}
                   {m.translated && <span className="msg-tr">한국어: {m.translated}</span>}
                 </p>
-              ))}
+                ),
+              )}
             </div>
 
             {detail.status !== 'CLOSED' && (aiSuggest.loading || aiSuggest.items.length > 0) && (

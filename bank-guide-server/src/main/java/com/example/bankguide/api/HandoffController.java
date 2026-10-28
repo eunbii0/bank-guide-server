@@ -1,5 +1,6 @@
 package com.example.bankguide.api;
 
+import com.example.bankguide.api.ApiDtos.ActivityRequest;
 import com.example.bankguide.api.ApiDtos.AgentPoll;
 import com.example.bankguide.api.ApiDtos.CustomerInfoView;
 import com.example.bankguide.api.ApiDtos.CustomerMessageRequest;
@@ -76,6 +77,12 @@ public class HandoffController {
     @PostMapping("/tickets/{ticketNo}/customer-message")
     public MessageView customerMessage(@PathVariable String ticketNo, @RequestBody CustomerMessageRequest request) {
         return handoffService.customerMessage(ticketNo, request.text());
+    }
+
+    /** 상담 중 고객이 앱 화면을 옮겼을 때: 상담원 대화에 이동 기록으로 남긴다 (종료된 상담이면 409) */
+    @PostMapping("/tickets/{ticketNo}/activity")
+    public MessageView activity(@PathVariable String ticketNo, @RequestBody ActivityRequest request) {
+        return handoffService.customerActivity(ticketNo, request.page());
     }
 
     /** 고객이 상담 종료 버튼을 눌렀을 때: 티켓을 CLOSED로 바꾼다 (이미 종료됐어도 성공으로 응답) */

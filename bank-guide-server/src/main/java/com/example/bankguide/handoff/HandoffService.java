@@ -239,6 +239,21 @@ public class HandoffService {
                 saved.getContent(), saved.getTranslated());
     }
 
+    /**
+     * 상담 중 고객이 앱 화면을 옮겼다: 대화에 이동 기록(ACTIVITY)으로 남겨 상담원 화면 대화에 바로 보이게 한다.
+     * 고객 화면은 자기 언어로 같은 줄을 대화창에 직접 붙인다 (서버를 다시 거치지 않는다)
+     */
+    public MessageView customerActivity(String ticketNo, String page) {
+        if (page == null || page.isBlank() || page.length() > 60) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "page is required");
+        }
+        HandoffTicket t = find(ticketNo);
+        if ("CLOSED".equals(t.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ticket is already closed: " + ticketNo);
+        }
+        return view(conversationService.activity(t.getConversationId(), page));
+    }
+
     /** 고객 화면: 티켓 상태 + afterId 이후의 상담원 답장(번역본) */
     public AgentPoll poll(String ticketNo, long afterId) {
         HandoffTicket t = find(ticketNo);
@@ -281,18 +296,29 @@ public class HandoffService {
         String headline = HandoffNote.headline(
                 t.getIntent() != null && taskRepository.existsById(t.getIntent()) ? intentName : null,
                 t.getReason(), t.getRiskFlag());
+        // 현재 화면: 이 티켓을 만든 뒤 고객이 옮긴 화면이 있으면 그것 (상담 중에도 상담원이 고객 위치를 안다)
+        List<ChatMessage> history = conversationService.history(t.getConversationId());
+        String currentPage = history.stream()
+                .filter(m -> "ACTIVITY".equals(m.getSender()) && !m.getCreatedAt().isBefore(t.getCreatedAt()))
+                .reduce((a, b) -> b)
+                .map(ChatMessage::getContent)
+                .orElse(t.getCurrentPage());
         return new TicketView(t.getTicketNo(), headline, t.getQueue(), t.getStatus(), HandoffNote.reasonKo(t.getReason()),
-                HandoffNote.langKo(t.getLang()), intentName, PageNames.of(t.getCurrentPage()),
+                HandoffNote.langKo(t.getLang()), intentName, PageNames.of(currentPage),
                 lines(t.getSummaryKo()), lines(t.getCheckpoints()), t.getRiskFlag(), t.getSummarySource(),
-                messages(t.getConversationId()), t.getCreatedAt().format(TIME),
+                history.stream().map(HandoffService::view).toList(), t.getCreatedAt().format(TIME),
                 t.getCustomerId() != null, t.getInfoConsent());
     }
 
     private List<MessageView> messages(String conversationId) {
-        return conversationService.history(conversationId).stream()
-                .map(m -> new MessageView(m.getCreatedAt().format(TIME), m.getSender(), m.getLang(), m.getContent(),
-                        "CUSTOMER".equals(m.getSender()) ? m.getTranslated() : null))
-                .toList();
+        return conversationService.history(conversationId).stream().map(HandoffService::view).toList();
+    }
+
+    /** 대화 한 줄. 화면 이동 기록(ACTIVITY)은 화면 ID를 한국어 화면 이름으로 바꾼다 */
+    private static MessageView view(ChatMessage m) {
+        String content = "ACTIVITY".equals(m.getSender()) ? PageNames.of(m.getContent()) : m.getContent();
+        return new MessageView(m.getCreatedAt().format(TIME), m.getSender(), m.getLang(), content,
+                "CUSTOMER".equals(m.getSender()) ? m.getTranslated() : null);
     }
 
     private static List<String> lines(String text) {

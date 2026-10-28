@@ -277,20 +277,28 @@
   font-size: 14px;
 }
 .hc-timeline .hc-icon {
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  color: var(--muted);
+}
+.hc-timeline li.ok .hc-icon {
+  color: #16a34a;
+}
+.hc-timeline li.warn .hc-icon {
+  color: #dc2626;
+}
+.hc-timeline li.agent .hc-icon {
+  color: var(--ink);
 }
 .hc-timeline time {
   color: var(--muted);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
-.hc-timeline li.warn .hc-text {
-  color: #b42318;
-  font-weight: 600;
-}
-.hc-timeline li.agent .hc-text {
-  color: var(--brand);
-  font-weight: 600;
+.hc-ai {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .hc-summary {
   margin: 0;
@@ -316,6 +324,24 @@
 .hc-next li::before {
   content: '→ ';
   color: var(--brand);
+}
+/* 상담 중 고객 화면 이동 (대화창 가운데 작은 줄) */
+.msg.activity {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  align-self: center;
+  max-width: none;
+  padding: 2px 0;
+  background: none;
+  border: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.msg.activity b {
+  color: var(--ink);
 }
 /* 상담원 답장 번역 실패 → 다시 번역 / 그대로 보내기 */
 .translate-failed {

@@ -99,6 +99,7 @@ public final class HandoffNote {
                         case "CUSTOMER" -> "고객";
                         case "AGENT" -> "상담원";
                         case "SYSTEM" -> "시스템";
+                        case "ACTIVITY" -> "고객 화면 이동";
                         default -> "챗봇";
                     }).append(": ")
                     .append(Masking.mask(m.content())).append('\n');

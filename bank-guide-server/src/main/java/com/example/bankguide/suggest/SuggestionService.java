@@ -90,7 +90,7 @@ public class SuggestionService {
         }
 
         List<ChatMessage> history = conversationService.history(t.getConversationId()).stream()
-                .filter(m -> !"SYSTEM".equals(m.getSender()))
+                .filter(m -> !"SYSTEM".equals(m.getSender()) && !"ACTIVITY".equals(m.getSender())) // 화면 이동마다 추천을 다시 만들지 않게
                 .toList();
         if (history.isEmpty()) {
             return NONE;
