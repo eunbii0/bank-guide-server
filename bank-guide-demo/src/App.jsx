@@ -31,8 +31,8 @@ const newId = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${
 const params = new URLSearchParams(window.location.search);
 
 // 같은 화면에서 이 시간(초) 동안 아무것도 안 누르면 '멈춤'으로 본다.
-// 시연할 때는 주소 뒤에 ?stuck=5 를 붙이면 5초로 줄어든다.
-const STUCK_SECONDS = Number(params.get('stuck')) || 30;
+// 주소 뒤에 ?stuck=5 를 붙이면 그 시간(초)으로 바뀐다.
+const STUCK_SECONDS = Number(params.get('stuck')) || 7;
 
 // 데모용 가상 고객 (A: Nguyen, B: Li Wei, C: Emily Carter). 첫 화면(로그인 대신)에서 고른다.
 // 주소에 ?customer=B 를 붙이면 그 고객으로 바로 들어간다.
