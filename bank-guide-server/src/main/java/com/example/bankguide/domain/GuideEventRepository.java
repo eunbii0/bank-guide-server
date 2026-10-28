@@ -1,0 +1,12 @@
+package com.example.bankguide.domain;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface GuideEventRepository extends JpaRepository<GuideEvent, Long> {
+
+    List<GuideEvent> findBySessionIdOrderByIdAsc(String sessionId);
+
+    List<GuideEvent> findByConversationIdOrderByIdAsc(String conversationId);
+}

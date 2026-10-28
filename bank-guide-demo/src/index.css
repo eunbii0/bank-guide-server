@@ -1,0 +1,15 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Pretendard Variable', 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+  background: #eef1f5;
+  color: #1c2430;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
